@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Nexvia – Gombe</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css">
+<style>
+  :root { --nav:#14213d; --resto:#f2a900; --pharma:#1b998b; --bg:#f7f8fa; --ink:#14213d; }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif; color: var(--ink); background: var(--bg); }
+  body { display: flex; flex-direction: column; }
+  header { background: var(--nav); color: #fff; padding: 10px 14px; display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+  header h1 { font-size: 1.15rem; margin: 0; letter-spacing: .3px; }
+  header span { font-size: .8rem; opacity: .75; }
+  .filters { display: flex; gap: 6px; padding: 8px 10px; background: #fff; border-bottom: 1px solid #dde1e8; }
+  .filters button { flex: 1; border: 1.5px solid var(--nav); background: #fff; color: var(--nav); padding: 9px 6px; border-radius: 8px; font-size: .9rem; font-weight: 600; cursor: pointer; }
+  .filters button[aria-pressed="true"] { background: var(--nav); color: #fff; }
+  .filters button:focus-visible { outline: 3px solid #4c8dff; outline-offset: 2px; }
+  #map { flex: 1; min-height: 300px; }
+  .pin { width: 22px; height: 22px; border-radius: 50% 50% 50% 0; transform: rotate(-45deg); border: 2px solid #fff; box-shadow: 0 1px 4px rgba(0,0,0,.45); }
+  .pin.restaurant { background: var(--resto); }
+  .pin.pharmacie { background: var(--pharma); }
+  .fiche h2 { font-size: 1rem; margin: 0 0 2px; }
+  .fiche .cat { font-size: .78rem; font-weight: 700; margin-bottom: 6px; }
+  .fiche .cat.restaurant { color: #a87500; }
+  .fiche .cat.pharmacie { color: #136e64; }
+  .fiche p { margin: 3px 0; font-size: .85rem; line-height: 1.35; }
+  .fiche .actions { display: flex; gap: 6px; margin-top: 8px; }
+  .fiche a.btn { flex: 1; text-align: center; padding: 8px 6px; border-radius: 7px; text-decoration: none; font-size: .85rem; font-weight: 600; background: var(--nav); color: #fff !important; }
+  .fiche a.btn.alt { background: #fff; color: var(--nav) !important; border: 1.5px solid var(--nav); }
+  #erreur { display: none; padding: 20px; text-align: center; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Nexvia</h1>
+  <span>Restaurants et pharmacies · Gombe, Kinshasa</span>
+</header>
+<div class="filters" role="group" aria-label="Filtrer les lieux">
+  <button data-filter="tous" aria-pressed="true">Tous</button>
+  <button data-filter="restaurant" aria-pressed="false">Restaurants</button>
+  <button data-filter="pharmacie" aria-pressed="false">Pharmacies</button>
+</div>
+<div id="map" role="application" aria-label="Carte des lieux"></div>
+<div id="erreur">La carte n'a pas pu se charger. Vérifiez votre connexion internet puis rechargez la page.</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
+<script>
+// Données issues du tableau nexvia_lieux_gombe.xlsx (confirmées par Emmanuel le 2026-10-08)
+const LIEUX = [
+  { nom: "Chez Gaby", cat: "restaurant", adresse: "26, avenue Roi Beaudouin, Gombe", tel: "+243 819 904 213", horaires: "Lun–Sam : 12h–22h", lat: -4.304919, lng: 15.290544 },
+  { nom: "Wabi Sabi", cat: "restaurant", adresse: "10, avenue de l'Équateur, Gombe", tel: "+243 900 000 702", horaires: "Tous les jours : 12h–01h", lat: -4.302184, lng: 15.310935 },
+  { nom: "Le Z Restaurant et Lounge", cat: "restaurant", adresse: "Immeuble Matrix, 119 Boulevard du 30 Juin, 8e étage, Gombe", tel: "+243 828 664 628", horaires: "Lun : fermé ; Mar–Jeu : 12h–01h ; Ven : 12h–01h ; Sam : 15h–01h ; Dim : 12h–01h", lat: -4.309240, lng: 15.292253 },
+  { nom: "Pharmacie Santemetre", cat: "pharmacie", adresse: "44, avenue Tombalbaye, Gombe", tel: "+243 999 935 970", horaires: "24h/24 – 7j/7", lat: -4.306177, lng: 15.310710 },
+  { nom: "Pharmacie du 30 Juin", cat: "pharmacie", adresse: "Avenue des Batetela, Gombe", tel: "+243 999 933 690", horaires: "24h/24 – 7j/7", lat: -4.316805, lng: 15.279037 }
+];
+const LABELS = { restaurant: "Restaurant", pharmacie: "Pharmacie" };
+
+function esc(s) {
+  return String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+}
+
+if (typeof L === "undefined") {
+  document.getElementById("map").style.display = "none";
+  document.getElementById("erreur").style.display = "block";
+} else {
+  const map = L.map("map").setView([-4.308, 15.298], 14);
+  // Fond OpenStreetMap : fonctionne quand la page est hébergée sur un site (https), pas en fichier local.
+  L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    maxZoom: 19,
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+  }).addTo(map);
+
+  const markers = LIEUX.map(l => {
+    const icon = L.divIcon({ className: "", html: '<div class="pin ' + l.cat + '"></div>', iconSize: [22, 22], iconAnchor: [11, 22], popupAnchor: [0, -22] });
+    const tel = l.tel.replace(/\s+/g, "");
+    const html =
+      '<div class="fiche">' +
+      '<h2>' + esc(l.nom) + '</h2>' +
+      '<div class="cat ' + l.cat + '">' + LABELS[l.cat] + '</div>' +
+      '<p>📍 ' + esc(l.adresse) + '</p>' +
+      '<p>🕒 ' + esc(l.horaires) + '</p>' +
+      '<p>📞 ' + esc(l.tel) + '</p>' +
+      '<div class="actions">' +
+      '<a class="btn" href="tel:' + esc(tel) + '">Appeler</a>' +
+      '<a class="btn alt" target="_blank" rel="noopener" href="https://www.google.com/maps/dir/?api=1&destination=' + l.lat + ',' + l.lng + '">Itinéraire</a>' +
+      '</div></div>';
+    const m = L.marker([l.lat, l.lng], { icon, title: l.nom, keyboard: true }).bindPopup(html, { minWidth: 210 });
+    return { cat: l.cat, marker: m };
+  });
+
+  function afficher(filtre) {
+    const visibles = [];
+    markers.forEach(({ cat, marker }) => {
+      if (filtre === "tous" || cat === filtre) { marker.addTo(map); visibles.push(marker.getLatLng()); }
+      else { map.removeLayer(marker); }
+    });
+    if (visibles.length) map.fitBounds(L.latLngBounds(visibles).pad(0.25), { maxZoom: 16 });
+  }
+
+  document.querySelectorAll(".filters button").forEach(btn => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll(".filters button").forEach(b => b.setAttribute("aria-pressed", String(b === btn)));
+      afficher(btn.dataset.filter);
+    });
+  });
+  afficher("tous");
+}
+</script>
+</body>
+</html>
