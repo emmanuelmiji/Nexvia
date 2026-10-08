@@ -112,9 +112,9 @@ const VERIFIES = [
 // ---- Catégories (affichage) ----
 const CATS = {
   restaurant: "Restaurants et cafés", pharmacie: "Pharmacies", sante: "Santé", banque: "Banques",
-  hotel: "Hôtels", ecole: "Écoles", culte: "Lieux de culte", commerce: "Commerces", autre: "Autres"
+  hotel: "Hôtels", sport: "Terrains et sport", ecole: "Écoles", culte: "Lieux de culte", commerce: "Commerces", autre: "Autres"
 };
-const CAT_LABEL = { restaurant: "Restaurant", pharmacie: "Pharmacie", sante: "Santé", banque: "Banque", hotel: "Hôtel", ecole: "École", culte: "Lieu de culte", commerce: "Commerce", autre: "Autre lieu" };
+const CAT_LABEL = { restaurant: "Restaurant", pharmacie: "Pharmacie", sante: "Santé", banque: "Banque", hotel: "Hôtel", sport: "Terrain de sport", ecole: "École", culte: "Lieu de culte", commerce: "Commerce", autre: "Autre lieu" };
 
 function catOSM(t) {
   const a = t.amenity, s = t.shop, to = t.tourism;
@@ -122,6 +122,7 @@ function catOSM(t) {
   if (a === "pharmacy") return "pharmacie";
   if (["hospital", "clinic", "doctors"].includes(a)) return "sante";
   if (a === "bank") return "banque";
+  if (["pitch", "sports_centre", "stadium"].includes(t.leisure)) return "sport";
   if (["school", "university"].includes(a)) return "ecole";
   if (a === "place_of_worship") return "culte";
   if (["hotel", "guest_house"].includes(to)) return "hotel";
@@ -240,7 +241,9 @@ if (typeof L === "undefined") {
     let ajoutes = 0;
     (data.elements || []).forEach(el => {
       const t = el.tags || {};
-      if (!t.name) return;
+      const estTerrain = ["pitch", "sports_centre", "stadium"].includes(t.leisure);
+      if (!t.name && !estTerrain) return;
+      if (!t.name) t.name = t.sport === "soccer" ? "Terrain de football" : "Terrain de sport";
       const lat = el.lat !== undefined ? el.lat : el.center && el.center.lat;
       const lng = el.lon !== undefined ? el.lon : el.center && el.center.lon;
       if (typeof lat !== "number" || typeof lng !== "number") return;

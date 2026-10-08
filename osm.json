@@ -1,0 +1,3097 @@
+{
+  "version": 0.6,
+  "generator": "Overpass API 0.7.62.4 2390de5a",
+  "osm3s": {
+    "timestamp_osm_base": "2026-10-08T02:04:26Z",
+    "copyright": "The data included in this document is from www.openstreetmap.org. The data is made available under ODbL."
+  },
+  "elements": [
+    {
+      "type": "node",
+      "id": 440108862,
+      "lat": -4.3042155,
+      "lon": 15.3191258,
+      "tags": {
+        "amenity": "restaurant",
+        "name": "Estoril Sun"
+      }
+    },
+    {
+      "type": "node",
+      "id": 440109169,
+      "lat": -4.3021473,
+      "lon": 15.313381,
+      "tags": {
+        "amenity": "pharmacy",
+        "check_date": "2023-05-06",
+        "dispensing": "no",
+        "healthcare": "pharmacy",
+        "name": "Pharmabel"
+      }
+    },
+    {
+      "type": "node",
+      "id": 440109947,
+      "lat": -4.3015827,
+      "lon": 15.3104483,
+      "tags": {
+        "amenity": "pharmacy",
+        "check_date": "2023-05-06",
+        "healthcare": "pharmacy"
+      }
+    },
+    {
+      "type": "node",
+      "id": 440111689,
+      "lat": -4.3051029,
+      "lon": 15.3146977,
+      "tags": {
+        "amenity": "restaurant",
+        "check_date": "2023-05-06",
+        "name": "Restaurant Hong-Kong"
+      }
+    },
+    {
+      "type": "node",
+      "id": 440115096,
+      "lat": -4.3053308,
+      "lon": 15.3019127,
+      "tags": {
+        "addr:housenumber": "42",
+        "addr:street": "Boulevard du 30 juin",
+        "amenity": "restaurant",
+        "check_date": "2023-05-13",
+        "name": "L'Olive Verte",
+        "phone": "+243 81 9819575"
+      }
+    },
+    {
+      "type": "node",
+      "id": 440115097,
+      "lat": -4.3039181,
+      "lon": 15.3012657,
+      "tags": {
+        "amenity": "restaurant",
+        "name": "Le Mistral"
+      }
+    },
+    {
+      "type": "node",
+      "id": 440115098,
+      "lat": -4.3045345,
+      "lon": 15.2992577,
+      "tags": {
+        "amenity": "pharmacy",
+        "check_date": "2023-05-13",
+        "healthcare": "pharmacy",
+        "name": "Pharmacie de la Gombe"
+      }
+    },
+    {
+      "type": "node",
+      "id": 440115099,
+      "lat": -4.3051181,
+      "lon": 15.2965475,
+      "tags": {
+        "amenity": "restaurant",
+        "check_date": "2023-05-13",
+        "name": "Le Colibri"
+      }
+    },
+    {
+      "type": "node",
+      "id": 440132538,
+      "lat": -4.3101387,
+      "lon": 15.2915006,
+      "tags": {
+        "addr:housenumber": "4",
+        "addr:street": "Avenue du Cercle",
+        "amenity": "restaurant",
+        "check_date": "2023-05-13",
+        "delivery:covid19": "only",
+        "name": "O Poeta",
+        "opening_hours": "12:00-23:00",
+        "opening_hours:covid19": "12:00-21:30",
+        "phone": "+243808503936"
+      }
+    },
+    {
+      "type": "node",
+      "id": 440142395,
+      "lat": -4.3057977,
+      "lon": 15.3071187,
+      "tags": {
+        "amenity": "restaurant",
+        "name": "Piccolo"
+      }
+    },
+    {
+      "type": "node",
+      "id": 440142702,
+      "lat": -4.3052803,
+      "lon": 15.3048421,
+      "tags": {
+        "amenity": "restaurant",
+        "check_date": "2023-05-13",
+        "name": "3615 Milo"
+      }
+    },
+    {
+      "type": "node",
+      "id": 930489700,
+      "lat": -4.3016151,
+      "lon": 15.3123205,
+      "tags": {
+        "amenity": "restaurant",
+        "check_date": "2023-05-06",
+        "name": "Chez Bibi"
+      }
+    },
+    {
+      "type": "node",
+      "id": 942246342,
+      "lat": -4.3032225,
+      "lon": 15.3067403,
+      "tags": {
+        "amenity": "restaurant",
+        "name": "Chez Gaby"
+      }
+    },
+    {
+      "type": "node",
+      "id": 974493182,
+      "lat": -4.3026985,
+      "lon": 15.3113391,
+      "tags": {
+        "addr:street": "Boulevard du 30 Juin",
+        "amenity": "restaurant",
+        "check_date": "2023-05-06",
+        "cuisine": "lebanese",
+        "name": "Al'dar",
+        "phone": "+243819957888"
+      }
+    },
+    {
+      "type": "node",
+      "id": 983582157,
+      "lat": -4.318701,
+      "lon": 15.2745044,
+      "tags": {
+        "addr:housenumber": "88",
+        "addr:place": "Kin Plazza Mall",
+        "addr:street": "Croisement des avenues de la Justice et Ouganda",
+        "air_conditioning": "yes",
+        "amenity": "restaurant",
+        "check_date": "2024-02-18",
+        "cuisine": "sandwich;ice_cream;burger",
+        "delivery": "yes",
+        "delivery:covid19": "yes",
+        "internet_access": "yes",
+        "name": "Eric Kayser",
+        "opening_hours": "Mo-Sa 07:00-22:00; Su 08:00-22:00",
+        "opening_hours:covid19": "Mo-Sa 09:00-16:00",
+        "outdoor_seating": "yes",
+        "phone": "00243970021125",
+        "shop": "bakery"
+      }
+    },
+    {
+      "type": "node",
+      "id": 997440502,
+      "lat": -4.3010121,
+      "lon": 15.313313,
+      "tags": {
+        "addr:street": "Avenue des Aviateurs",
+        "amenity": "restaurant",
+        "delivery": "yes",
+        "name": "Hunga Busta",
+        "smoking": "no"
+      }
+    },
+    {
+      "type": "node",
+      "id": 1018712007,
+      "lat": -4.303683,
+      "lon": 15.3145822,
+      "tags": {
+        "amenity": "restaurant",
+        "check_date": "2023-05-06",
+        "name": "Cercle Onatra"
+      }
+    },
+    {
+      "type": "node",
+      "id": 1018722296,
+      "lat": -4.3010059,
+      "lon": 15.3109388,
+      "tags": {
+        "amenity": "restaurant",
+        "delivery": "yes",
+        "name": "Patisserie Nouvelle",
+        "note:covid19": "Sunday opening_hours to be confirmed after official communication",
+        "opening_hours:covid19": "09:00-16:00",
+        "phone": "+243819989000",
+        "shop": "bakery",
+        "takeaway": "yes"
+      }
+    },
+    {
+      "type": "node",
+      "id": 1018727531,
+      "lat": -4.3026813,
+      "lon": 15.3105321,
+      "tags": {
+        "amenity": "restaurant",
+        "check_date": "2023-05-19",
+        "name": "Planete J"
+      }
+    },
+    {
+      "type": "node",
+      "id": 1018729261,
+      "lat": -4.3024147,
+      "lon": 15.3102569,
+      "tags": {
+        "amenity": "restaurant",
+        "check_date": "2023-05-06",
+        "name": "La Baquette"
+      }
+    },
+    {
+      "type": "node",
+      "id": 1018733251,
+      "lat": -4.3021109,
+      "lon": 15.3086998,
+      "tags": {
+        "amenity": "restaurant",
+        "check_date": "2023-05-06",
+        "name": "Chez Patrick"
+      }
+    },
+    {
+      "type": "node",
+      "id": 1018741957,
+      "lat": -4.3035974,
+      "lon": 15.3052695,
+      "tags": {
+        "amenity": "restaurant",
+        "name": "La Bouronne"
+      }
+    },
+    {
+      "type": "node",
+      "id": 1018746514,
+      "lat": -4.3069995,
+      "lon": 15.3042396,
+      "tags": {
+        "amenity": "restaurant",
+        "check_date": "2023-05-08",
+        "name": "New Jeans"
+      }
+    },
+    {
+      "type": "node",
+      "id": 1018748383,
+      "lat": -4.3078904,
+      "lon": 15.3020338,
+      "tags": {
+        "addr:city": "Kinshasa",
+        "addr:street": "Avenue Huilerie",
+        "amenity": "restaurant",
+        "check_date": "2023-05-08",
+        "cuisine": "regional",
+        "name": "Nguasuma",
+        "outdoor_seating": "yes"
+      }
+    },
+    {
+      "type": "node",
+      "id": 1018751772,
+      "lat": -4.3071386,
+      "lon": 15.2962466,
+      "tags": {
+        "amenity": "restaurant",
+        "cuisine": "chinese",
+        "name": "Mandarin",
+        "opening_hours": "Tu-Su 12:00-15:00, Tu-Su 19:00-22:30",
+        "phone": "+2438841716;+2439931358"
+      }
+    },
+    {
+      "type": "node",
+      "id": 1018755575,
+      "lat": -4.3191727,
+      "lon": 15.2863082,
+      "tags": {
+        "addr:city": "Kinshasa",
+        "addr:housenumber": "33",
+        "addr:street": "Avenue des Forces Armées",
+        "amenity": "restaurant",
+        "facebook": "https://www.facebook.com/lepetittrianonmaisondefrance/",
+        "name": "Maison de France"
+      }
+    },
+    {
+      "type": "node",
+      "id": 1424405054,
+      "lat": -4.3028751,
+      "lon": 15.3104792,
+      "tags": {
+        "addr:city": "Kinshasa",
+        "addr:street": "Avenue de l'Équateur",
+        "amenity": "pharmacy",
+        "check_date": "2023-05-13",
+        "healthcare": "pharmacy",
+        "name": "Oxygene"
+      }
+    },
+    {
+      "type": "node",
+      "id": 2144897730,
+      "lat": -4.329168,
+      "lon": 15.2732955,
+      "tags": {
+        "access:covid19": "no",
+        "addr:housenumber": "7",
+        "addr:street": "Avenue de l'OUA",
+        "amenity": "restaurant",
+        "contact:whatsapp": "+243900343434",
+        "cuisine": "italian;mexican;french;sushi;lebanese",
+        "delivery:covid19": "yes",
+        "description:covid19": "Commandes prises par WhatsApp au +243900343434",
+        "name": "Le Palais",
+        "opening_hours": "08:00-24:00",
+        "opening_hours:covid19": "11:00-23:00",
+        "phone": "+243973999999;+243900343434",
+        "website": "https://www.facebook.com/LePalaisRestaurantKinshasa"
+      }
+    },
+    {
+      "type": "node",
+      "id": 2144897835,
+      "lat": -4.3287464,
+      "lon": 15.2749712,
+      "tags": {
+        "amenity": "pharmacy",
+        "check_date": "2025-03-03",
+        "dispensing": "no",
+        "name": "Pharmacie Sainte Catherine",
+        "opening_hours": "off"
+      }
+    },
+    {
+      "type": "node",
+      "id": 2144899265,
+      "lat": -4.305386,
+      "lon": 15.2858541,
+      "tags": {
+        "addr:city": "Kinshasa",
+        "addr:housenumber": "26",
+        "addr:street": "Avenue Caisse d'Epargne",
+        "amenity": "restaurant",
+        "check_date": "2023-05-08",
+        "cuisine": "chinese",
+        "name": "Jin Yang"
+      }
+    },
+    {
+      "type": "node",
+      "id": 2144899266,
+      "lat": -4.3049538,
+      "lon": 15.2904084,
+      "tags": {
+        "amenity": "restaurant",
+        "check_date": "2023-05-13",
+        "cuisine": "regional",
+        "name": "Nouvelle Cuisine Congolaise"
+      }
+    },
+    {
+      "type": "node",
+      "id": 2144899270,
+      "lat": -4.3237643,
+      "lon": 15.2703018,
+      "tags": {
+        "addr:street": "Avenue Colonel Mondjiba",
+        "air_conditioning": "yes",
+        "amenity": "restaurant",
+        "cuisine": "sandwich;bakery;ice_cream;coffee",
+        "delivery": "yes",
+        "name": "Patisserie Nouvelle",
+        "note:covid19": "Sunday opening_hours to be confirmed after official communication",
+        "opening_hours:covid19": "09:00-16:00",
+        "outdoor_seating": "yes",
+        "phone": "+243814226640",
+        "shop": "bakery",
+        "takeaway": "yes"
+      }
+    },
+    {
+      "type": "node",
+      "id": 2144899271,
+      "lat": -4.3190549,
+      "lon": 15.2870899,
+      "tags": {
+        "amenity": "restaurant",
+        "cuisine": "french",
+        "name": "Petit Trianon"
+      }
+    },
+    {
+      "type": "node",
+      "id": 2144899382,
+      "lat": -4.3152626,
+      "lon": 15.2823283,
+      "tags": {
+        "addr:housenumber": "165",
+        "addr:street": "Boulevard du 30 Juin",
+        "amenity": "restaurant",
+        "cuisine": "regional;french",
+        "indoor_seating": "yes",
+        "name": "Résidence 165",
+        "outdoor_seating": "yes"
+      }
+    },
+    {
+      "type": "node",
+      "id": 2144927307,
+      "lat": -4.312694,
+      "lon": 15.2931796,
+      "tags": {
+        "addr:street": "Avenue du Cercle",
+        "amenity": "restaurant",
+        "check_date": "2023-05-19",
+        "name": "Le Cercle Gourmand",
+        "phone": "00243999901001"
+      }
+    },
+    {
+      "type": "node",
+      "id": 2144927308,
+      "lat": -4.3165911,
+      "lon": 15.2866139,
+      "tags": {
+        "amenity": "restaurant",
+        "cuisine": "regional",
+        "email": "bekikab@hotmail.com",
+        "name": "Quick Poulet - Chez Beki",
+        "opening_hours": "Mo-Su 10:00-23:00",
+        "website": "http://quickpoulet.com/"
+      }
+    },
+    {
+      "type": "node",
+      "id": 2145683950,
+      "lat": -4.3227184,
+      "lon": 15.2773568,
+      "tags": {
+        "amenity": "restaurant",
+        "check_date": "2023-05-08",
+        "cuisine": "regional",
+        "internet_access": "no",
+        "opening_hours": "Mo-Fr 12:00-14:00"
+      }
+    },
+    {
+      "type": "node",
+      "id": 2145684496,
+      "lat": -4.3263632,
+      "lon": 15.2952205,
+      "tags": {
+        "amenity": "restaurant",
+        "check_date": "2023-05-13"
+      }
+    },
+    {
+      "type": "node",
+      "id": 2148448555,
+      "lat": -4.3245822,
+      "lon": 15.3050789,
+      "tags": {
+        "amenity": "pharmacy",
+        "check_date": "2023-05-13",
+        "dispensing": "no",
+        "healthcare": "pharmacy"
+      }
+    },
+    {
+      "type": "node",
+      "id": 2157497454,
+      "lat": -4.3056397,
+      "lon": 15.2963071,
+      "tags": {
+        "amenity": "restaurant",
+        "cuisine": "asian",
+        "microbrewery": "no",
+        "name": "Yewon Restaurant Coreen"
+      }
+    },
+    {
+      "type": "node",
+      "id": 2157565903,
+      "lat": -4.3014524,
+      "lon": 15.3104858,
+      "tags": {
+        "addr:housenumber": "208",
+        "addr:street": "Avenue de l'Équateur",
+        "amenity": "restaurant",
+        "check_date": "2023-05-06",
+        "name": "Eric Kayser",
+        "shop": "bakery",
+        "website": "https://www.maison-kayser.com/"
+      }
+    },
+    {
+      "type": "node",
+      "id": 2158831409,
+      "lat": -4.3278842,
+      "lon": 15.2696965,
+      "tags": {
+        "amenity": "restaurant",
+        "cuisine": "regional",
+        "name": "Malewa",
+        "opening_hours": "Mo-Su 08:30-19:30",
+        "operator": "Bibiche"
+      }
+    },
+    {
+      "type": "node",
+      "id": 2159144034,
+      "lat": -4.2988614,
+      "lon": 15.3103504,
+      "tags": {
+        "amenity": "restaurant",
+        "name": "Le Plein Vent",
+        "name:fr": "Le Plein Vent"
+      }
+    },
+    {
+      "type": "node",
+      "id": 2171586945,
+      "lat": -4.3059697,
+      "lon": 15.3023157,
+      "tags": {
+        "amenity": "restaurant",
+        "fixme": "Internet access to be confirmed",
+        "internet_access": "no",
+        "internet_access:fee": "no",
+        "name": "Restaurant Melisse",
+        "opening_hours": "Mo-Fr 08:30-20:00",
+        "smoking": "yes",
+        "wheelchair": "no"
+      }
+    },
+    {
+      "type": "node",
+      "id": 2171586966,
+      "lat": -4.3060065,
+      "lon": 15.3019023,
+      "tags": {
+        "amenity": "restaurant",
+        "check_date": "2023-05-08",
+        "internet_access": "no",
+        "internet_access:fee": "no",
+        "name": "TERRASSE CRYSTAL",
+        "opening_hours": "Mo-Sa 08:30-20:00",
+        "smoking": "yes",
+        "wheelchair": "no"
+      }
+    },
+    {
+      "type": "node",
+      "id": 2377757594,
+      "lat": -4.3061095,
+      "lon": 15.2894228,
+      "tags": {
+        "addr:city": "Kinshasa",
+        "addr:housenumber": "6",
+        "addr:street": "Avenue Caisse d'Epargne",
+        "amenity": "restaurant",
+        "check_date": "2023-05-08",
+        "cuisine": "regional",
+        "name": "Inzia"
+      }
+    },
+    {
+      "type": "node",
+      "id": 3155477138,
+      "lat": -4.32327,
+      "lon": 15.2779385,
+      "tags": {
+        "access:covid19": "yes",
+        "amenity": "pharmacy",
+        "check_date": "2023-05-08",
+        "dispensing": "yes",
+        "healthcare": "pharmacy",
+        "name": "Pharmacie Gender Socimat",
+        "name:fr": "Pharmacie Gender Socimat",
+        "opening_hours": "Mo-Fr 06:30-21:00; Sa 07:00-21:00; Su 12:00-19:00"
+      }
+    },
+    {
+      "type": "node",
+      "id": 3287578959,
+      "lat": -4.3169766,
+      "lon": 15.2783857,
+      "tags": {
+        "amenity": "pharmacy",
+        "check_date": "2023-05-08",
+        "dispensing": "yes",
+        "healthcare": "pharmacy",
+        "name": "Pharmacie du 30 Juin"
+      }
+    },
+    {
+      "type": "node",
+      "id": 3428636711,
+      "lat": -4.3096164,
+      "lon": 15.2988146,
+      "tags": {
+        "amenity": "restaurant",
+        "check_date": "2023-05-08",
+        "cuisine": "congolese",
+        "name": "Chez Flore"
+      }
+    },
+    {
+      "type": "node",
+      "id": 3447563303,
+      "lat": -4.3170391,
+      "lon": 15.2842475,
+      "tags": {
+        "amenity": "restaurant",
+        "check_date": "2023-05-08",
+        "name": "Maïsha Park"
+      }
+    },
+    {
+      "type": "node",
+      "id": 3507656042,
+      "lat": -4.3011284,
+      "lon": 15.3133489,
+      "tags": {
+        "amenity": "restaurant",
+        "cuisine": "italian",
+        "name": "Casa Nostra"
+      }
+    },
+    {
+      "type": "node",
+      "id": 3758966475,
+      "lat": -4.3233374,
+      "lon": 15.2955779,
+      "tags": {
+        "addr:city": "Kinshasa",
+        "addr:street": "Avenue Kitega",
+        "amenity": "restaurant",
+        "check_date": "2023-05-13",
+        "cuisine": "brochettes",
+        "name": "Délices de Notre Dame",
+        "smoking": "yes",
+        "takeaway": "yes"
+      }
+    },
+    {
+      "type": "node",
+      "id": 3902298277,
+      "lat": -4.3034544,
+      "lon": 15.3049874,
+      "tags": {
+        "amenity": "restaurant",
+        "name": "Zamani"
+      }
+    },
+    {
+      "type": "node",
+      "id": 3946468926,
+      "lat": -4.3147738,
+      "lon": 15.2805576,
+      "tags": {
+        "addr:city": "Commune de Gombe",
+        "addr:housenumber": "81b",
+        "addr:street": "Avenue de la Justice",
+        "amenity": "restaurant",
+        "capacity": "100",
+        "cuisine": "regional,_internationnale",
+        "delivery": "yes",
+        "name": "Touche de Piment",
+        "note": "Nouveau cadre charmant avec une cuisine local et internationnale.",
+        "opening_hours": "12:00-00:00",
+        "phone": "+243810000589",
+        "smoking": "outside",
+        "takeaway": "yes"
+      }
+    },
+    {
+      "type": "node",
+      "id": 3962508991,
+      "lat": -4.3057564,
+      "lon": 15.3180639,
+      "tags": {
+        "amenity": "pharmacy",
+        "check_date": "2023-05-19",
+        "healthcare": "pharmacy",
+        "name": "Pharmacie Estcom"
+      }
+    },
+    {
+      "type": "node",
+      "id": 4215494849,
+      "lat": -4.3123269,
+      "lon": 15.284325,
+      "tags": {
+        "addr:city": "Kinshasa",
+        "addr:housenumber": "65",
+        "addr:street": "Avenue de la Justice",
+        "amenity": "restaurant",
+        "capacity": "40",
+        "check_date": "2023-05-19",
+        "cuisine": "french;belgian",
+        "delivery": "yes",
+        "smoking": "no"
+      }
+    },
+    {
+      "type": "node",
+      "id": 4218899194,
+      "lat": -4.3041826,
+      "lon": 15.3154069,
+      "tags": {
+        "addr:city": "Kinshasa",
+        "addr:housenumber": "5",
+        "addr:street": "Avenue colonel Ebeya",
+        "amenity": "restaurant",
+        "check_date": "2023-05-06"
+      }
+    },
+    {
+      "type": "node",
+      "id": 4457506091,
+      "lat": -4.3037944,
+      "lon": 15.2928227,
+      "tags": {
+        "amenity": "restaurant",
+        "check_date": "2023-05-13",
+        "name": "Monte Christo"
+      }
+    },
+    {
+      "type": "node",
+      "id": 4685987874,
+      "lat": -4.3040822,
+      "lon": 15.3186257,
+      "tags": {
+        "amenity": "pharmacy",
+        "check_date": "2024-02-03",
+        "healthcare": "pharmacy",
+        "name": "Pharmacie Ste Thérèse du Flambeau"
+      }
+    },
+    {
+      "type": "node",
+      "id": 4701574280,
+      "lat": -4.3071525,
+      "lon": 15.3041593,
+      "tags": {
+        "amenity": "restaurant",
+        "check_date": "2023-05-08",
+        "name": "Restaurant chez Philo"
+      }
+    },
+    {
+      "type": "node",
+      "id": 4701607517,
+      "lat": -4.306778,
+      "lon": 15.3038666,
+      "tags": {
+        "amenity": "restaurant",
+        "check_date": "2023-05-08",
+        "name": "Restaurant Ushuaia"
+      }
+    },
+    {
+      "type": "node",
+      "id": 5305388647,
+      "lat": -4.3237981,
+      "lon": 15.2780449,
+      "tags": {
+        "amenity": "restaurant",
+        "check_date": "2023-05-19",
+        "cuisine": "chinese",
+        "name": "Shangrila",
+        "opening_hours": "closed"
+      }
+    },
+    {
+      "type": "node",
+      "id": 5339118685,
+      "lat": -4.3229445,
+      "lon": 15.2795897,
+      "tags": {
+        "amenity": "pharmacy",
+        "check_date": "2023-05-08",
+        "healthcare": "pharmacy",
+        "name": "Lulu Pharma"
+      }
+    },
+    {
+      "type": "node",
+      "id": 5343913894,
+      "lat": -4.2983397,
+      "lon": 15.3115886,
+      "tags": {
+        "amenity": "restaurant",
+        "name": "Arome"
+      }
+    },
+    {
+      "type": "node",
+      "id": 5499358555,
+      "lat": -4.3188875,
+      "lon": 15.2848524,
+      "tags": {
+        "amenity": "restaurant",
+        "check_date": "2023-05-08",
+        "microbrewery": "yes",
+        "name": "Restaurant Rocas",
+        "operator": "Congolais",
+        "outdoor_seating": "yes"
+      }
+    },
+    {
+      "type": "node",
+      "id": 5604062235,
+      "lat": -4.3049107,
+      "lon": 15.2919948,
+      "tags": {
+        "amenity": "restaurant",
+        "check_date": "2023-05-13",
+        "name": "Restaurant Fleur de Lys"
+      }
+    },
+    {
+      "type": "node",
+      "id": 5717264782,
+      "lat": -4.3124572,
+      "lon": 15.2841096,
+      "tags": {
+        "addr:city": "Kinshasa",
+        "addr:street": "Avenue de la Justice",
+        "amenity": "restaurant",
+        "brand": "Loving Hut",
+        "brand:wikidata": "Q3491655",
+        "brand:wikipedia": "en:Loving Hut",
+        "check_date": "2023-05-19",
+        "cuisine": "international",
+        "diet:vegan": "only",
+        "diet:vegetarian": "only",
+        "name": "Loving Hut",
+        "outdoor_seating": "yes"
+      }
+    },
+    {
+      "type": "node",
+      "id": 6030334307,
+      "lat": -4.327518,
+      "lon": 15.3106238,
+      "tags": {
+        "amenity": "restaurant",
+        "check_date": "2023-05-19",
+        "name": "Dacing Club AZ"
+      }
+    },
+    {
+      "type": "node",
+      "id": 6126926186,
+      "lat": -4.3195048,
+      "lon": 15.3298213,
+      "tags": {
+        "addr:street": "Avenue Flambeau",
+        "amenity": "restaurant",
+        "name": "Cheetah 2"
+      }
+    },
+    {
+      "type": "node",
+      "id": 6222632986,
+      "lat": -4.32154,
+      "lon": 15.2787004,
+      "tags": {
+        "addr:housenumber": "3",
+        "addr:street": "Avenue Milambo",
+        "amenity": "restaurant",
+        "check_date": "2026-07-08",
+        "check_date:opening_hours": "2026-07-08",
+        "name": "La Reine du Cossa",
+        "opening_hours": "Mo-Su,PH 09:00+"
+      }
+    },
+    {
+      "type": "node",
+      "id": 6415551387,
+      "lat": -4.3200871,
+      "lon": 15.2742721,
+      "tags": {
+        "access:covid19": "no",
+        "amenity": "restaurant",
+        "contact:whatsapp": "0859243073",
+        "delivery:covid19": "only",
+        "name": "Planète J",
+        "phone": "0816779997;0859243073"
+      }
+    },
+    {
+      "type": "node",
+      "id": 6428020600,
+      "lat": -4.3245023,
+      "lon": 15.2970026,
+      "tags": {
+        "amenity": "restaurant",
+        "check_date": "2023-05-13",
+        "name": "Aimé dollars"
+      }
+    },
+    {
+      "type": "node",
+      "id": 6589914044,
+      "lat": -4.3289852,
+      "lon": 15.2793661,
+      "tags": {
+        "addr:housenumber": "16",
+        "addr:street": "Avenue Ntangu",
+        "amenity": "restaurant",
+        "name": "Le Cactus",
+        "outdoor_seating": "yes"
+      }
+    },
+    {
+      "type": "node",
+      "id": 6612163885,
+      "lat": -4.2901094,
+      "lon": 15.2668685,
+      "tags": {
+        "addr:city": "Brazzaville",
+        "addr:street": "Route de la Corniche",
+        "amenity": "restaurant",
+        "cuisine": "grill",
+        "email": "infos@etshardom.com",
+        "name": "Chez Dom",
+        "opening_hours": "Mo-Su 11:00-00:00",
+        "operator": "Bar Grill & Terrasse vue sur le fleuve Congo",
+        "phone": "+242 06 441 6182",
+        "website": "https://www.facebook.com/CHEZ-DOM-546520765766383/"
+      }
+    },
+    {
+      "type": "node",
+      "id": 6790883966,
+      "lat": -4.3087558,
+      "lon": 15.3030443,
+      "tags": {
+        "amenity": "restaurant",
+        "check_date": "2023-05-08",
+        "name": "TABOO"
+      }
+    },
+    {
+      "type": "node",
+      "id": 6886876153,
+      "lat": -4.3270468,
+      "lon": 15.2960119,
+      "tags": {
+        "amenity": "pharmacy",
+        "check_date": "2023-05-13",
+        "healthcare": "pharmacy",
+        "name": "Pharmacie Notre Dame"
+      }
+    },
+    {
+      "type": "node",
+      "id": 7035785291,
+      "lat": -4.3145467,
+      "lon": 15.3036869,
+      "tags": {
+        "amenity": "pharmacy",
+        "check_date": "2023-05-08",
+        "healthcare": "pharmacy",
+        "name": "pharmacie bonne guerison"
+      }
+    },
+    {
+      "type": "node",
+      "id": 7044986701,
+      "lat": -4.3185238,
+      "lon": 15.274483,
+      "tags": {
+        "amenity": "pharmacy",
+        "check_date": "2024-02-18",
+        "healthcare": "pharmacy"
+      }
+    },
+    {
+      "type": "node",
+      "id": 7060363400,
+      "lat": -4.3009412,
+      "lon": 15.3053383,
+      "tags": {
+        "amenity": "restaurant",
+        "name": "Restaurant Marina"
+      }
+    },
+    {
+      "type": "node",
+      "id": 7447105476,
+      "lat": -4.303763,
+      "lon": 15.3076763,
+      "tags": {
+        "amenity": "pharmacy",
+        "healthcare": "pharmacy",
+        "name": "Pharmacie de l'independance"
+      }
+    },
+    {
+      "type": "node",
+      "id": 7768176630,
+      "lat": -4.3140599,
+      "lon": 15.2869137,
+      "tags": {
+        "amenity": "restaurant",
+        "check_date": "2025-04-10",
+        "cuisine": "chinese",
+        "name": "Les Baguettes"
+      }
+    },
+    {
+      "type": "node",
+      "id": 7817428848,
+      "lat": -4.3190801,
+      "lon": 15.2770565,
+      "tags": {
+        "amenity": "restaurant",
+        "cuisine": "chinese",
+        "name": "Nicolas Perle",
+        "opening_hours": "Mo-Su 10:00-23:30"
+      }
+    },
+    {
+      "type": "node",
+      "id": 7856381337,
+      "lat": -4.3236116,
+      "lon": 15.3085548,
+      "tags": {
+        "addr:street": "luvungi",
+        "amenity": "restaurant",
+        "check_date": "2023-05-13",
+        "description": "hotel, restaurant,bar",
+        "name": "Pacifique hotel",
+        "opening_hours": "Mo-Su 09:00-12:00, 11:00-18:00",
+        "website": "www.pacifiquehotel.com"
+      }
+    },
+    {
+      "type": "node",
+      "id": 7949104320,
+      "lat": -4.3161299,
+      "lon": 15.2821676,
+      "tags": {
+        "amenity": "restaurant",
+        "name": "Villa Royale",
+        "takeaway": "yes"
+      }
+    },
+    {
+      "type": "node",
+      "id": 8189664949,
+      "lat": -4.3161307,
+      "lon": 15.2783881,
+      "tags": {
+        "addr:city": "Commune de Gombe",
+        "addr:housenumber": "67",
+        "addr:street": "Avenue de la Justice",
+        "amenity": "restaurant",
+        "brand": "Loving Hut",
+        "brand:wikidata": "Q3491655",
+        "brand:wikipedia": "en:Loving Hut",
+        "check_date": "2023-05-08",
+        "cuisine": "international",
+        "diet:vegan": "only",
+        "diet:vegetarian": "only",
+        "fixme": "Move to correct location",
+        "name": "Loving Hut",
+        "phone": "+243 844-641-600"
+      }
+    },
+    {
+      "type": "node",
+      "id": 8284142031,
+      "lat": -4.3019552,
+      "lon": 15.3141897,
+      "tags": {
+        "amenity": "restaurant",
+        "check_date": "2023-05-06",
+        "name": "Tucanos"
+      }
+    },
+    {
+      "type": "node",
+      "id": 8284142050,
+      "lat": -4.3116046,
+      "lon": 15.2797025,
+      "tags": {
+        "amenity": "restaurant",
+        "name": "Auspices"
+      }
+    },
+    {
+      "type": "node",
+      "id": 8334947152,
+      "lat": -4.3245695,
+      "lon": 15.3018009,
+      "tags": {
+        "addr:housenumber": "208",
+        "addr:landmark": "Croisement kalembelembe et mushi",
+        "addr:quarter": "Lokombe",
+        "addr:street": "Kalembelembe",
+        "addr:suburb": "Lingwala",
+        "amenity": "pharmacy",
+        "check_date": "2023-05-08",
+        "contact:phone": "+243898299855",
+        "dispensing": "yes",
+        "healthcare": "pharmacy",
+        "name": "Caféine",
+        "opening_hours": "Mo-Su 7:30-20:00",
+        "ref:CD:CNOP": "0867/02"
+      }
+    },
+    {
+      "type": "node",
+      "id": 8334947154,
+      "lat": -4.3199021,
+      "lon": 15.3001695,
+      "tags": {
+        "addr:city": "Kinshasa",
+        "addr:housenumber": "102",
+        "addr:landmark": "Croisement dodoma et mushi",
+        "addr:quarter": "CNECI",
+        "addr:street": "Avenue Dodoma",
+        "addr:suburb": "Lingwala",
+        "amenity": "pharmacy",
+        "check_date": "2023-05-08",
+        "contact:phone": "+243851211140",
+        "healthcare": "pharmacy",
+        "name": "Saint Barthélémy",
+        "opening_hours": "Mo-Su 8:00-21:30",
+        "opening_hours:covid19": "Mo-Su 8:00-20:00",
+        "ref:CD:CNOP": "0831/00"
+      }
+    },
+    {
+      "type": "node",
+      "id": 8334947155,
+      "lat": -4.3214733,
+      "lon": 15.2948977,
+      "tags": {
+        "addr:housenumber": "292/C",
+        "addr:landmark": "Croisement ngele et la libération; ex 24 novembre",
+        "addr:quarter": "Pakadjuma",
+        "addr:street": "Ngele",
+        "addr:suburb": "Lingwala",
+        "amenity": "pharmacy",
+        "check_date": "2023-05-19",
+        "contact:phone": "+243998301899",
+        "name": "Adjab",
+        "opening_hours": "Mo-Su 9:00-22:30",
+        "opening_hours:covid19": "Mo-Su 9:00-21:00",
+        "ref:CD:CNOP": "0362/89"
+      }
+    },
+    {
+      "type": "node",
+      "id": 8349868213,
+      "lat": -4.3247462,
+      "lon": 15.305808,
+      "tags": {
+        "addr:housenumber": "175",
+        "addr:landmark": "Rond point des huileries; place de la justice",
+        "addr:quarter": "Ngondalokombe",
+        "addr:street": "Nyangwe",
+        "addr:suburb": "Lingwala",
+        "amenity": "pharmacy",
+        "check_date": "2026-05-29",
+        "check_date:opening_hours": "2026-05-29",
+        "contact:phone": "+243897530216",
+        "dispensing": "yes",
+        "healthcare": "pharmacy",
+        "name": "Fleurs de marguerite",
+        "opening_hours": "Mo-Su 09:30-20:00",
+        "ref:CD:CNOP": "0220/85",
+        "wheelchair": "no"
+      }
+    },
+    {
+      "type": "node",
+      "id": 8722730917,
+      "lat": -4.3031259,
+      "lon": 15.3082073,
+      "tags": {
+        "amenity": "restaurant",
+        "name": "Nice Cream"
+      }
+    },
+    {
+      "type": "node",
+      "id": 8905596344,
+      "lat": -4.316217,
+      "lon": 15.2724718,
+      "tags": {
+        "addr:housenumber": "4465",
+        "addr:landmark": "En face de la Clinique Ngaliema",
+        "addr:street": "De Clinique",
+        "addr:suburb": "Gombe",
+        "amenity": "pharmacy",
+        "check_date": "2023-05-08",
+        "contact:phone": "+243820556398",
+        "dispensing": "yes",
+        "name": "New GMA Pharmacy",
+        "opening_hours": "24/7",
+        "ref:CD:CNOP": "0988/04"
+      }
+    },
+    {
+      "type": "node",
+      "id": 8905708649,
+      "lat": -4.3016622,
+      "lon": 15.3084521,
+      "tags": {
+        "addr:city": "Kinshasa",
+        "addr:housenumber": "1",
+        "addr:landmark": "Rond-Point Forescom",
+        "addr:quarter": "Rond-Point Forescom",
+        "addr:street": "Avenue du Port",
+        "addr:suburb": "Gombe",
+        "amenity": "pharmacy",
+        "check_date": "2023-05-13",
+        "contact:phone": "+243844684420",
+        "dispensing": "yes",
+        "healthcare": "pharmacy",
+        "name": "Pharmacie Venus",
+        "opening_hours": "07:30-17:00",
+        "ref:CD:CNOP": "0285/86"
+      }
+    },
+    {
+      "type": "node",
+      "id": 8905731348,
+      "lat": -4.3057458,
+      "lon": 15.3143704,
+      "tags": {
+        "addr:housenumber": "119",
+        "addr:landmark": "A côté de la Maison de la Bible",
+        "addr:quarter": "Commerce",
+        "addr:street": "Haut-Congo",
+        "addr:suburb": "Gombe",
+        "amenity": "pharmacy",
+        "check_date": "2023-05-06",
+        "contact:phone": "+243998192093",
+        "dispensing": "yes",
+        "name": "Pharmacie Saint Ignace",
+        "opening_hours": "08:00-17:00",
+        "ref:CD:CNOP": "0861/02"
+      }
+    },
+    {
+      "type": "node",
+      "id": 8905754336,
+      "lat": -4.3130349,
+      "lon": 15.2901483,
+      "tags": {
+        "addr:housenumber": "301",
+        "addr:landmark": "Ambassade du Ghana",
+        "addr:quarter": "Croix Rouge",
+        "addr:street": "24 Novembre",
+        "addr:suburb": "Gombe",
+        "amenity": "pharmacy",
+        "check_date": "2023-05-08",
+        "contact:phone": "+243851808000",
+        "dispensing": "yes",
+        "healthcare": "pharmacy",
+        "name": "Nouvelle Pharmacie Moderne",
+        "opening_hours": "08:00-21:00",
+        "opening_hours:covid19": "8:00-19:00",
+        "ref:CD:CNOP": "1294/10"
+      }
+    },
+    {
+      "type": "node",
+      "id": 8905767500,
+      "lat": -4.3070258,
+      "lon": 15.3080255,
+      "tags": {
+        "addr:housenumber": "02/0134",
+        "addr:landmark": "Croisement Kasa-Vubu / Tombalbaye",
+        "addr:street": "Tombalbaye",
+        "addr:suburb": "Gombe",
+        "amenity": "pharmacy",
+        "check_date": "2023-05-13",
+        "contact:email": "santemetre@yahoo.fr",
+        "contact:phone": "+243999935725;+243818100740",
+        "dispensing": "yes",
+        "name": "Meilleure Santé Mètre",
+        "opening_hours": "24/7",
+        "opening_hours:covid19": "07:00-21:00",
+        "ref:CD:CNOP": "0254/86"
+      }
+    },
+    {
+      "type": "node",
+      "id": 8906385082,
+      "lat": -4.3180405,
+      "lon": 15.3259438,
+      "tags": {
+        "addr:housenumber": "1372",
+        "addr:landmark": "Marché Kabambare",
+        "addr:quarter": "Bon marché",
+        "addr:street": "Kabambare",
+        "addr:suburb": "Barumbu",
+        "amenity": "pharmacy",
+        "contact:phone": "+243810725500",
+        "dispensing": "yes",
+        "name": "Pharmacie Kratos",
+        "opening_hours": "08:00-20:00",
+        "ref:CD:CNOP": "0273/86"
+      }
+    },
+    {
+      "type": "node",
+      "id": 8906405113,
+      "lat": -4.305488,
+      "lon": 15.3066029,
+      "tags": {
+        "addr:housenumber": "2",
+        "addr:landmark": "A côté du Super Marché Kin Marché 2",
+        "addr:quarter": "Golf",
+        "addr:street": "Mpolo-Maurice",
+        "addr:suburb": "Gombe",
+        "amenity": "pharmacy",
+        "contact:phone": "+243999988709",
+        "dispensing": "yes",
+        "healthcare": "pharmacy",
+        "name": "Pharmacie du Centre Ville",
+        "opening_hours": "08:30-17:00",
+        "opening_hours:covid19": "08:00-16:00",
+        "ref:CD:CNOP": "0615/70"
+      }
+    },
+    {
+      "type": "node",
+      "id": 8906423080,
+      "lat": -4.3210427,
+      "lon": 15.3295271,
+      "tags": {
+        "addr:housenumber": "1",
+        "addr:landmark": "Hôtel Phœnix",
+        "addr:quarter": "Beau Marché",
+        "addr:street": "Suanga",
+        "addr:suburb": "Barumbu",
+        "amenity": "pharmacy",
+        "contact:phone": "+243816354177",
+        "dispensing": "yes",
+        "name": "Pharmacie du Bien Être",
+        "opening_hours": "07:00-24:00",
+        "opening_hours:covid19": "07:00-21:00",
+        "ref:CD:CNOP": "1584/13"
+      }
+    },
+    {
+      "type": "node",
+      "id": 8906423081,
+      "lat": -4.3192433,
+      "lon": 15.3202184,
+      "tags": {
+        "addr:housenumber": "25",
+        "addr:landmark": "Croisement Kalembelembe et Kasaï",
+        "addr:quarter": "Libulu",
+        "addr:street": "Avenue Kalembelembe",
+        "addr:suburb": "Barumbu",
+        "amenity": "pharmacy",
+        "check_date:opening_hours": "2026-05-29",
+        "contact:phone": "+243810755985",
+        "dispensing": "yes",
+        "drive_through": "no",
+        "healthcare": "pharmacy",
+        "name": "Pharmacie du Kasaï",
+        "opening_hours": "07:30-22:00",
+        "ref:CD:CNOP": "1090/06"
+      }
+    },
+    {
+      "type": "node",
+      "id": 8906436813,
+      "lat": -4.3115567,
+      "lon": 15.3182349,
+      "tags": {
+        "addr:housenumber": "15",
+        "addr:landmark": "Croisement Kasaï / Lac Moero",
+        "addr:quarter": "Bitshakutshaku",
+        "addr:street": "Lac Moëro",
+        "addr:suburb": "Barumbu",
+        "amenity": "pharmacy",
+        "check_date": "2023-05-08",
+        "contact:phone": "+243847661677",
+        "dispensing": "yes",
+        "name": "Glopa Pharmacie",
+        "opening_hours": "07:30-22:00",
+        "opening_hours:covid19": "07:30-20:00",
+        "ref:CD:CNOP": "1196/09"
+      }
+    },
+    {
+      "type": "node",
+      "id": 8906440664,
+      "lat": -4.3212274,
+      "lon": 15.3177991,
+      "tags": {
+        "addr:housenumber": "54",
+        "addr:landmark": "Immeuble Tukeki, Croisement Kindu/Bokasa",
+        "addr:quarter": "Kasaï",
+        "addr:street": "Kindu",
+        "addr:suburb": "Barumbu",
+        "amenity": "pharmacy",
+        "check_date": "2023-05-13",
+        "contact:phone": "+243997551724;+243824533153",
+        "dispensing": "yes",
+        "name": "Pharmacie Adenine",
+        "opening_hours": "06:00-22:00",
+        "opening_hours:covid19": "06:00-21:00",
+        "ref:CD:CNOP": "0536/83"
+      }
+    },
+    {
+      "type": "node",
+      "id": 8906454408,
+      "lat": -4.3111096,
+      "lon": 15.3218116,
+      "tags": {
+        "addr:city": "Kinshasa",
+        "addr:housenumber": "25",
+        "addr:landmark": "Croisement Itaga / Syndicat",
+        "addr:quarter": "Tshimanga",
+        "addr:street": "Avenue Itaga",
+        "addr:suburb": "Barumbu",
+        "amenity": "pharmacy",
+        "check_date": "2023-05-19",
+        "contact:phone": "+243811488470",
+        "dispensing": "yes",
+        "healthcare": "pharmacy",
+        "name": "Les Officines du Pharmacien",
+        "opening_hours": "08:00-21:30",
+        "opening_hours:covid19": "08:00-20:00",
+        "ref:CD:CNOP": "1122/08"
+      }
+    },
+    {
+      "type": "node",
+      "id": 8906504535,
+      "lat": -4.3096744,
+      "lon": 15.315718,
+      "tags": {
+        "addr:city": "Kinshasa",
+        "addr:housenumber": "28",
+        "addr:landmark": "Croisement Rwakadingi / Bas-Congo",
+        "addr:quarter": "Bitshakutshaku",
+        "addr:street": "av",
+        "addr:suburb": "Barumbu",
+        "amenity": "pharmacy",
+        "check_date": "2023-05-06",
+        "contact:phone": "+243851451601",
+        "dispensing": "yes",
+        "healthcare": "pharmacy",
+        "name": "JBM Pharmacie",
+        "opening_hours": "07:30-17:00",
+        "opening_hours:covid19": "08:00-16:00",
+        "ref:CD:CNOP": "0682/94"
+      }
+    },
+    {
+      "type": "node",
+      "id": 9432883094,
+      "lat": -4.3189049,
+      "lon": 15.285535,
+      "tags": {
+        "amenity": "pharmacy",
+        "fixme": "Vérifier le nom (Pharmacy est le seul signe visible à l'extérieur)",
+        "name": "Pharmacy"
+      }
+    },
+    {
+      "type": "node",
+      "id": 9525457675,
+      "lat": -4.3021392,
+      "lon": 15.3089891,
+      "tags": {
+        "amenity": "restaurant",
+        "check_date": "2023-05-13",
+        "name": "New Baguette"
+      }
+    },
+    {
+      "type": "node",
+      "id": 9528418623,
+      "lat": -4.3060706,
+      "lon": 15.2984239,
+      "tags": {
+        "amenity": "pharmacy",
+        "healthcare": "pharmacy"
+      }
+    },
+    {
+      "type": "node",
+      "id": 9669154547,
+      "lat": -4.3094379,
+      "lon": 15.2918148,
+      "tags": {
+        "amenity": "pharmacy",
+        "check_date": "2023-05-13",
+        "healthcare": "pharmacy",
+        "name": "Alpha"
+      }
+    },
+    {
+      "type": "node",
+      "id": 9916172153,
+      "lat": -4.3015177,
+      "lon": 15.3107935,
+      "tags": {
+        "amenity": "pharmacy",
+        "check_date": "2023-05-08",
+        "name": "Pharmacie de la lumière"
+      }
+    },
+    {
+      "type": "node",
+      "id": 9977007188,
+      "lat": -4.3229774,
+      "lon": 15.3003689,
+      "tags": {
+        "amenity": "restaurant",
+        "check_date": "2023-05-13",
+        "cuisine": "african",
+        "name": "Belle France"
+      }
+    },
+    {
+      "type": "node",
+      "id": 9977007194,
+      "lat": -4.3216723,
+      "lon": 15.2745625,
+      "tags": {
+        "amenity": "restaurant",
+        "check_date": "2024-11-08",
+        "name": "Cafeteria"
+      }
+    },
+    {
+      "type": "node",
+      "id": 9977062293,
+      "lat": -4.3244266,
+      "lon": 15.2830915,
+      "tags": {
+        "amenity": "restaurant",
+        "check_date": "2023-05-19",
+        "name": "Espace MARANATHA"
+      }
+    },
+    {
+      "type": "node",
+      "id": 10313361454,
+      "lat": -4.323876,
+      "lon": 15.3085423,
+      "tags": {
+        "amenity": "pharmacy",
+        "check_date": "2023-05-13",
+        "healthcare": "pharmacy",
+        "source": "Mapillary"
+      }
+    },
+    {
+      "type": "node",
+      "id": 11565562319,
+      "lat": -4.3225704,
+      "lon": 15.2803986,
+      "tags": {
+        "amenity": "restaurant",
+        "check_date": "2025-02-28",
+        "name": "Abilio"
+      }
+    },
+    {
+      "type": "node",
+      "id": 11968800869,
+      "lat": -4.3037259,
+      "lon": 15.3071136,
+      "tags": {
+        "addr:street": "Boulevard du 30 Juin",
+        "amenity": "restaurant",
+        "name": "00243"
+      }
+    },
+    {
+      "type": "node",
+      "id": 12032838145,
+      "lat": -4.3010422,
+      "lon": 15.2993723,
+      "tags": {
+        "addr:street": "River Tower",
+        "amenity": "restaurant",
+        "name": "Siscilia"
+      }
+    },
+    {
+      "type": "node",
+      "id": 12234983801,
+      "lat": -4.3132039,
+      "lon": 15.2773048,
+      "tags": {
+        "amenity": "restaurant",
+        "name": "EPSP"
+      }
+    },
+    {
+      "type": "node",
+      "id": 12620509873,
+      "lat": -4.31883,
+      "lon": 15.2855551,
+      "tags": {
+        "amenity": "restaurant",
+        "cuisine": "italian",
+        "name": "Pinocchio cucina"
+      }
+    },
+    {
+      "type": "node",
+      "id": 12743537297,
+      "lat": -4.3145724,
+      "lon": 15.2868194,
+      "tags": {
+        "amenity": "restaurant",
+        "check_date": "2025-04-10",
+        "name": "TerraCota"
+      }
+    },
+    {
+      "type": "node",
+      "id": 12757560615,
+      "lat": -4.3051164,
+      "lon": 15.3144559,
+      "tags": {
+        "addr:city": "Kinshasa",
+        "addr:housenumber": "22",
+        "addr:postcode": "12",
+        "addr:street": "Avenue Tombalbaye",
+        "amenity": "restaurant",
+        "bar": "yes",
+        "cuisine": "african;pizza;steak_house",
+        "diet:local": "yes",
+        "level": "4",
+        "name": "Vilakazi Restaurant Kinshasa",
+        "opening_hours": "Mo-Su 12:00-00:00",
+        "phone": "+243812769071",
+        "smoking": "outside",
+        "takeaway": "yes",
+        "wheelchair": "yes"
+      }
+    },
+    {
+      "type": "node",
+      "id": 13121048039,
+      "lat": -4.3262924,
+      "lon": 15.3147291,
+      "tags": {
+        "addr:street": "Rue de Mbanza-Ngungu",
+        "amenity": "pharmacy",
+        "dispensing": "yes",
+        "healthcare": "pharmacy",
+        "opening_hours": "24/7"
+      }
+    },
+    {
+      "type": "node",
+      "id": 13121081103,
+      "lat": -4.3256493,
+      "lon": 15.3172269,
+      "tags": {
+        "amenity": "restaurant",
+        "cuisine": "cuisine_congolaise;chicken;steak_house",
+        "name": "Restaurant Chez Maman Judith"
+      }
+    },
+    {
+      "type": "node",
+      "id": 13664316301,
+      "lat": -4.3067617,
+      "lon": 15.3095867,
+      "tags": {
+        "addr:street": "Place du Marché Central",
+        "amenity": "restaurant"
+      }
+    },
+    {
+      "type": "node",
+      "id": 13796573008,
+      "lat": -4.3265452,
+      "lon": 15.295911,
+      "tags": {
+        "addr:city": "Kinshasa",
+        "addr:housenumber": "16",
+        "addr:postcode": "1003020",
+        "addr:street": "Av. De la libération N°16 (Ex 24 Novembre) Gombe Réf: En face du saut de mouton Assanef",
+        "amenity": "restaurant",
+        "contact:facebook": "https://www.facebook.com/lacaserestogrill/",
+        "cuisine": "african",
+        "name": "La case Resto-Grill Kinshasa Gombe",
+        "opening_hours": "24/7",
+        "phone": "+243812420260",
+        "website": "https://linktr.ee/lacaserestogrill"
+      }
+    },
+    {
+      "type": "node",
+      "id": 13952556238,
+      "lat": -4.3258724,
+      "lon": 15.2958383,
+      "tags": {
+        "addr:city": "Kinshasa",
+        "addr:housenumber": "16",
+        "addr:postcode": "1003020",
+        "addr:street": "Avenue de la Libération",
+        "amenity": "restaurant",
+        "contact:facebook": "https://www.facebook.com/24signature/",
+        "contact:instagram": "https://www.instagram.com/24signature/",
+        "cuisine": "european;african",
+        "name": "24 Signature By Eden",
+        "opening_hours": "Mo-Su 06:00-23:00",
+        "phone": "+243 838 876 691"
+      }
+    },
+    {
+      "type": "node",
+      "id": 14254965942,
+      "lat": -4.3144352,
+      "lon": 15.3094764,
+      "tags": {
+        "leisure": "pitch",
+        "name": "Terrain la voix du peuple"
+      }
+    },
+    {
+      "type": "way",
+      "id": 4402561,
+      "center": {
+        "lat": -4.3302758,
+        "lon": 15.3103642
+      },
+      "tags": {
+        "addr:city": "kinshasa",
+        "check_date": "2025-11-07",
+        "leisure": "stadium",
+        "name": "Stade des Martyrs de la Pentecôte",
+        "name:fr": "Stade des Martyrs de la Pentecôte",
+        "official_name": "Stade des Martyrs de la Pentecôte",
+        "sport": "soccer;running;athletics",
+        "start_date": "1994",
+        "wheelchair": "no",
+        "wikidata": "Q2165655",
+        "wikipedia": "fr:Stade des Martyrs"
+      }
+    },
+    {
+      "type": "way",
+      "id": 4696575,
+      "center": {
+        "lat": -4.3279182,
+        "lon": 15.3004473
+      },
+      "tags": {
+        "leisure": "pitch",
+        "lit": "no",
+        "name": "Terrain Ocal",
+        "sport": "soccer",
+        "surface": "artificial_turf"
+      }
+    },
+    {
+      "type": "way",
+      "id": 37631671,
+      "center": {
+        "lat": -4.323964,
+        "lon": 15.2674824
+      },
+      "tags": {
+        "leisure": "pitch",
+        "sport": "tennis"
+      }
+    },
+    {
+      "type": "way",
+      "id": 37631940,
+      "center": {
+        "lat": -4.3002008,
+        "lon": 15.3132858
+      },
+      "tags": {
+        "leisure": "pitch",
+        "sport": "tennis"
+      }
+    },
+    {
+      "type": "way",
+      "id": 48535184,
+      "center": {
+        "lat": -4.316157,
+        "lon": 15.2909644
+      },
+      "tags": {
+        "leisure": "pitch",
+        "sport": "multi"
+      }
+    },
+    {
+      "type": "way",
+      "id": 48535254,
+      "center": {
+        "lat": -4.3184167,
+        "lon": 15.2887477
+      },
+      "tags": {
+        "leisure": "pitch"
+      }
+    },
+    {
+      "type": "way",
+      "id": 48535343,
+      "center": {
+        "lat": -4.3234213,
+        "lon": 15.2902039
+      },
+      "tags": {
+        "leisure": "pitch",
+        "lit": "yes",
+        "sport": "soccer",
+        "surface": "artificial_turf"
+      }
+    },
+    {
+      "type": "way",
+      "id": 48535345,
+      "center": {
+        "lat": -4.3242246,
+        "lon": 15.2913457
+      },
+      "tags": {
+        "leisure": "pitch"
+      }
+    },
+    {
+      "type": "way",
+      "id": 48535346,
+      "center": {
+        "lat": -4.3259217,
+        "lon": 15.2928823
+      },
+      "tags": {
+        "leisure": "pitch",
+        "sport": "soccer"
+      }
+    },
+    {
+      "type": "way",
+      "id": 52593917,
+      "center": {
+        "lat": -4.3037273,
+        "lon": 15.3040991
+      },
+      "tags": {
+        "leisure": "pitch",
+        "lit": "yes",
+        "operator": "Cercle Elaïs",
+        "sport": "tennis",
+        "surface": "clay"
+      }
+    },
+    {
+      "type": "way",
+      "id": 52595373,
+      "center": {
+        "lat": -4.304577,
+        "lon": 15.3040493
+      },
+      "tags": {
+        "leisure": "pitch",
+        "sport": "tennis"
+      }
+    },
+    {
+      "type": "way",
+      "id": 129297066,
+      "center": {
+        "lat": -4.3226161,
+        "lon": 15.312868
+      },
+      "tags": {
+        "addr:city": "Kinshasa",
+        "check_date": "2026-03-21",
+        "leisure": "stadium",
+        "name": "Stade Cardinal Malula",
+        "old_name": "Stade Reine Astrid;Stade du 24 Novembre",
+        "sport": "soccer;multi",
+        "wikidata": "Q3495937"
+      }
+    },
+    {
+      "type": "way",
+      "id": 203908709,
+      "center": {
+        "lat": -4.3034924,
+        "lon": 15.3039315
+      },
+      "tags": {
+        "hoops": "2",
+        "leisure": "pitch",
+        "lit": "yes",
+        "operator": "Cercle Elaïs",
+        "sport": "basketball",
+        "surface": "concrete"
+      }
+    },
+    {
+      "type": "way",
+      "id": 204490037,
+      "center": {
+        "lat": -4.3118943,
+        "lon": 15.2752757
+      },
+      "tags": {
+        "leisure": "stadium"
+      }
+    },
+    {
+      "type": "way",
+      "id": 204493448,
+      "center": {
+        "lat": -4.3126605,
+        "lon": 15.2938485
+      },
+      "tags": {
+        "leisure": "pitch"
+      }
+    },
+    {
+      "type": "way",
+      "id": 204493449,
+      "center": {
+        "lat": -4.3130128,
+        "lon": 15.2939225
+      },
+      "tags": {
+        "leisure": "pitch"
+      }
+    },
+    {
+      "type": "way",
+      "id": 204493450,
+      "center": {
+        "lat": -4.3134313,
+        "lon": 15.2940846
+      },
+      "tags": {
+        "leisure": "pitch"
+      }
+    },
+    {
+      "type": "way",
+      "id": 204547802,
+      "center": {
+        "lat": -4.3038352,
+        "lon": 15.3028381
+      },
+      "tags": {
+        "amenity": "restaurant",
+        "building": "yes",
+        "name": "Le Chantilly",
+        "opening_hours": "Mo-Su 07:00-18:30"
+      }
+    },
+    {
+      "type": "way",
+      "id": 204552981,
+      "center": {
+        "lat": -4.3288026,
+        "lon": 15.2732474
+      },
+      "tags": {
+        "leisure": "pitch"
+      }
+    },
+    {
+      "type": "way",
+      "id": 204854700,
+      "center": {
+        "lat": -4.3253116,
+        "lon": 15.2918277
+      },
+      "tags": {
+        "leisure": "pitch",
+        "sport": "soccer"
+      }
+    },
+    {
+      "type": "way",
+      "id": 204854701,
+      "center": {
+        "lat": -4.3251187,
+        "lon": 15.2909573
+      },
+      "tags": {
+        "leisure": "pitch",
+        "sport": "soccer"
+      }
+    },
+    {
+      "type": "way",
+      "id": 205764015,
+      "center": {
+        "lat": -4.3036564,
+        "lon": 15.30191
+      },
+      "tags": {
+        "addr:city": "Kinshasa",
+        "addr:street": "Avenue Colonel Lukusa",
+        "amenity": "restaurant",
+        "building": "yes",
+        "name": "Extreme"
+      }
+    },
+    {
+      "type": "way",
+      "id": 205778192,
+      "center": {
+        "lat": -4.3064853,
+        "lon": 15.2999588
+      },
+      "tags": {
+        "amenity": "restaurant",
+        "building": "yes",
+        "name": "Restaurant Reginal"
+      }
+    },
+    {
+      "type": "way",
+      "id": 205778193,
+      "center": {
+        "lat": -4.3077963,
+        "lon": 15.2999319
+      },
+      "tags": {
+        "amenity": "restaurant",
+        "building": "yes",
+        "check_date": "2023-05-08",
+        "name": "Reve de Sophie Alka"
+      }
+    },
+    {
+      "type": "way",
+      "id": 289107158,
+      "center": {
+        "lat": -4.3048568,
+        "lon": 15.3148016
+      },
+      "tags": {
+        "addr:city": "Gombe",
+        "addr:housenumber": "20",
+        "addr:street": "Avenue Tombalbaye",
+        "amenity": "restaurant",
+        "check_date": "2023-05-13",
+        "cuisine": "italian",
+        "name": "Limoncello",
+        "phone": "+243819141111",
+        "website": "www.limoncello.cd"
+      }
+    },
+    {
+      "type": "way",
+      "id": 298352628,
+      "center": {
+        "lat": -4.3034992,
+        "lon": 15.3143208
+      },
+      "tags": {
+        "addr:street": "Avenue Luambo Makiadi",
+        "amenity": "restaurant",
+        "check_date": "2023-05-08",
+        "cuisine": "greek",
+        "name": "La Piscine"
+      }
+    },
+    {
+      "type": "way",
+      "id": 300929837,
+      "center": {
+        "lat": -4.3103939,
+        "lon": 15.2750134
+      },
+      "tags": {
+        "access:covid19": "no",
+        "amenity": "restaurant",
+        "building": "yes",
+        "cuisine": "italian;italian_pizza",
+        "delivery:covid19": "only",
+        "name": "A Casa Mia",
+        "opening_hours:covid19": "Mo-Sa 12:00-20:00",
+        "phone": "+243840355657;+243893089662"
+      }
+    },
+    {
+      "type": "way",
+      "id": 300947061,
+      "center": {
+        "lat": -4.3045224,
+        "lon": 15.3144322
+      },
+      "tags": {
+        "amenity": "restaurant",
+        "check_date": "2023-05-08",
+        "cuisine": "indian",
+        "name": "Green Garden"
+      }
+    },
+    {
+      "type": "way",
+      "id": 361994554,
+      "center": {
+        "lat": -4.3216849,
+        "lon": 15.3272018
+      },
+      "tags": {
+        "leisure": "sports_centre",
+        "name": "Stade Barumbu"
+      }
+    },
+    {
+      "type": "way",
+      "id": 362191178,
+      "center": {
+        "lat": -4.3303587,
+        "lon": 15.3131528
+      },
+      "tags": {
+        "leisure": "pitch",
+        "lit": "yes",
+        "sport": "soccer",
+        "surface": "artificial_turf"
+      }
+    },
+    {
+      "type": "way",
+      "id": 362438623,
+      "center": {
+        "lat": -4.3226407,
+        "lon": 15.3128864
+      },
+      "tags": {
+        "leisure": "pitch",
+        "lit": "yes",
+        "sport": "soccer;multi",
+        "surface": "grass"
+      }
+    },
+    {
+      "type": "way",
+      "id": 363535807,
+      "center": {
+        "lat": -4.3110181,
+        "lon": 15.299538
+      },
+      "tags": {
+        "golf": "green",
+        "leisure": "pitch",
+        "sport": "golf"
+      }
+    },
+    {
+      "type": "way",
+      "id": 363535808,
+      "center": {
+        "lat": -4.3112093,
+        "lon": 15.2990351
+      },
+      "tags": {
+        "golf": "green",
+        "leisure": "pitch",
+        "sport": "golf"
+      }
+    },
+    {
+      "type": "way",
+      "id": 363535809,
+      "center": {
+        "lat": -4.312671,
+        "lon": 15.3016536
+      },
+      "tags": {
+        "golf": "green",
+        "leisure": "pitch",
+        "sport": "golf"
+      }
+    },
+    {
+      "type": "way",
+      "id": 363535810,
+      "center": {
+        "lat": -4.313018,
+        "lon": 15.3006638
+      },
+      "tags": {
+        "golf": "green",
+        "leisure": "pitch",
+        "sport": "golf"
+      }
+    },
+    {
+      "type": "way",
+      "id": 363535811,
+      "center": {
+        "lat": -4.3127031,
+        "lon": 15.2999088
+      },
+      "tags": {
+        "golf": "green",
+        "leisure": "pitch",
+        "sport": "golf"
+      }
+    },
+    {
+      "type": "way",
+      "id": 363535812,
+      "center": {
+        "lat": -4.3123126,
+        "lon": 15.2962959
+      },
+      "tags": {
+        "golf": "green",
+        "leisure": "pitch",
+        "sport": "golf"
+      }
+    },
+    {
+      "type": "way",
+      "id": 363535813,
+      "center": {
+        "lat": -4.3117335,
+        "lon": 15.2960914
+      },
+      "tags": {
+        "golf": "green",
+        "leisure": "pitch",
+        "sport": "golf"
+      }
+    },
+    {
+      "type": "way",
+      "id": 363535814,
+      "center": {
+        "lat": -4.3117837,
+        "lon": 15.2939678
+      },
+      "tags": {
+        "golf": "green",
+        "leisure": "pitch",
+        "sport": "golf"
+      }
+    },
+    {
+      "type": "way",
+      "id": 363535815,
+      "center": {
+        "lat": -4.3116934,
+        "lon": 15.2945437
+      },
+      "tags": {
+        "golf": "green",
+        "leisure": "pitch",
+        "sport": "golf"
+      }
+    },
+    {
+      "type": "way",
+      "id": 363535816,
+      "center": {
+        "lat": -4.312796,
+        "lon": 15.2957514
+      },
+      "tags": {
+        "golf": "green",
+        "leisure": "pitch",
+        "sport": "golf"
+      }
+    },
+    {
+      "type": "way",
+      "id": 363535817,
+      "center": {
+        "lat": -4.3086841,
+        "lon": 15.2930762
+      },
+      "tags": {
+        "golf": "green",
+        "leisure": "pitch",
+        "lit": "no",
+        "sport": "golf"
+      }
+    },
+    {
+      "type": "way",
+      "id": 363535818,
+      "center": {
+        "lat": -4.30897,
+        "lon": 15.2957916
+      },
+      "tags": {
+        "golf": "green",
+        "leisure": "pitch",
+        "sport": "golf"
+      }
+    },
+    {
+      "type": "way",
+      "id": 363535822,
+      "center": {
+        "lat": -4.3106938,
+        "lon": 15.2969195
+      },
+      "tags": {
+        "golf": "green",
+        "leisure": "pitch",
+        "sport": "golf"
+      }
+    },
+    {
+      "type": "way",
+      "id": 372306789,
+      "center": {
+        "lat": -4.3036695,
+        "lon": 15.3038745
+      },
+      "tags": {
+        "amenity": "restaurant",
+        "building": "yes",
+        "name": "Paillote midi",
+        "operator": "Cercle Elaïs"
+      }
+    },
+    {
+      "type": "way",
+      "id": 372331162,
+      "center": {
+        "lat": -4.3130017,
+        "lon": 15.2728823
+      },
+      "tags": {
+        "building": "yes",
+        "leisure": "sports_centre"
+      }
+    },
+    {
+      "type": "way",
+      "id": 372332999,
+      "center": {
+        "lat": -4.3114598,
+        "lon": 15.276249
+      },
+      "tags": {
+        "leisure": "pitch",
+        "lit": "yes",
+        "sport": "tennis",
+        "surface": "hardcourt"
+      }
+    },
+    {
+      "type": "way",
+      "id": 372333000,
+      "center": {
+        "lat": -4.3114829,
+        "lon": 15.2760697
+      },
+      "tags": {
+        "leisure": "pitch",
+        "lit": "yes",
+        "sport": "tennis",
+        "surface": "hardcourt"
+      }
+    },
+    {
+      "type": "way",
+      "id": 372333001,
+      "center": {
+        "lat": -4.311809,
+        "lon": 15.2762958
+      },
+      "tags": {
+        "leisure": "pitch",
+        "lit": "yes",
+        "sport": "tennis",
+        "surface": "clay"
+      }
+    },
+    {
+      "type": "way",
+      "id": 372333003,
+      "center": {
+        "lat": -4.3118349,
+        "lon": 15.2761215
+      },
+      "tags": {
+        "leisure": "pitch",
+        "lit": "yes",
+        "sport": "tennis",
+        "surface": "clay"
+      }
+    },
+    {
+      "type": "way",
+      "id": 372333004,
+      "center": {
+        "lat": -4.3118612,
+        "lon": 15.2759493
+      },
+      "tags": {
+        "leisure": "pitch",
+        "lit": "yes",
+        "sport": "tennis",
+        "surface": "clay"
+      }
+    },
+    {
+      "type": "way",
+      "id": 372333005,
+      "center": {
+        "lat": -4.3115314,
+        "lon": 15.2758705
+      },
+      "tags": {
+        "leisure": "pitch",
+        "lit": "yes",
+        "sport": "volleyball",
+        "surface": "artificial_turf"
+      }
+    },
+    {
+      "type": "way",
+      "id": 372333014,
+      "center": {
+        "lat": -4.3133482,
+        "lon": 15.2731509
+      },
+      "tags": {
+        "leisure": "pitch",
+        "sport": "tennis",
+        "surface": "clay"
+      }
+    },
+    {
+      "type": "way",
+      "id": 372333015,
+      "center": {
+        "lat": -4.3133499,
+        "lon": 15.2733149
+      },
+      "tags": {
+        "leisure": "pitch",
+        "sport": "tennis",
+        "surface": "clay"
+      }
+    },
+    {
+      "type": "way",
+      "id": 372339143,
+      "center": {
+        "lat": -4.3157609,
+        "lon": 15.2856332
+      },
+      "tags": {
+        "amenity": "restaurant",
+        "building": "commercial",
+        "building:levels": "2",
+        "check_date": "2023-05-19",
+        "cuisine": "japanese",
+        "name": "Gekko's Sushi",
+        "smoking": "separated"
+      }
+    },
+    {
+      "type": "way",
+      "id": 416408884,
+      "center": {
+        "lat": -4.3089441,
+        "lon": 15.3037984
+      },
+      "tags": {
+        "leisure": "pitch",
+        "name": "Terrain HGRK",
+        "sport": "soccer"
+      }
+    },
+    {
+      "type": "way",
+      "id": 424199870,
+      "center": {
+        "lat": -4.3100472,
+        "lon": 15.2857128
+      },
+      "tags": {
+        "leisure": "stadium",
+        "name": "Stade Albert"
+      }
+    },
+    {
+      "type": "way",
+      "id": 441759711,
+      "center": {
+        "lat": -4.3126877,
+        "lon": 15.2902191
+      },
+      "tags": {
+        "addr:city": "Kinshasa",
+        "addr:housenumber": "2",
+        "addr:postcode": "B.P 7955",
+        "addr:street": "Oranger, Gombe",
+        "amenity": "restaurant",
+        "building": "house",
+        "cuisine": "chicken;french;regional;steak_house;fish;grill;african;congolaise;wings;fine_dining;european;shawarma",
+        "name": "Restaurant Bar chez FRIDA",
+        "outdoor_seating": "yes",
+        "phone": "+243 813 348 316",
+        "website": "https://www.facebook.com/",
+        "wheelchair": "yes"
+      }
+    },
+    {
+      "type": "way",
+      "id": 477154646,
+      "center": {
+        "lat": -4.3073829,
+        "lon": 15.2969687
+      },
+      "tags": {
+        "leisure": "pitch",
+        "sport": "basketball"
+      }
+    },
+    {
+      "type": "way",
+      "id": 477881794,
+      "center": {
+        "lat": -4.3167786,
+        "lon": 15.2841899
+      },
+      "tags": {
+        "leisure": "pitch",
+        "sport": "basketball"
+      }
+    },
+    {
+      "type": "way",
+      "id": 510309332,
+      "center": {
+        "lat": -4.3233065,
+        "lon": 15.2808124
+      },
+      "tags": {
+        "amenity": "restaurant",
+        "building": "yes",
+        "name": "Espace marinette"
+      }
+    },
+    {
+      "type": "way",
+      "id": 558456979,
+      "center": {
+        "lat": -4.3075223,
+        "lon": 15.2972078
+      },
+      "tags": {
+        "amenity": "restaurant",
+        "building": "yes",
+        "cuisine": "greek",
+        "name": "Mythos/La maison des mezze"
+      }
+    },
+    {
+      "type": "way",
+      "id": 601408945,
+      "center": {
+        "lat": -4.3187754,
+        "lon": 15.286354
+      },
+      "tags": {
+        "access": "customers",
+        "leisure": "pitch",
+        "sport": "tennis"
+      }
+    },
+    {
+      "type": "way",
+      "id": 601408946,
+      "center": {
+        "lat": -4.3191001,
+        "lon": 15.286595
+      },
+      "tags": {
+        "access": "customers",
+        "leisure": "pitch",
+        "sport": "soccer"
+      }
+    },
+    {
+      "type": "way",
+      "id": 612365315,
+      "center": {
+        "lat": -4.3302669,
+        "lon": 15.3103766
+      },
+      "tags": {
+        "leisure": "pitch",
+        "lit": "yes",
+        "sport": "soccer",
+        "surface": "artificial_turf"
+      }
+    },
+    {
+      "type": "way",
+      "id": 680633328,
+      "center": {
+        "lat": -4.3115704,
+        "lon": 15.3077885
+      },
+      "tags": {
+        "amenity": "restaurant",
+        "building": "yes",
+        "check_date": "2023-05-13",
+        "name": "Restaurant du Zoo"
+      }
+    },
+    {
+      "type": "way",
+      "id": 724438040,
+      "center": {
+        "lat": -4.3246131,
+        "lon": 15.2702517
+      },
+      "tags": {
+        "addr:housenumber": "272",
+        "addr:street": "Avenue Colonel Mondjiba",
+        "amenity": "restaurant",
+        "building": "yes",
+        "cuisine": "sushi",
+        "name": "Restaurant Paradise & Sushi Bar"
+      }
+    },
+    {
+      "type": "way",
+      "id": 731889652,
+      "center": {
+        "lat": -4.291204,
+        "lon": 15.2657494
+      },
+      "tags": {
+        "amenity": "restaurant",
+        "building": "yes",
+        "name": "Le GLAD"
+      }
+    },
+    {
+      "type": "way",
+      "id": 747810471,
+      "center": {
+        "lat": -4.3065106,
+        "lon": 15.2748575
+      },
+      "tags": {
+        "leisure": "pitch",
+        "sport": "tennis"
+      }
+    },
+    {
+      "type": "way",
+      "id": 772918435,
+      "center": {
+        "lat": -4.3107823,
+        "lon": 15.2785107
+      },
+      "tags": {
+        "leisure": "pitch",
+        "lit": "yes",
+        "sport": "soccer",
+        "surface": "artificial_turf"
+      }
+    },
+    {
+      "type": "way",
+      "id": 975271498,
+      "center": {
+        "lat": -4.318216,
+        "lon": 15.2690027
+      },
+      "tags": {
+        "leisure": "pitch",
+        "sport": "tennis"
+      }
+    },
+    {
+      "type": "way",
+      "id": 981386179,
+      "center": {
+        "lat": -4.318157,
+        "lon": 15.2902432
+      },
+      "tags": {
+        "leisure": "pitch",
+        "sport": "soccer"
+      }
+    },
+    {
+      "type": "way",
+      "id": 1039259052,
+      "center": {
+        "lat": -4.3079127,
+        "lon": 15.2946991
+      },
+      "tags": {
+        "golf": "green",
+        "leisure": "pitch",
+        "lit": "no",
+        "sport": "golf"
+      }
+    },
+    {
+      "type": "way",
+      "id": 1039259059,
+      "center": {
+        "lat": -4.309809,
+        "lon": 15.2965621
+      },
+      "tags": {
+        "golf": "green",
+        "leisure": "pitch",
+        "sport": "golf"
+      }
+    },
+    {
+      "type": "way",
+      "id": 1084140631,
+      "center": {
+        "lat": -4.308598,
+        "lon": 15.2735002
+      },
+      "tags": {
+        "leisure": "pitch",
+        "sport": "tennis"
+      }
+    },
+    {
+      "type": "way",
+      "id": 1084140634,
+      "center": {
+        "lat": -4.3075331,
+        "lon": 15.2740959
+      },
+      "tags": {
+        "leisure": "pitch",
+        "sport": "tennis"
+      }
+    },
+    {
+      "type": "way",
+      "id": 1084140636,
+      "center": {
+        "lat": -4.3086055,
+        "lon": 15.273497
+      },
+      "tags": {
+        "leisure": "sports_centre",
+        "sport": "tennis"
+      }
+    },
+    {
+      "type": "way",
+      "id": 1084140644,
+      "center": {
+        "lat": -4.311473,
+        "lon": 15.2761577
+      },
+      "tags": {
+        "leisure": "sports_centre",
+        "sport": "tennis"
+      }
+    },
+    {
+      "type": "way",
+      "id": 1084140645,
+      "center": {
+        "lat": -4.3115357,
+        "lon": 15.2758803
+      },
+      "tags": {
+        "leisure": "sports_centre",
+        "sport": "volleyball"
+      }
+    },
+    {
+      "type": "way",
+      "id": 1128043491,
+      "center": {
+        "lat": -4.3217829,
+        "lon": 15.3079652
+      },
+      "tags": {
+        "amenity": "pharmacy",
+        "building": "yes",
+        "check_date": "2023-05-19",
+        "healthcare": "pharmacy",
+        "name": "BePharma",
+        "source": "Mapillary"
+      }
+    },
+    {
+      "type": "way",
+      "id": 1182862854,
+      "center": {
+        "lat": -4.3095202,
+        "lon": 15.3160213
+      },
+      "tags": {
+        "leisure": "pitch"
+      }
+    },
+    {
+      "type": "way",
+      "id": 1182864859,
+      "center": {
+        "lat": -4.3217258,
+        "lon": 15.327174
+      },
+      "tags": {
+        "leisure": "pitch",
+        "sport": "soccer"
+      }
+    },
+    {
+      "type": "way",
+      "id": 1192811729,
+      "center": {
+        "lat": -4.318331,
+        "lon": 15.2934756
+      },
+      "tags": {
+        "leisure": "pitch",
+        "sport": "soccer"
+      }
+    },
+    {
+      "type": "way",
+      "id": 1359433500,
+      "center": {
+        "lat": -4.3207194,
+        "lon": 15.2925999
+      },
+      "tags": {
+        "leisure": "pitch"
+      }
+    },
+    {
+      "type": "way",
+      "id": 1359726878,
+      "center": {
+        "lat": -4.3238147,
+        "lon": 15.2880663
+      },
+      "tags": {
+        "leisure": "pitch",
+        "lit": "yes",
+        "sport": "soccer",
+        "surface": "artificial_turf"
+      }
+    },
+    {
+      "type": "way",
+      "id": 1359727237,
+      "center": {
+        "lat": -4.3223118,
+        "lon": 15.285839
+      },
+      "tags": {
+        "leisure": "pitch"
+      }
+    },
+    {
+      "type": "way",
+      "id": 1359727238,
+      "center": {
+        "lat": -4.3223352,
+        "lon": 15.2859935
+      },
+      "tags": {
+        "leisure": "pitch"
+      }
+    },
+    {
+      "type": "way",
+      "id": 1359727239,
+      "center": {
+        "lat": -4.3220683,
+        "lon": 15.2860329
+      },
+      "tags": {
+        "leisure": "pitch"
+      }
+    },
+    {
+      "type": "way",
+      "id": 1369612851,
+      "center": {
+        "lat": -4.3190763,
+        "lon": 15.3054734
+      },
+      "tags": {
+        "amenity": "restaurant",
+        "building": "yes"
+      }
+    },
+    {
+      "type": "way",
+      "id": 1372042412,
+      "center": {
+        "lat": -4.3229166,
+        "lon": 15.3245257
+      },
+      "tags": {
+        "leisure": "pitch"
+      }
+    },
+    {
+      "type": "way",
+      "id": 1390076590,
+      "center": {
+        "lat": -4.3046725,
+        "lon": 15.3120573
+      },
+      "tags": {
+        "amenity": "restaurant",
+        "building": "yes",
+        "name": "Restaurant Hôtel Pour Vous"
+      }
+    },
+    {
+      "type": "way",
+      "id": 1472341872,
+      "center": {
+        "lat": -4.3249226,
+        "lon": 15.3260281
+      },
+      "tags": {
+        "addr:city": "Kinshasa",
+        "addr:street": "Bobanga",
+        "amenity": "restaurant",
+        "building": "yes",
+        "cuisine": "african",
+        "diet:local": "yes",
+        "internet_access": "wlan",
+        "opening_hours": "24/7",
+        "phone": "+243826654585"
+      }
+    },
+    {
+      "type": "way",
+      "id": 1472343433,
+      "center": {
+        "lat": -4.3144615,
+        "lon": 15.2900869
+      },
+      "tags": {
+        "leisure": "pitch",
+        "name": "Terrain de basket isc",
+        "sport": "basketball"
+      }
+    },
+    {
+      "type": "way",
+      "id": 1472348842,
+      "center": {
+        "lat": -4.3230267,
+        "lon": 15.2933238
+      },
+      "tags": {
+        "leisure": "pitch",
+        "sport": "soccer"
+      }
+    },
+    {
+      "type": "way",
+      "id": 1472348843,
+      "center": {
+        "lat": -4.3235388,
+        "lon": 15.29339
+      },
+      "tags": {
+        "leisure": "pitch",
+        "sport": "basketball"
+      }
+    },
+    {
+      "type": "way",
+      "id": 1472348845,
+      "center": {
+        "lat": -4.3244783,
+        "lon": 15.2898063
+      },
+      "tags": {
+        "leisure": "pitch",
+        "sport": "soccer"
+      }
+    },
+    {
+      "type": "way",
+      "id": 1476835597,
+      "center": {
+        "lat": -4.3231676,
+        "lon": 15.3070359
+      },
+      "tags": {
+        "addr:city": "Kinshasa",
+        "addr:housenumber": "155",
+        "addr:postcode": "1020010",
+        "addr:street": "Avenue Kabambare",
+        "amenity": "restaurant",
+        "building": "yes",
+        "cuisine": "burger;coffee_shop;chicken;sandwich;steak_house;seafood;barbecue;pizza;breakfast",
+        "layer": "1",
+        "name": "Espace Le 155",
+        "opening_hours": "Mo-Fr 09:00-17:00",
+        "payment:cash": "yes",
+        "payment:credit_cards": "yes",
+        "phone": "+243973238915"
+      }
+    },
+    {
+      "type": "way",
+      "id": 1549879787,
+      "center": {
+        "lat": -4.3095803,
+        "lon": 15.2789053
+      },
+      "tags": {
+        "leisure": "pitch",
+        "sport": "basketball"
+      }
+    }
+  ]
+}
