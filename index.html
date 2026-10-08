@@ -4,108 +4,262 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Nexvia – Gombe</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' rx='9' fill='%2314213d'/%3E%3Cpath d='M20 6c-6 0-10.5 4.7-10.5 10.6C9.5 24.200 20 34 20 34s10.5-9.800 10.500-17.400C30.500 10.700 26 6 20 6z' fill='%23f2a900'/%3E%3Ccircle cx='20' cy='16.500' r='4.200' fill='%2314213d'/%3E%3C/svg%3E">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/MarkerCluster.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/MarkerCluster.Default.css">
 <style>
-  :root { --nav:#14213d; --resto:#f2a900; --pharma:#1b998b; --bg:#f7f8fa; --ink:#14213d; }
+  :root { --nav:#14213d; --resto:#f2a900; --pharma:#1b998b; --osm:#6b7a90; --bg:#f7f8fa; --ink:#14213d; }
   * { box-sizing: border-box; }
   html, body { height: 100%; margin: 0; font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif; color: var(--ink); background: var(--bg); }
   body { display: flex; flex-direction: column; }
-  header { background: var(--nav); color: #fff; padding: 10px 14px; display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
-  header h1 { font-size: 1.15rem; margin: 0; letter-spacing: .3px; }
-  header span { font-size: .8rem; opacity: .75; }
-  .filters { display: flex; gap: 6px; padding: 8px 10px; background: #fff; border-bottom: 1px solid #dde1e8; }
-  .filters button { flex: 1; border: 1.5px solid var(--nav); background: #fff; color: var(--nav); padding: 9px 6px; border-radius: 8px; font-size: .9rem; font-weight: 600; cursor: pointer; }
-  .filters button[aria-pressed="true"] { background: var(--nav); color: #fff; }
-  .filters button:focus-visible { outline: 3px solid #4c8dff; outline-offset: 2px; }
+  header { position: relative; overflow: hidden; color: #fff; padding: 16px 16px 40px; background: linear-gradient(180deg, #0b1530 0%, #14346b 55%, #1f5fae 100%); }
+  header .ciel { position: absolute; left: 0; right: 0; bottom: 0; width: 100%; height: 50px; }
+  header .brand { position: relative; z-index: 1; }
+  header h1 { font-size: 1.8rem; line-height: 1.05; margin: 0; letter-spacing: .6px; text-shadow: 0 2px 8px rgba(0,0,0,.35); }
+  header .sous { display: block; font-size: .85rem; opacity: .9; margin-top: 3px; }
+  .drapeau { height: 5px; background: linear-gradient(90deg, #2e9bff 0 60%, #f2a900 60% 80%, #e03c31 80% 100%); }
+  .bar { background: #fff; border-bottom: 1px solid #dde1e8; padding: 8px 10px; }
+  .bar input[type=search] { width: 100%; padding: 10px 12px; font-size: 1rem; border: 1.5px solid #c5ccd8; border-radius: 8px; color: var(--ink); }
+  .bar input[type=search]:focus-visible { outline: 3px solid #4c8dff; outline-offset: 1px; }
+  .chips { display: flex; gap: 6px; overflow-x: auto; padding: 8px 0 2px; -webkit-overflow-scrolling: touch; }
+  .chips button { flex: none; border: 1.5px solid var(--nav); background: #fff; color: var(--nav); padding: 8px 12px; border-radius: 999px; font-size: .85rem; font-weight: 600; cursor: pointer; white-space: nowrap; }
+  .chips button[aria-pressed="true"] { background: var(--nav); color: #fff; }
+  .chips button:focus-visible { outline: 3px solid #4c8dff; outline-offset: 2px; }
+  .opt { display: flex; align-items: center; gap: 8px; font-size: .85rem; padding-top: 6px; }
+  .opt input { width: 18px; height: 18px; }
   #map { flex: 1; min-height: 300px; }
-  .pin { width: 22px; height: 22px; border-radius: 50% 50% 50% 0; transform: rotate(-45deg); border: 2px solid #fff; box-shadow: 0 1px 4px rgba(0,0,0,.45); }
+  #statut { font-size: .75rem; padding: 5px 10px; background: #eef1f6; color: #3b4658; }
+  .pin { width: 24px; height: 24px; border-radius: 50% 50% 50% 0; transform: rotate(-45deg); border: 2.5px solid #fff; box-shadow: 0 1px 5px rgba(0,0,0,.5); }
   .pin.restaurant { background: var(--resto); }
   .pin.pharmacie { background: var(--pharma); }
-  .fiche h2 { font-size: 1rem; margin: 0 0 2px; }
-  .fiche .cat { font-size: .78rem; font-weight: 700; margin-bottom: 6px; }
-  .fiche .cat.restaurant { color: #a87500; }
-  .fiche .cat.pharmacie { color: #136e64; }
+  .dot { width: 12px; height: 12px; border-radius: 50%; background: var(--osm); border: 2px solid #fff; box-shadow: 0 0 3px rgba(0,0,0,.5); }
+  .fiche h2 { font-size: 1rem; margin: 0 0 3px; }
+  .badge { display: inline-block; font-size: .72rem; font-weight: 700; padding: 2px 8px; border-radius: 999px; margin-bottom: 6px; }
+  .badge.ok { background: #d9f2ec; color: #0e5f55; }
+  .badge.osm { background: #e8ebf1; color: #4a5568; }
   .fiche p { margin: 3px 0; font-size: .85rem; line-height: 1.35; }
+  .fiche .note { font-size: .75rem; color: #5b6575; margin-top: 6px; }
   .fiche .actions { display: flex; gap: 6px; margin-top: 8px; }
   .fiche a.btn { flex: 1; text-align: center; padding: 8px 6px; border-radius: 7px; text-decoration: none; font-size: .85rem; font-weight: 600; background: var(--nav); color: #fff !important; }
   .fiche a.btn.alt { background: #fff; color: var(--nav) !important; border: 1.5px solid var(--nav); }
   #erreur { display: none; padding: 20px; text-align: center; }
+  header .brand { display: flex; align-items: center; gap: 12px; }
+  header .logo { width: 46px; height: 46px; flex: none; filter: drop-shadow(0 2px 6px rgba(0,0,0,.4)); }
+  #accueil .ville { position: absolute; left: 0; right: 0; bottom: 0; width: 100%; height: 90px; pointer-events: none; }
+  #accueil .carte { position: relative; z-index: 1; }
+  .moi { margin-top: 8px; width: 100%; padding: 10px; border-radius: 8px; border: 1.5px solid var(--pharma); background: #fff; color: #0e5f55; font-size: .9rem; font-weight: 700; cursor: pointer; }
+  #accueil { position: fixed; inset: 0; z-index: 2000; background: linear-gradient(160deg, #14213d 0%, #1d3566 100%); color: #fff; display: flex; align-items: center; justify-content: center; padding: 24px 24px 110px; overflow-y: auto; }
+  #accueil .carte { max-width: 460px; width: 100%; text-align: center; }
+  #accueil svg { width: 84px; height: 84px; }
+  #accueil h1 { font-size: 2.4rem; margin: 10px 0 4px; letter-spacing: .5px; }
+  #accueil .slogan { font-size: 1.1rem; line-height: 1.45; margin: 0 0 22px; opacity: .92; }
+  #accueil ul { list-style: none; padding: 0; margin: 0 0 24px; text-align: left; }
+  #accueil li { padding: 10px 14px; margin-bottom: 8px; background: rgba(255,255,255,.1); border-radius: 10px; font-size: .95rem; line-height: 1.35; }
+  #accueil li b { color: #f2a900; }
+  #accueil button { width: 100%; padding: 15px; font-size: 1.05rem; font-weight: 800; border: 0; border-radius: 12px; background: #f2a900; color: #14213d; cursor: pointer; }
+  #accueil button:focus-visible { outline: 3px solid #fff; outline-offset: 3px; }
+  #accueil .pied { font-size: .75rem; opacity: .7; margin-top: 14px; }
 </style>
 </head>
 <body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs><symbol id="skyline" viewBox="0 0 600 46" preserveAspectRatio="xMidYMax slice"><rect x="0" y="28" width="34" height="18" fill="#ffffff" fill-opacity=".10"/><rect x="30" y="20" width="26" height="26" fill="#ffffff" fill-opacity=".10"/><rect x="52" y="30" width="30" height="16" fill="#ffffff" fill-opacity=".10"/><rect x="96" y="16" width="22" height="30" fill="#ffffff" fill-opacity=".10"/><rect x="150" y="26" width="30" height="20" fill="#ffffff" fill-opacity=".10"/><rect x="196" y="12" width="24" height="34" fill="#ffffff" fill-opacity=".10"/><rect x="250" y="28" width="28" height="18" fill="#ffffff" fill-opacity=".10"/><rect x="352" y="14" width="26" height="32" fill="#ffffff" fill-opacity=".10"/><rect x="410" y="26" width="32" height="20" fill="#ffffff" fill-opacity=".10"/><rect x="458" y="18" width="24" height="28" fill="#ffffff" fill-opacity=".10"/><rect x="520" y="28" width="30" height="18" fill="#ffffff" fill-opacity=".10"/><rect x="566" y="22" width="34" height="24" fill="#ffffff" fill-opacity=".10"/><rect x="8" y="32" width="24" height="14" fill="#0a1430" fill-opacity=".55"/><rect x="40" y="24" width="22" height="22" fill="#0a1430" fill-opacity=".55"/><rect x="70" y="34" width="28" height="12" fill="#0a1430" fill-opacity=".55"/><rect x="104" y="20" width="20" height="26" fill="#0a1430" fill-opacity=".55"/><rect x="128" y="30" width="34" height="16" fill="#0a1430" fill-opacity=".55"/><rect x="170" y="22" width="22" height="24" fill="#0a1430" fill-opacity=".55"/><rect x="214" y="32" width="30" height="14" fill="#0a1430" fill-opacity=".55"/><rect x="262" y="26" width="22" height="20" fill="#0a1430" fill-opacity=".55"/><rect x="286" y="8" width="16" height="38" fill="#0a1430" fill-opacity=".55"/><rect x="330" y="30" width="24" height="16" fill="#0a1430" fill-opacity=".55"/><rect x="372" y="24" width="28" height="22" fill="#0a1430" fill-opacity=".55"/><rect x="420" y="32" width="22" height="14" fill="#0a1430" fill-opacity=".55"/><rect x="446" y="22" width="30" height="24" fill="#0a1430" fill-opacity=".55"/><rect x="486" y="34" width="26" height="12" fill="#0a1430" fill-opacity=".55"/><rect x="536" y="26" width="24" height="20" fill="#0a1430" fill-opacity=".55"/><rect x="572" y="32" width="28" height="14" fill="#0a1430" fill-opacity=".55"/><rect x="293" y="2" width="2" height="8" fill="#0a1430" fill-opacity=".55"/><path d="M0 40 Q 50 34 100 40 T 200 40 T 300 40 T 400 40 T 500 40 T 600 40 V46 H0 Z" fill="#5cb3ff" fill-opacity=".55"/></symbol></defs></svg>
 <header>
-  <h1>Nexvia</h1>
-  <span>Restaurants et pharmacies · Gombe, Kinshasa</span>
+  <svg class="ciel" viewBox="0 0 600 46" preserveAspectRatio="xMidYMax slice" aria-hidden="true"><use href="#skyline"/></svg>
+  <div class="brand"><svg class="logo" viewBox="0 0 40 40" aria-hidden="true"><rect width="40" height="40" rx="9" fill="#14213d" stroke="#f2a900" stroke-width="1.5"/><path d="M20 6c-6 0-10.5 4.7-10.5 10.6C9.5 24.2 20 34 20 34s10.5-9.8 10.5-17.4C30.5 10.7 26 6 20 6z" fill="#f2a900"/><circle cx="20" cy="16.5" r="4.2" fill="#14213d"/></svg><div><h1>Nexvia</h1><span class="sous">Restaurants, pharmacies et services · Gombe, Kinshasa</span></div></div>
 </header>
-<div class="filters" role="group" aria-label="Filtrer les lieux">
-  <button data-filter="tous" aria-pressed="true">Tous</button>
-  <button data-filter="restaurant" aria-pressed="false">Restaurants</button>
-  <button data-filter="pharmacie" aria-pressed="false">Pharmacies</button>
+<div class="drapeau"></div>
+<div class="bar">
+  <input type="search" id="recherche" placeholder="Rechercher un lieu par son nom" aria-label="Rechercher un lieu">
+  <div class="chips" id="chips" role="group" aria-label="Catégories"></div>
+  <button class="moi" id="moi" type="button">📍 Près de moi</button>
+  <label class="opt"><input type="checkbox" id="verifies"> Afficher seulement les lieux vérifiés</label>
 </div>
+<section id="accueil" aria-label="Accueil">
+  <svg class="ville" viewBox="0 0 600 46" preserveAspectRatio="xMidYMax slice" aria-hidden="true"><use href="#skyline"/></svg>
+  <div class="carte">
+    <svg viewBox="0 0 40 40" aria-hidden="true"><rect width="40" height="40" rx="9" fill="#14213d" stroke="#f2a900" stroke-width="1.5"/><path d="M20 6c-6 0-10.5 4.7-10.5 10.6C9.5 24.2 20 34 20 34s10.5-9.8 10.5-17.4C30.5 10.7 26 6 20 6z" fill="#f2a900"/><circle cx="20" cy="16.5" r="4.2" fill="#14213d"/></svg>
+    <h1>Nexvia</h1>
+    <p class="slogan">Trouvez les restaurants, pharmacies et services de Gombe, près de vous.</p>
+    <ul>
+      <li><b>✔ Lieux vérifiés</b> : adresse, horaires et téléphone confirmés sur place.</li>
+      <li><b>🗺️ Toujours plus de lieux</b>, issus d'OpenStreetMap, la carte libre faite par ses contributeurs.</li>
+      <li><b>📞 Un clic pour appeler</b>, un clic pour l'itinéraire. Gratuit, sans compte.</li>
+    </ul>
+    <button type="button" id="entrer">Explorer la carte</button>
+    <p class="pied">Version de départ · Restaurants, pharmacies et plus à Gombe, Kinshasa</p>
+  </div>
+</section>
 <div id="map" role="application" aria-label="Carte des lieux"></div>
+<div id="statut">Chargement…</div>
 <div id="erreur">La carte n'a pas pu se charger. Vérifiez votre connexion internet puis rechargez la page.</div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/leaflet.markercluster.js"></script>
 <script>
-// Données issues du tableau nexvia_lieux_gombe.xlsx (confirmées par Emmanuel le 2026-10-08)
-const LIEUX = [
+// ---- Lieux vérifiés (confirmés par Emmanuel le 2026-10-08) ----
+const VERIFIES = [
   { nom: "Chez Gaby", cat: "restaurant", adresse: "26, avenue Roi Beaudouin, Gombe", tel: "+243 819 904 213", horaires: "Lun–Sam : 12h–22h", lat: -4.304919, lng: 15.290544 },
   { nom: "Wabi Sabi", cat: "restaurant", adresse: "10, avenue de l'Équateur, Gombe", tel: "+243 900 000 702", horaires: "Tous les jours : 12h–01h", lat: -4.302184, lng: 15.310935 },
   { nom: "Le Z Restaurant et Lounge", cat: "restaurant", adresse: "Immeuble Matrix, 119 Boulevard du 30 Juin, 8e étage, Gombe", tel: "+243 828 664 628", horaires: "Lun : fermé ; Mar–Jeu : 12h–01h ; Ven : 12h–01h ; Sam : 15h–01h ; Dim : 12h–01h", lat: -4.309240, lng: 15.292253 },
   { nom: "Pharmacie Santemetre", cat: "pharmacie", adresse: "44, avenue Tombalbaye, Gombe", tel: "+243 999 935 970", horaires: "24h/24 – 7j/7", lat: -4.306177, lng: 15.310710 },
   { nom: "Pharmacie du 30 Juin", cat: "pharmacie", adresse: "Avenue des Batetela, Gombe", tel: "+243 999 933 690", horaires: "24h/24 – 7j/7", lat: -4.316805, lng: 15.279037 }
 ];
-const LABELS = { restaurant: "Restaurant", pharmacie: "Pharmacie" };
+
+// ---- Catégories (affichage) ----
+const CATS = {
+  restaurant: "Restaurants et cafés", pharmacie: "Pharmacies", sante: "Santé", banque: "Banques",
+  hotel: "Hôtels", ecole: "Écoles", culte: "Lieux de culte", commerce: "Commerces", autre: "Autres"
+};
+const CAT_LABEL = { restaurant: "Restaurant", pharmacie: "Pharmacie", sante: "Santé", banque: "Banque", hotel: "Hôtel", ecole: "École", culte: "Lieu de culte", commerce: "Commerce", autre: "Autre lieu" };
+
+function catOSM(t) {
+  const a = t.amenity, s = t.shop, to = t.tourism;
+  if (["restaurant", "cafe", "fast_food", "bar"].includes(a)) return "restaurant";
+  if (a === "pharmacy") return "pharmacie";
+  if (["hospital", "clinic", "doctors"].includes(a)) return "sante";
+  if (a === "bank") return "banque";
+  if (["school", "university"].includes(a)) return "ecole";
+  if (a === "place_of_worship") return "culte";
+  if (["hotel", "guest_house"].includes(to)) return "hotel";
+  if (s || a === "marketplace") return "commerce";
+  return "autre";
+}
 
 function esc(s) {
   return String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 }
+function norm(s) { return String(s).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]/g, ""); }
+function telHref(t) { return "tel:" + String(t).replace(/[^\d+]/g, ""); }
+function distM(a, b, c, d) {
+  const R = 6371000, r = Math.PI / 180, x = (c - a) * r, y = (d - b) * r * Math.cos(a * r);
+  return R * Math.sqrt(x * x + y * y);
+}
+
+function fiche(l, verifie) {
+  const itin = "https://www.google.com/maps/dir/?api=1&destination=" + l.lat + "," + l.lng;
+  let h = '<div class="fiche"><h2>' + esc(l.nom) + '</h2>' +
+    '<span class="badge ' + (verifie ? 'ok' : 'osm') + '">' + (verifie ? '✔ Vérifié · ' : 'OpenStreetMap · ') + esc(CAT_LABEL[l.cat]) + '</span>';
+  if (l.adresse) h += '<p>📍 ' + esc(l.adresse) + '</p>';
+  if (l.horaires) h += '<p>🕒 ' + esc(l.horaires) + '</p>';
+  if (l.tel) h += '<p>📞 ' + esc(l.tel) + '</p>';
+  if (!verifie) h += '<p class="note">Source : OpenStreetMap (informations de la communauté). Appelez avant de vous déplacer.</p>';
+  h += '<div class="actions">' + (l.tel ? '<a class="btn" href="' + esc(telHref(l.tel)) + '">Appeler</a>' : '') +
+    '<a class="btn alt" target="_blank" rel="noopener" href="' + itin + '">Itinéraire</a></div></div>';
+  return h;
+}
 
 if (typeof L === "undefined") {
   document.getElementById("map").style.display = "none";
+  document.getElementById("statut").style.display = "none";
   document.getElementById("erreur").style.display = "block";
 } else {
   const map = L.map("map").setView([-4.308, 15.298], 14);
-  // Fond OpenStreetMap : fonctionne quand la page est hébergée sur un site (https), pas en fichier local.
   L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
     maxZoom: 19,
-    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> (ODbL)'
   }).addTo(map);
 
-  const markers = LIEUX.map(l => {
-    const icon = L.divIcon({ className: "", html: '<div class="pin ' + l.cat + '"></div>', iconSize: [22, 22], iconAnchor: [11, 22], popupAnchor: [0, -22] });
-    const tel = l.tel.replace(/\s+/g, "");
-    const html =
-      '<div class="fiche">' +
-      '<h2>' + esc(l.nom) + '</h2>' +
-      '<div class="cat ' + l.cat + '">' + LABELS[l.cat] + '</div>' +
-      '<p>📍 ' + esc(l.adresse) + '</p>' +
-      '<p>🕒 ' + esc(l.horaires) + '</p>' +
-      '<p>📞 ' + esc(l.tel) + '</p>' +
-      '<div class="actions">' +
-      '<a class="btn" href="tel:' + esc(tel) + '">Appeler</a>' +
-      '<a class="btn alt" target="_blank" rel="noopener" href="https://www.google.com/maps/dir/?api=1&destination=' + l.lat + ',' + l.lng + '">Itinéraire</a>' +
-      '</div></div>';
-    const m = L.marker([l.lat, l.lng], { icon, title: l.nom, keyboard: true }).bindPopup(html, { minWidth: 210 });
-    return { cat: l.cat, marker: m };
-  });
+  const groupeVerifies = L.layerGroup().addTo(map);
+  const groupeOSM = L.markerClusterGroup({ maxClusterRadius: 45, disableClusteringAtZoom: 18, showCoverageOnHover: false }).addTo(map);
 
-  function afficher(filtre) {
-    const visibles = [];
-    markers.forEach(({ cat, marker }) => {
-      if (filtre === "tous" || cat === filtre) { marker.addTo(map); visibles.push(marker.getLatLng()); }
-      else { map.removeLayer(marker); }
-    });
-    if (visibles.length) map.fitBounds(L.latLngBounds(visibles).pad(0.25), { maxZoom: 16 });
+  let lieux = VERIFIES.map(l => ({ ...l, verifie: true }));
+  let filtre = "tous";
+
+  function creerMarqueur(l) {
+    const icon = l.verifie
+      ? L.divIcon({ className: "", html: '<div class="pin ' + l.cat + '"></div>', iconSize: [24, 24], iconAnchor: [12, 24], popupAnchor: [0, -24] })
+      : L.divIcon({ className: "", html: '<div class="dot"></div>', iconSize: [12, 12], iconAnchor: [6, 6], popupAnchor: [0, -6] });
+    return L.marker([l.lat, l.lng], { icon, title: l.nom, keyboard: true, zIndexOffset: l.verifie ? 1000 : 0 })
+      .bindPopup(fiche(l, l.verifie), { minWidth: 210 });
   }
 
-  document.querySelectorAll(".filters button").forEach(btn => {
-    btn.addEventListener("click", () => {
-      document.querySelectorAll(".filters button").forEach(b => b.setAttribute("aria-pressed", String(b === btn)));
-      afficher(btn.dataset.filter);
+  function construireFiltres() {
+    const present = new Set(lieux.map(l => l.cat));
+    const box = document.getElementById("chips");
+    box.innerHTML = "";
+    const liste = ["tous"].concat(Object.keys(CATS).filter(c => present.has(c)));
+    liste.forEach(c => {
+      const b = document.createElement("button");
+      b.textContent = c === "tous" ? "Tous" : CATS[c];
+      b.dataset.filter = c;
+      b.setAttribute("aria-pressed", String(c === filtre));
+      b.addEventListener("click", () => { filtre = c; construireFiltres(); afficher(true); });
+      box.appendChild(b);
     });
+  }
+
+  function afficher(recentrer) {
+    const q = norm(document.getElementById("recherche").value);
+    const seulV = document.getElementById("verifies").checked;
+    groupeVerifies.clearLayers();
+    groupeOSM.clearLayers();
+    const pts = [], osm = [];
+    lieux.forEach(l => {
+      if (filtre !== "tous" && l.cat !== filtre) return;
+      if (seulV && !l.verifie) return;
+      if (q && !norm(l.nom).includes(q)) return;
+      const m = creerMarqueur(l);
+      pts.push([l.lat, l.lng]);
+      if (l.verifie) groupeVerifies.addLayer(m); else osm.push(m);
+    });
+    groupeOSM.addLayers(osm);
+    const nV = pts.length - osm.length;
+    document.getElementById("statut").textContent =
+      pts.length + " lieu(x) affiché(s) : " + nV + " vérifié(s), " + osm.length + " depuis OpenStreetMap.";
+    if (recentrer && pts.length) map.fitBounds(L.latLngBounds(pts).pad(0.2), { maxZoom: 16 });
+  }
+
+  document.getElementById("recherche").addEventListener("input", () => afficher(false));
+  document.getElementById("verifies").addEventListener("change", () => afficher(true));
+
+  // ---- Chargement des données OpenStreetMap (fichier osm.json à côté de cette page) ----
+  function ajouterOSM(data) {
+    let ajoutes = 0;
+    (data.elements || []).forEach(el => {
+      const t = el.tags || {};
+      if (!t.name) return;
+      const lat = el.lat !== undefined ? el.lat : el.center && el.center.lat;
+      const lng = el.lon !== undefined ? el.lon : el.center && el.center.lon;
+      if (typeof lat !== "number" || typeof lng !== "number") return;
+      const cat = catOSM(t);
+      const n = norm(t.name);
+      const doublon = lieux.some(l => norm(l.nom) === n || (l.cat === cat && distM(l.lat, l.lng, lat, lng) < 40));
+      if (doublon) return;
+      const rue = [t["addr:housenumber"], t["addr:street"]].filter(Boolean).join(" ");
+      lieux.push({
+        nom: t.name, cat, lat, lng, verifie: false,
+        adresse: rue, tel: t.phone || t["contact:phone"] || "", horaires: t.opening_hours || ""
+      });
+      ajoutes++;
+    });
+    return ajoutes;
+  }
+
+  document.getElementById("entrer").addEventListener("click", () => {
+    document.getElementById("accueil").style.display = "none";
+    map.invalidateSize();
   });
-  afficher("tous");
+
+  let moiMarker = null;
+  document.getElementById("moi").addEventListener("click", () => {
+    const st = document.getElementById("statut");
+    if (!navigator.geolocation) { st.textContent = "La localisation n'est pas disponible sur cet appareil."; return; }
+    navigator.geolocation.getCurrentPosition(p => {
+      const ll = [p.coords.latitude, p.coords.longitude];
+      if (moiMarker) map.removeLayer(moiMarker);
+      moiMarker = L.circleMarker(ll, { radius: 8, color: "#fff", weight: 3, fillColor: "#2f6fed", fillOpacity: 1 }).addTo(map).bindTooltip("Vous êtes ici");
+      map.setView(ll, 16);
+    }, () => { st.textContent = "Position indisponible. Autorisez la localisation dans votre navigateur, puis réessayez."; });
+  });
+
+  construireFiltres();
+  afficher(true);
+
+  fetch("osm.json", { cache: "no-cache" })
+    .then(r => { if (!r.ok) throw new Error("absent"); return r.json(); })
+    .then(data => { ajouterOSM(data); construireFiltres(); afficher(true); })
+    .catch(() => { document.getElementById("statut").textContent += " (Données OpenStreetMap pas encore ajoutées.)"; });
 }
 </script>
 </body>
