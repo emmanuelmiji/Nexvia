@@ -34,6 +34,8 @@
   .pin.restaurant { background: var(--resto); }
   .pin.pharmacie { background: var(--pharma); }
   .dot { width: 12px; height: 12px; border-radius: 50%; background: var(--osm); border: 2px solid #fff; box-shadow: 0 0 3px rgba(0,0,0,.5); }
+  .photos { display: flex; gap: 6px; overflow-x: auto; scroll-snap-type: x mandatory; margin: 0 0 8px; }
+  .photos img { flex: none; width: 100%; max-width: 230px; height: 120px; object-fit: cover; border-radius: 8px; scroll-snap-align: start; background: #e8ebf1; }
   .fiche h2 { font-size: 1rem; margin: 0 0 3px; }
   .badge { display: inline-block; font-size: .72rem; font-weight: 700; padding: 2px 8px; border-radius: 999px; margin-bottom: 6px; }
   .badge.ok { background: #d9f2ec; color: #0e5f55; }
@@ -98,6 +100,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/leaflet.markercluster.js"></script>
 <script>
 // ---- Lieux vérifiés (confirmés par Emmanuel le 2026-10-08) ----
+// Photos : ajouter  photos: ["photos/chez-gaby-1.jpg", "photos/chez-gaby-2.jpg"]  à un lieu (photos prises par Emmanuel, dossier photos/ du dépôt).
 const VERIFIES = [
   { nom: "Chez Gaby", cat: "restaurant", adresse: "26, avenue Roi Beaudouin, Gombe", tel: "+243 819 904 213", horaires: "Lun–Sam : 12h–22h", lat: -4.304919, lng: 15.290544 },
   { nom: "Wabi Sabi", cat: "restaurant", adresse: "10, avenue de l'Équateur, Gombe", tel: "+243 900 000 702", horaires: "Tous les jours : 12h–01h", lat: -4.302184, lng: 15.310935 },
@@ -130,6 +133,11 @@ function esc(s) {
   return String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 }
 function norm(s) { return String(s).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]/g, ""); }
+function normS(s) { return norm(s).replace(/y/g, "i"); }
+function correspond(nom, requete) {
+  const n = normS(nom);
+  return String(requete).split(/\s+/).map(normS).filter(Boolean).every(t => n.includes(t));
+}
 function telHref(t) { return "tel:" + String(t).replace(/[^\d+]/g, ""); }
 function distM(a, b, c, d) {
   const R = 6371000, r = Math.PI / 180, x = (c - a) * r, y = (d - b) * r * Math.cos(a * r);
@@ -138,7 +146,11 @@ function distM(a, b, c, d) {
 
 function fiche(l, verifie) {
   const itin = "https://www.google.com/maps/dir/?api=1&destination=" + l.lat + "," + l.lng;
-  let h = '<div class="fiche"><h2>' + esc(l.nom) + '</h2>' +
+  let h = '<div class="fiche">';
+  if (l.photos && l.photos.length) {
+    h += '<div class="photos">' + l.photos.map(src => '<img src="' + esc(src) + '" alt="Photo de ' + esc(l.nom) + '" loading="lazy" onerror="this.remove()">').join('') + '</div>';
+  }
+  h += '<h2>' + esc(l.nom) + '</h2>' +
     '<span class="badge ' + (verifie ? 'ok' : 'osm') + '">' + (verifie ? '✔ Vérifié · ' : 'OpenStreetMap · ') + esc(CAT_LABEL[l.cat]) + '</span>';
   if (l.adresse) h += '<p>📍 ' + esc(l.adresse) + '</p>';
   if (l.horaires) h += '<p>🕒 ' + esc(l.horaires) + '</p>';
@@ -171,7 +183,7 @@ if (typeof L === "undefined") {
       ? L.divIcon({ className: "", html: '<div class="pin ' + l.cat + '"></div>', iconSize: [24, 24], iconAnchor: [12, 24], popupAnchor: [0, -24] })
       : L.divIcon({ className: "", html: '<div class="dot"></div>', iconSize: [12, 12], iconAnchor: [6, 6], popupAnchor: [0, -6] });
     return L.marker([l.lat, l.lng], { icon, title: l.nom, keyboard: true, zIndexOffset: l.verifie ? 1000 : 0 })
-      .bindPopup(fiche(l, l.verifie), { minWidth: 210 });
+      .bindPopup(fiche(l, l.verifie), { minWidth: 230, maxWidth: 260 });
   }
 
   function construireFiltres() {
@@ -189,17 +201,19 @@ if (typeof L === "undefined") {
     });
   }
 
-  function afficher(recentrer) {
-    const q = norm(document.getElementById("recherche").value);
+  function afficher(recentrer, ouvrir) {
+    const q = document.getElementById("recherche").value.trim();
     const seulV = document.getElementById("verifies").checked;
     groupeVerifies.clearLayers();
     groupeOSM.clearLayers();
     const pts = [], osm = [];
+    let dernier = null, dernierV = false;
     lieux.forEach(l => {
       if (filtre !== "tous" && l.cat !== filtre) return;
       if (seulV && !l.verifie) return;
-      if (q && !norm(l.nom).includes(q)) return;
+      if (q && !correspond(l.nom, q)) return;
       const m = creerMarqueur(l);
+      dernier = m; dernierV = l.verifie;
       pts.push([l.lat, l.lng]);
       if (l.verifie) groupeVerifies.addLayer(m); else osm.push(m);
     });
@@ -207,10 +221,18 @@ if (typeof L === "undefined") {
     const nV = pts.length - osm.length;
     document.getElementById("statut").textContent =
       pts.length + " lieu(x) affiché(s) : " + nV + " vérifié(s), " + osm.length + " depuis OpenStreetMap.";
+    if (q && !pts.length) document.getElementById("statut").textContent = "Aucun lieu trouvé pour « " + q + " ». Essayez un autre mot.";
     if (recentrer && pts.length) map.fitBounds(L.latLngBounds(pts).pad(0.2), { maxZoom: 16 });
+    if (ouvrir && pts.length === 1 && dernier) {
+      if (dernierV) dernier.openPopup(); else groupeOSM.zoomToShowLayer(dernier, () => dernier.openPopup());
+    }
   }
 
-  document.getElementById("recherche").addEventListener("input", () => afficher(false));
+  const champ = document.getElementById("recherche");
+  champ.addEventListener("input", () => afficher(false));
+  champ.addEventListener("keydown", e => {
+    if (e.key === "Enter") { e.preventDefault(); afficher(true, true); champ.blur(); }
+  });
   document.getElementById("verifies").addEventListener("change", () => afficher(true));
 
   // ---- Chargement des données OpenStreetMap (fichier osm.json à côté de cette page) ----
