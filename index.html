@@ -2,133 +2,201 @@
 <html lang="fr">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#14213d">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Nexvia">
 <title>Nexvia – Gombe</title>
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' rx='9' fill='%2314213d'/%3E%3Cpath d='M20 6c-6 0-10.5 4.7-10.5 10.6C9.5 24.200 20 34 20 34s10.5-9.800 10.500-17.400C30.500 10.700 26 6 20 6z' fill='%23f2a900'/%3E%3Ccircle cx='20' cy='16.500' r='4.200' fill='%2314213d'/%3E%3C/svg%3E">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="icon" href="icon-192.png" type="image/png">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/MarkerCluster.css">
 <style>
-  :root { --nav:#14213d; --resto:#f2a900; --pharma:#1b998b; --osm:#6b7a90; --bg:#f7f8fa; --ink:#14213d; }
-  * { box-sizing: border-box; }
-  html, body { height: 100%; margin: 0; font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif; color: var(--ink); background: var(--bg); }
-  body { display: flex; flex-direction: column; }
-  header { position: relative; overflow: hidden; color: #fff; padding: 16px 16px 40px; background: linear-gradient(180deg, #0b1530 0%, #14346b 55%, #1f5fae 100%); }
-  header .ciel { position: absolute; left: 0; right: 0; bottom: 0; width: 100%; height: 50px; }
-  header .brand { position: relative; z-index: 1; }
-  header h1 { font-size: 1.8rem; line-height: 1.05; margin: 0; letter-spacing: .6px; text-shadow: 0 2px 8px rgba(0,0,0,.35); }
-  header .sous { display: block; font-size: .85rem; opacity: .9; margin-top: 3px; }
-  .drapeau { height: 5px; background: linear-gradient(90deg, #2e9bff 0 60%, #f2a900 60% 80%, #e03c31 80% 100%); }
-  .bar { background: #fff; border-bottom: 1px solid #dde1e8; padding: 8px 10px; }
-  .bar input[type=search] { width: 100%; padding: 10px 12px; font-size: 1rem; border: 1.5px solid #c5ccd8; border-radius: 8px; color: var(--ink); }
-  .bar input[type=search]:focus-visible { outline: 3px solid #4c8dff; outline-offset: 1px; }
+  :root { --nav:#14213d; --gold:#f2a900; --teal:#1b998b; --osm:#6b7a90; --bg:#f4f6fa; --ink:#14213d; --muted:#5b6575; --line:#dde1e8; }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; margin: 0; }
+  body { display: flex; flex-direction: column; height: 100vh; height: 100dvh; font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif; color: var(--ink); background: var(--bg); overflow: hidden; }
+  button { font-family: inherit; }
+  :focus-visible { outline: 3px solid #4c8dff; outline-offset: 2px; }
+
+  #app { flex: 1; position: relative; min-height: 0; }
+  .screen { position: absolute; inset: 0; display: none; flex-direction: column; }
+  .screen.on { display: flex; }
+
+  /* ---------- barre du bas ---------- */
+  nav#tabs { display: flex; background: #fff; border-top: 1px solid var(--line); padding-bottom: env(safe-area-inset-bottom); z-index: 1900; box-shadow: 0 -2px 10px rgba(20,33,61,.06); }
+  nav#tabs button { flex: 1; border: 0; background: none; padding: 8px 4px 7px; color: var(--muted); font-size: .72rem; font-weight: 700; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 2px; }
+  nav#tabs button span.i { font-size: 1.35rem; line-height: 1.2; filter: grayscale(1) opacity(.7); }
+  nav#tabs button[aria-current="page"] { color: var(--nav); }
+  nav#tabs button[aria-current="page"] span.i { filter: none; }
+  nav#tabs button[aria-current="page"]::after { content: ""; width: 26px; height: 3px; border-radius: 3px; background: var(--gold); margin-top: 1px; }
+
+  /* ---------- Découvrir ---------- */
+  #s-decouvrir { overflow-y: auto; -webkit-overflow-scrolling: touch; }
+  .hero { position: relative; flex: none; color: #fff; padding: 18px 16px 74px; background: linear-gradient(180deg, #0b1530 0%, #14346b 60%, #1f5fae 100%); overflow: hidden; }
+  .hero .ciel { position: absolute; left: 0; right: 0; bottom: 0; width: 100%; height: 56px; }
+  .hero .marque { position: relative; display: flex; align-items: center; gap: 8px; font-weight: 800; letter-spacing: .4px; font-size: 1rem; opacity: .95; }
+  .hero .marque svg { width: 26px; height: 26px; }
+  .hero h1 { position: relative; margin: 14px 0 4px; font-size: 1.65rem; line-height: 1.15; text-shadow: 0 2px 8px rgba(0,0,0,.3); }
+  .hero p { position: relative; margin: 0; font-size: .92rem; opacity: .9; }
+  .drapeau { height: 5px; flex: none; background: linear-gradient(90deg, #2e9bff 0 60%, #f2a900 60% 80%, #e03c31 80% 100%); }
+  .rech { position: relative; z-index: 3; margin: -26px 14px 0; }
+  .rech input, .bar input[type=search] { width: 100%; padding: 14px 18px; font-size: 1rem; border: 1.5px solid #c5ccd8; border-radius: 999px; color: var(--ink); background: #fff; font-family: inherit; }
+  .rech input { box-shadow: 0 6px 18px rgba(20,33,61,.18); border-color: transparent; }
+  .corps { padding: 6px 14px 22px; }
+  .corps h2 { font-size: 1rem; margin: 18px 0 10px; }
+  #resHome { margin-top: 10px; }
+  .res { display: flex; gap: 10px; align-items: center; width: 100%; text-align: left; padding: 10px 12px; margin-bottom: 8px; background: #fff; border: 1px solid var(--line); border-radius: 12px; cursor: pointer; }
+  .res .e { flex: none; width: 38px; height: 38px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.15rem; }
+  .res b { display: block; font-size: .95rem; }
+  .res small { color: var(--muted); font-size: .78rem; }
+  .cats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+  .cat { border: 1px solid var(--line); background: #fff; border-radius: 14px; padding: 10px 2px 8px; display: flex; flex-direction: column; align-items: center; gap: 6px; cursor: pointer; color: var(--ink); font-size: .72rem; font-weight: 700; text-align: center; line-height: 1.15; }
+  .cat .e { width: 42px; height: 42px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.3rem; }
+  .cat small { color: var(--muted); font-weight: 600; font-size: .68rem; }
+  .pops { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 6px; scroll-snap-type: x proximity; margin: 0 -14px; padding-left: 14px; padding-right: 14px; }
+  .pop { flex: none; width: 150px; scroll-snap-align: start; background: #fff; border: 1px solid var(--line); border-radius: 14px; overflow: hidden; text-align: left; cursor: pointer; padding: 0; }
+  .pop .top { height: 54px; display: flex; align-items: center; justify-content: center; font-size: 1.8rem; }
+  .pop .txt { padding: 8px 10px 10px; }
+  .pop b { display: block; font-size: .85rem; line-height: 1.2; }
+  .pop small { color: var(--muted); font-size: .72rem; display: block; margin-top: 3px; }
+  .note-bas { font-size: .74rem; color: var(--muted); line-height: 1.45; margin-top: 18px; }
+  .install { margin-top: 16px; background: #fff; border: 1px dashed #b9c2d3; border-radius: 12px; padding: 12px; font-size: .82rem; line-height: 1.4; }
+  .install button { margin-top: 8px; width: 100%; padding: 11px; border: 0; border-radius: 10px; background: var(--nav); color: #fff; font-weight: 700; font-size: .9rem; cursor: pointer; }
+
+  /* ---------- Carte ---------- */
+  .bar { position: relative; background: #fff; border-bottom: 1px solid var(--line); padding: 8px 10px 6px; flex: none; }
+  .bar input[type=search] { padding: 11px 16px; font-size: .95rem; }
+  .bar input[type=search]:focus-visible { outline-offset: 1px; }
   .chips { display: flex; gap: 6px; overflow-x: auto; padding: 8px 0 2px; -webkit-overflow-scrolling: touch; }
-  .chips button { flex: none; border: 1.5px solid var(--nav); background: #fff; color: var(--nav); padding: 8px 12px; border-radius: 999px; font-size: .85rem; font-weight: 600; cursor: pointer; white-space: nowrap; }
+  .chips button { flex: none; border: 1.5px solid var(--nav); background: #fff; color: var(--nav); padding: 7px 12px; border-radius: 999px; font-size: .82rem; font-weight: 700; cursor: pointer; white-space: nowrap; }
   .chips button[aria-pressed="true"] { background: var(--nav); color: #fff; }
-  .chips button:focus-visible { outline: 3px solid #4c8dff; outline-offset: 2px; }
-  .opt { display: flex; align-items: center; gap: 8px; font-size: .85rem; padding-top: 6px; }
-  .opt input { width: 18px; height: 18px; }
-  #map { flex: 1; min-height: 300px; }
-  #statut { font-size: .75rem; padding: 5px 10px; background: #eef1f6; color: #3b4658; }
-  .pin { width: 24px; height: 24px; border-radius: 50% 50% 50% 0; transform: rotate(-45deg); border: 2.5px solid #fff; box-shadow: 0 1px 5px rgba(0,0,0,.5); }
-  .pin.big { width: 30px; height: 30px; }
-  .dot { width: 20px; height: 20px; border-radius: 50%; background: var(--osm); border: 2px solid #fff; box-shadow: 0 0 3px rgba(0,0,0,.5); }
-  .photos { display: flex; gap: 6px; overflow-x: auto; scroll-snap-type: x mandatory; margin: 0 0 8px; }
-  .photos img { flex: none; width: 100%; max-width: 230px; height: 120px; object-fit: cover; border-radius: 8px; scroll-snap-align: start; background: #e8ebf1; }
-  .fiche h2 { font-size: 1rem; margin: 0 0 3px; }
-  .badge { display: inline-block; font-size: .72rem; font-weight: 700; padding: 2px 8px; border-radius: 999px; margin-bottom: 6px; }
-  .badge.ok { background: #d9f2ec; color: #0e5f55; }
-  .badge.osm { background: #e8ebf1; color: #4a5568; }
-  .fiche p { margin: 3px 0; font-size: .85rem; line-height: 1.35; }
-  .fiche .note { font-size: .75rem; color: #5b6575; margin-top: 6px; }
-  .fiche .actions { display: flex; gap: 6px; margin-top: 8px; }
-  .fiche a.btn { flex: 1; text-align: center; padding: 8px 6px; border-radius: 7px; text-decoration: none; font-size: .85rem; font-weight: 600; background: var(--nav); color: #fff !important; }
-  .fiche a.btn.alt { background: #fff; color: var(--nav) !important; border: 1.5px solid var(--nav); }
+  .ligne2 { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding-top: 6px; }
+  .seg { display: flex; border: 1.5px solid var(--nav); border-radius: 9px; overflow: hidden; }
+  .seg button { border: 0; background: #fff; color: var(--nav); padding: 7px 14px; font-size: .84rem; font-weight: 700; cursor: pointer; }
+  .seg button[aria-pressed="true"] { background: var(--nav); color: #fff; }
+  .opt { display: flex; align-items: center; gap: 7px; font-size: .8rem; color: var(--muted); }
+  .opt input { width: 17px; height: 17px; }
+  #sugg { display: none; position: absolute; left: 10px; right: 10px; top: 52px; z-index: 1700; background: #fff; border: 1px solid #c5ccd8; border-radius: 12px; box-shadow: 0 8px 22px rgba(0,0,0,.2); max-height: 300px; overflow-y: auto; }
+  #sugg button { display: block; width: 100%; text-align: left; padding: 10px 12px; border: 0; border-bottom: 1px solid #eef1f6; background: #fff; cursor: pointer; }
+  #sugg button:last-child { border-bottom: 0; }
+  #sugg b { display: block; font-size: .93rem; }
+  #sugg small { color: var(--muted); font-size: .76rem; }
+  #cartewrap { flex: 1; position: relative; min-height: 0; }
+  #map { position: absolute; inset: 0; }
+  #liste { position: absolute; inset: 0; display: none; overflow-y: auto; padding: 10px; background: var(--bg); }
+  #statut { flex: none; font-size: .72rem; padding: 5px 10px; background: #eef1f6; color: #3b4658; }
   #erreur { display: none; padding: 20px; text-align: center; }
-  header .brand { display: flex; align-items: center; gap: 12px; }
-  header .logo { width: 46px; height: 46px; flex: none; filter: drop-shadow(0 2px 6px rgba(0,0,0,.4)); }
-  #accueil .ville { position: absolute; left: 0; right: 0; bottom: 0; width: 100%; height: 90px; pointer-events: none; }
-  #accueil .carte { position: relative; z-index: 1; }
-  .vues { display: flex; gap: 6px; margin-top: 8px; }
-  .vues button { flex: 1; padding: 10px 4px; border-radius: 8px; border: 1.5px solid var(--nav); background: #fff; color: var(--nav); font-size: .9rem; font-weight: 700; cursor: pointer; }
-  .vues button[aria-pressed="true"] { background: var(--nav); color: #fff; }
-  .vues .moi { border-color: var(--pharma); color: #0e5f55; }
-  .vues button:focus-visible { outline: 3px solid #4c8dff; outline-offset: 2px; }
-  #liste { display: none; flex: 1; overflow-y: auto; padding: 10px; background: var(--bg); }
-  .item { background: #fff; border: 1px solid #dde1e8; border-left: 5px solid var(--osm); border-radius: 12px; padding: 12px; margin-bottom: 10px; }
-  .item h3 { margin: 0 0 4px; font-size: 1rem; }
-  .item p { margin: 3px 0; font-size: .88rem; line-height: 1.35; }
-  .item .note { font-size: .78rem; color: #5b6575; }
-  .item .actions { display: flex; gap: 6px; margin-top: 8px; }
-  .item .btn { flex: 1; text-align: center; padding: 9px 6px; border-radius: 7px; text-decoration: none; font-size: .88rem; font-weight: 600; background: var(--nav); color: #fff; border: 0; cursor: pointer; font-family: inherit; }
-  .item .btn.alt { background: #fff; color: var(--nav); border: 1.5px solid var(--nav); }
-  .vide { text-align: center; color: #5b6575; padding: 30px 10px; }
-  .banniere { height: 64px; border-radius: 8px; margin-bottom: 8px; display: flex; align-items: center; justify-content: center; font-size: 2rem; }
-  .badge.ref { background: #fff1cf; color: #7a5200; }
-  .ico { width: 100%; height: 100%; position: relative; box-sizing: border-box; border: 2.5px solid #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 1px 5px rgba(0,0,0,.55); line-height: 1; }
+  #moi { position: absolute; right: 12px; bottom: 36px; z-index: 1001; width: 46px; height: 46px; border-radius: 50%; border: 0; background: #fff; box-shadow: 0 2px 10px rgba(0,0,0,.35); font-size: 1.3rem; cursor: pointer; }
+
+  .ico { width: 100%; height: 100%; position: relative; border: 2.5px solid #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 1px 5px rgba(0,0,0,.55); line-height: 1; }
   .ico.ver { border-color: #ffd54a; box-shadow: 0 0 0 2px #14213d, 0 2px 7px rgba(0,0,0,.55); }
-  .ico i { position: absolute; font-style: normal; border-radius: 50%; text-align: center; box-sizing: border-box; }
+  .ico i { position: absolute; font-style: normal; border-radius: 50%; text-align: center; }
   .ico .ok { right: -6px; top: -6px; width: 17px; height: 17px; background: #1b998b; color: #fff; font: 700 11px/14px system-ui, sans-serif; border: 1.5px solid #fff; }
   .ico .tel { right: -5px; bottom: -5px; width: 16px; height: 16px; background: #fff; border: 1px solid #c5ccd8; font-size: 9px; line-height: 14px; }
-  .touch { width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; }
-  .pin span { display: block; transform: rotate(45deg); color: #fff; font-weight: 800; font-size: 14px; line-height: 20px; text-align: center; }
-  .pin.tel span { font-size: 13px; line-height: 21px; }
-  .bar { position: relative; }
-  #sugg { display: none; position: absolute; left: 10px; right: 10px; top: 56px; z-index: 1500; background: #fff; border: 1px solid #c5ccd8; border-radius: 10px; box-shadow: 0 6px 18px rgba(0,0,0,.2); max-height: 300px; overflow-y: auto; }
-  #sugg button { display: block; width: 100%; text-align: left; padding: 10px 12px; border: 0; border-bottom: 1px solid #eef1f6; background: #fff; font-family: inherit; cursor: pointer; }
-  #sugg button:last-child { border-bottom: 0; }
-  #sugg b { display: block; font-size: .95rem; color: var(--ink); }
-  #sugg small { color: #5b6575; font-size: .78rem; }
-  .pin.big span { line-height: 25px; }
-  #accueil { position: fixed; inset: 0; z-index: 2000; background: linear-gradient(160deg, #14213d 0%, #1d3566 100%); color: #fff; display: flex; align-items: center; justify-content: center; padding: 24px 24px 110px; overflow-y: auto; }
-  #accueil .carte { max-width: 460px; width: 100%; text-align: center; }
-  #accueil svg { width: 84px; height: 84px; }
-  #accueil h1 { font-size: 2.4rem; margin: 10px 0 4px; letter-spacing: .5px; }
-  #accueil .slogan { font-size: 1.1rem; line-height: 1.45; margin: 0 0 22px; opacity: .92; }
-  #accueil ul { list-style: none; padding: 0; margin: 0 0 24px; text-align: left; }
-  #accueil li { padding: 10px 14px; margin-bottom: 8px; background: rgba(255,255,255,.1); border-radius: 10px; font-size: .95rem; line-height: 1.35; }
-  #accueil li b { color: #f2a900; }
-  #accueil button { width: 100%; padding: 15px; font-size: 1.05rem; font-weight: 800; border: 0; border-radius: 12px; background: #f2a900; color: #14213d; cursor: pointer; }
-  #accueil button:focus-visible { outline: 3px solid #fff; outline-offset: 3px; }
-  #accueil .pied { font-size: .75rem; opacity: .7; margin-top: 14px; }
+  .cl { width: 100%; height: 100%; border-radius: 50%; background: var(--nav); color: #fff; border: 3px solid var(--gold); display: flex; align-items: center; justify-content: center; font: 800 14px system-ui, sans-serif; box-shadow: 0 2px 8px rgba(0,0,0,.4); }
+  .mine { width: 100%; height: 100%; border-radius: 50%; background: #2f6fed; border: 3px solid #fff; box-shadow: 0 0 0 6px rgba(47,111,237,.25); }
+
+  /* ---------- fiche du bas ---------- */
+  #sheet { position: absolute; left: 0; right: 0; bottom: 0; z-index: 1800; background: #fff; border-radius: 20px 20px 0 0; box-shadow: 0 -6px 24px rgba(20,33,61,.25); max-height: 56%; overflow-y: auto; transform: translateY(105%); transition: transform .22s ease; padding: 14px 14px 16px; }
+  #sheet.open { transform: translateY(0); }
+  #sheet::before { content: ""; display: block; width: 40px; height: 4px; border-radius: 4px; background: #cfd6e2; margin: -4px auto 10px; }
+  #sheet .x, #sheet .fav { position: absolute; top: 10px; width: 36px; height: 36px; border-radius: 50%; border: 0; background: rgba(255,255,255,.92); box-shadow: 0 1px 5px rgba(0,0,0,.3); font-size: 1.05rem; cursor: pointer; z-index: 2; }
+  #sheet .x { right: 12px; }
+  #sheet .fav { right: 56px; color: #d6336c; font-size: 1.2rem; }
+  .fiche h2 { font-size: 1.08rem; margin: 0 0 4px; }
+  .photos { display: flex; gap: 6px; overflow-x: auto; scroll-snap-type: x mandatory; margin: 0 0 10px; }
+  .photos img { flex: none; width: 100%; max-width: 260px; height: 130px; object-fit: cover; border-radius: 10px; scroll-snap-align: start; background: #e8ebf1; }
+  .banniere { height: 74px; border-radius: 12px; margin-bottom: 10px; display: flex; align-items: center; justify-content: center; font-size: 2.2rem; }
+  .badge { display: inline-block; font-size: .72rem; font-weight: 700; padding: 3px 9px; border-radius: 999px; margin-bottom: 6px; }
+  .badge.ok { background: #d9f2ec; color: #0e5f55; }
+  .badge.ref { background: #fff1cf; color: #7a5200; }
+  .badge.osm { background: #e8ebf1; color: #4a5568; }
+  .fiche p { margin: 4px 0; font-size: .88rem; line-height: 1.38; }
+  .fiche .note, .item .note { font-size: .75rem; color: var(--muted); }
+  .actions { display: flex; gap: 6px; margin-top: 10px; }
+  .btn { flex: 1; text-align: center; padding: 11px 6px; border-radius: 10px; text-decoration: none; font-size: .88rem; font-weight: 700; background: var(--nav); color: #fff !important; border: 0; cursor: pointer; }
+  .btn.alt { background: #fff; color: var(--nav) !important; border: 1.5px solid var(--nav); }
+  .btn.wa { background: #1faa59; }
+  .item { background: #fff; border: 1px solid var(--line); border-left: 5px solid var(--osm); border-radius: 12px; padding: 12px; margin-bottom: 10px; }
+  .item h3 { margin: 0 0 4px; font-size: 1rem; }
+  .item p { margin: 3px 0; font-size: .88rem; line-height: 1.35; }
+  .vide { text-align: center; color: var(--muted); padding: 34px 14px; font-size: .92rem; line-height: 1.5; }
+
+  /* ---------- Favoris ---------- */
+  .tete { flex: none; background: var(--nav); color: #fff; padding: 16px 16px 14px; font-weight: 800; font-size: 1.15rem; }
+  #favList { flex: 1; overflow-y: auto; padding: 10px; }
+  .leaflet-container { font-family: inherit; }
 </style>
 </head>
 <body>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs><symbol id="skyline" viewBox="0 0 600 46" preserveAspectRatio="xMidYMax slice"><rect x="0" y="28" width="34" height="18" fill="#ffffff" fill-opacity=".10"/><rect x="30" y="20" width="26" height="26" fill="#ffffff" fill-opacity=".10"/><rect x="52" y="30" width="30" height="16" fill="#ffffff" fill-opacity=".10"/><rect x="96" y="16" width="22" height="30" fill="#ffffff" fill-opacity=".10"/><rect x="150" y="26" width="30" height="20" fill="#ffffff" fill-opacity=".10"/><rect x="196" y="12" width="24" height="34" fill="#ffffff" fill-opacity=".10"/><rect x="250" y="28" width="28" height="18" fill="#ffffff" fill-opacity=".10"/><rect x="352" y="14" width="26" height="32" fill="#ffffff" fill-opacity=".10"/><rect x="410" y="26" width="32" height="20" fill="#ffffff" fill-opacity=".10"/><rect x="458" y="18" width="24" height="28" fill="#ffffff" fill-opacity=".10"/><rect x="520" y="28" width="30" height="18" fill="#ffffff" fill-opacity=".10"/><rect x="566" y="22" width="34" height="24" fill="#ffffff" fill-opacity=".10"/><rect x="8" y="32" width="24" height="14" fill="#0a1430" fill-opacity=".55"/><rect x="40" y="24" width="22" height="22" fill="#0a1430" fill-opacity=".55"/><rect x="70" y="34" width="28" height="12" fill="#0a1430" fill-opacity=".55"/><rect x="104" y="20" width="20" height="26" fill="#0a1430" fill-opacity=".55"/><rect x="128" y="30" width="34" height="16" fill="#0a1430" fill-opacity=".55"/><rect x="170" y="22" width="22" height="24" fill="#0a1430" fill-opacity=".55"/><rect x="214" y="32" width="30" height="14" fill="#0a1430" fill-opacity=".55"/><rect x="262" y="26" width="22" height="20" fill="#0a1430" fill-opacity=".55"/><rect x="286" y="8" width="16" height="38" fill="#0a1430" fill-opacity=".55"/><rect x="330" y="30" width="24" height="16" fill="#0a1430" fill-opacity=".55"/><rect x="372" y="24" width="28" height="22" fill="#0a1430" fill-opacity=".55"/><rect x="420" y="32" width="22" height="14" fill="#0a1430" fill-opacity=".55"/><rect x="446" y="22" width="30" height="24" fill="#0a1430" fill-opacity=".55"/><rect x="486" y="34" width="26" height="12" fill="#0a1430" fill-opacity=".55"/><rect x="536" y="26" width="24" height="20" fill="#0a1430" fill-opacity=".55"/><rect x="572" y="32" width="28" height="14" fill="#0a1430" fill-opacity=".55"/><rect x="293" y="2" width="2" height="8" fill="#0a1430" fill-opacity=".55"/><path d="M0 40 Q 50 34 100 40 T 200 40 T 300 40 T 400 40 T 500 40 T 600 40 V46 H0 Z" fill="#5cb3ff" fill-opacity=".55"/></symbol></defs></svg>
-<header>
-  <svg class="ciel" viewBox="0 0 600 46" preserveAspectRatio="xMidYMax slice" aria-hidden="true"><use href="#skyline"/></svg>
-  <div class="brand"><svg class="logo" viewBox="0 0 40 40" aria-hidden="true"><rect width="40" height="40" rx="9" fill="#14213d" stroke="#f2a900" stroke-width="1.5"/><path d="M20 6c-6 0-10.5 4.7-10.5 10.6C9.5 24.2 20 34 20 34s10.5-9.8 10.5-17.4C30.5 10.7 26 6 20 6z" fill="#f2a900"/><circle cx="20" cy="16.5" r="4.2" fill="#14213d"/></svg><div><h1>Nexvia</h1><span class="sous">Restaurants, pharmacies et services · Gombe, Kinshasa</span></div></div>
-</header>
-<div class="drapeau"></div>
-<div class="bar">
-  <input type="search" id="recherche" placeholder="Rechercher un lieu (nom, avenue, type)" aria-label="Rechercher un lieu" autocomplete="off">
-  <div id="sugg" role="listbox"></div>
-  <div class="chips" id="chips" role="group" aria-label="Catégories"></div>
-  <div class="vues"><button type="button" id="btnCarte" aria-pressed="true">🗺️ Carte</button><button type="button" id="btnListe" aria-pressed="false">📋 Liste</button><button type="button" id="moi" class="moi">📍 Près de moi</button></div>
-  <label class="opt"><input type="checkbox" id="verifies"> Afficher seulement les lieux vérifiés</label>
+<div id="app">
+
+  <!-- ===== DÉCOUVRIR ===== -->
+  <section class="screen on" id="s-decouvrir" aria-label="Découvrir">
+    <div class="hero">
+      <svg class="ciel" viewBox="0 0 600 46" preserveAspectRatio="xMidYMax slice" aria-hidden="true"><use href="#skyline"/></svg>
+      <div class="marque"><svg viewBox="0 0 40 40" aria-hidden="true"><rect width="40" height="40" rx="9" fill="#14213d" stroke="#f2a900" stroke-width="1.5"/><path d="M20 6c-6 0-10.5 4.7-10.5 10.6C9.5 24.2 20 34 20 34s10.5-9.8 10.5-17.4C30.5 10.7 26 6 20 6z" fill="#f2a900"/><circle cx="20" cy="16.5" r="4.2" fill="#14213d"/></svg><span>Nexvia</span></div>
+      <h1>Que cherchez-vous&nbsp;?</h1>
+      <p>Restaurants, pharmacies et services à Gombe, Kinshasa</p>
+    </div>
+    <div class="drapeau"></div>
+    <div class="rech"><input type="search" id="rechercheHome" placeholder="Un lieu, une avenue, un type…" aria-label="Rechercher un lieu" autocomplete="off"></div>
+    <div class="corps">
+      <div id="resHome"></div>
+      <h2>Catégories</h2>
+      <div class="cats" id="cats"></div>
+      <h2>Lieux à découvrir</h2>
+      <div class="pops" id="pops"></div>
+      <div class="install" id="install">📲 <b>Installer Nexvia sur votre téléphone</b><br><span id="installTxt">Dans le menu de votre navigateur, choisissez « Ajouter à l'écran d'accueil ». Nexvia s'ouvrira alors comme une application.</span></div>
+      <p class="note-bas">Lieux « ✔ Vérifiés » : confirmés par l'équipe. « Référencés » : collectés, pas encore confirmés. « OpenStreetMap » : informations de la communauté. Appelez avant de vous déplacer.<br>Carte © contributeurs OpenStreetMap.</p>
+    </div>
+  </section>
+
+  <!-- ===== CARTE ===== -->
+  <section class="screen" id="s-carte" aria-label="Carte">
+    <div class="bar">
+      <input type="search" id="recherche" placeholder="Rechercher un lieu (nom, avenue, type)" aria-label="Rechercher un lieu" autocomplete="off">
+      <div id="sugg" role="listbox"></div>
+      <div class="chips" id="chips" role="group" aria-label="Catégories"></div>
+      <div class="ligne2">
+        <div class="seg"><button type="button" id="btnCarte" aria-pressed="true">🗺️ Carte</button><button type="button" id="btnListe" aria-pressed="false">📋 Liste</button></div>
+        <label class="opt"><input type="checkbox" id="verifies"> Vérifiés seulement</label>
+      </div>
+    </div>
+    <div id="cartewrap">
+      <div id="map" role="application" aria-label="Carte des lieux"></div>
+      <div id="liste" aria-label="Liste des lieux"></div>
+      <button type="button" id="moi" aria-label="Ma position" title="Ma position">📍</button>
+    </div>
+    <div id="statut">Chargement…</div>
+    <div id="erreur">La carte n'a pas pu se charger. Vérifiez votre connexion internet puis rechargez la page.</div>
+  </section>
+
+  <!-- ===== FAVORIS ===== -->
+  <section class="screen" id="s-favoris" aria-label="Favoris">
+    <div class="tete">❤️ Mes favoris</div>
+    <div id="favList"></div>
+  </section>
+
+  <div id="sheet" role="dialog" aria-label="Fiche du lieu"></div>
 </div>
-<section id="accueil" aria-label="Accueil">
-  <svg class="ville" viewBox="0 0 600 46" preserveAspectRatio="xMidYMax slice" aria-hidden="true"><use href="#skyline"/></svg>
-  <div class="carte">
-    <svg viewBox="0 0 40 40" aria-hidden="true"><rect width="40" height="40" rx="9" fill="#14213d" stroke="#f2a900" stroke-width="1.5"/><path d="M20 6c-6 0-10.5 4.7-10.5 10.6C9.5 24.2 20 34 20 34s10.5-9.8 10.5-17.4C30.5 10.7 26 6 20 6z" fill="#f2a900"/><circle cx="20" cy="16.5" r="4.2" fill="#14213d"/></svg>
-    <h1>Nexvia</h1>
-    <p class="slogan">Trouvez les restaurants, pharmacies et services de Gombe, près de vous.</p>
-    <ul>
-      <li><b>✔ Lieux vérifiés</b> : adresse, horaires et téléphone confirmés sur place.</li>
-      <li><b>🗺️ Toujours plus de lieux</b>, issus d'OpenStreetMap, la carte libre faite par ses contributeurs.</li>
-      <li><b>📞 Un clic pour appeler</b>, un clic pour l'itinéraire. Gratuit, sans compte.</li>
-    </ul>
-    <button type="button" id="entrer">Explorer la carte</button>
-    <p class="pied">Version de départ · Restaurants, pharmacies et plus à Gombe, Kinshasa</p>
-  </div>
-</section>
-<div id="map" role="application" aria-label="Carte des lieux"></div>
-<div id="liste" aria-label="Liste des lieux"></div>
-<div id="statut">Chargement…</div>
-<div id="erreur">La carte n'a pas pu se charger. Vérifiez votre connexion internet puis rechargez la page.</div>
+
+<nav id="tabs" aria-label="Navigation">
+  <button type="button" data-tab="decouvrir" aria-current="page"><span class="i">🧭</span>Découvrir</button>
+  <button type="button" data-tab="carte"><span class="i">🗺️</span>Carte</button>
+  <button type="button" data-tab="favoris"><span class="i">❤️</span>Favoris</button>
+</nav>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/leaflet.markercluster.js"></script>
 <script>
 // ---- Lieux vérifiés (confirmés par Emmanuel le 2026-10-08) ----
-// Photos : ajouter  photos: ["photos/chez-gaby-1.jpg"]  à un lieu (photos prises par Emmanuel, dossier photos/ du dépôt).
+// Photos : ajouter  photos: ["photos/chez-gaby-1.jpg"]  (photos prises par Emmanuel, dossier photos/ du dépôt).
+// WhatsApp : ajouter  whatsapp: true  seulement quand le numéro est confirmé sur WhatsApp.
 const VERIFIES = [
   { nom: "Chez Gaby", cat: "restaurant", type: "Restaurant portugais", adresse: "26, avenue Roi Beaudouin, Gombe", tel: "+243 819 904 213", horaires: "Lun–Sam : 12h–22h", lat: -4.304919, lng: 15.290544 },
   { nom: "Wabi Sabi", cat: "restaurant", type: "Restaurant asiatique", adresse: "10, avenue de l'Équateur, Gombe", tel: "+243 900 000 702", horaires: "Tous les jours : 12h–01h", lat: -4.302184, lng: 15.310935 },
@@ -138,11 +206,13 @@ const VERIFIES = [
 ];
 
 const CATS = { restaurant: "Restaurants et cafés", bar: "Bars et lounges", pharmacie: "Pharmacies", commerce: "Commerces", sport: "Terrains et sport", culte: "Lieux de culte", hotel: "Hôtels", sante: "Santé", banque: "Banques", ecole: "Écoles", autre: "Autres" };
+const CAT_COURT = { restaurant: "Restos", bar: "Bars", pharmacie: "Pharmacies", commerce: "Commerces", sport: "Sport", culte: "Culte", hotel: "Hôtels", sante: "Santé", banque: "Banques", ecole: "Écoles", autre: "Autres" };
 const CAT_LABEL = { restaurant: "Restaurant", bar: "Bar", pharmacie: "Pharmacie", commerce: "Commerce", sport: "Sport", culte: "Lieu de culte", hotel: "Hôtel", sante: "Santé", banque: "Banque", ecole: "École", autre: "Autre lieu" };
 const COULEUR = { restaurant: "#e08a00", bar: "#8e44ad", pharmacie: "#1b998b", commerce: "#2f6fed", sport: "#2e9b4f", culte: "#7a5c3e", hotel: "#d6336c", sante: "#e03c31", banque: "#374151", ecole: "#3b82f6", autre: "#6b7a90" };
 const EMOJI = { restaurant: "🍽️", bar: "🍸", pharmacie: "💊", commerce: "🛒", sport: "⚽", culte: "⛪", hotel: "🏨", sante: "🏥", banque: "🏦", ecole: "🏫", autre: "📍" };
 const GOMBE = [[-4.328, 15.268], [-4.293, 15.322]];
 const ZONE_LARGE = { s: -4.345, n: -4.28, o: 15.25, e: 15.34 };
+const ORDRE = { verifie: 0, reference: 1, osm: 2 };
 
 function catOSM(t) {
   const a = t.amenity, s = t.shop, to = t.tourism;
@@ -158,25 +228,32 @@ function catOSM(t) {
   if (s || a === "marketplace") return "commerce";
   return "autre";
 }
-
-function esc(s) {
-  return String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
-}
-function norm(s) { return String(s).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]/g, ""); }
+function esc(s) { return String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c])); }
+function norm(s) { return String(s).toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9]/g, ""); }
 function normS(s) { return norm(s).replace(/y/g, "i"); }
 const developper = s => String(s).replace(/\bbd\.?(?=\s|$)/gi, "boulevard").replace(/\bav\.?(?=\s|$)/gi, "avenue");
 function correspond(nom, requete) {
   const n = normS(developper(nom));
   return String(developper(requete)).split(/\s+/).map(normS).filter(Boolean).every(t => n.includes(t));
 }
-function telHref(t) { return "tel:" + String(t).replace(/[^\d+]/g, ""); }
-function distM(a, b, c, d) {
-  const R = 6371000, r = Math.PI / 180, x = (c - a) * r, y = (d - b) * r * Math.cos(a * r);
-  return R * Math.sqrt(x * x + y * y);
-}
-const texteRecherche = l => [l.nom, l.adresse, l.type, CATS[l.cat]].filter(Boolean).join(" ");
-const emojiDe = l => l.emoji || (l.cat === "culte" && l.religion === "muslim" ? "🕌" : (EMOJI[l.cat] || "📍"));
 const aPosition = l => typeof l.lat === "number" && typeof l.lng === "number";
+const emojiDe = l => l.emoji || (l.cat === "culte" && l.religion === "muslim" ? "🕌" : (EMOJI[l.cat] || "📍"));
+const texteRecherche = l => [l.nom, l.adresse, l.type, CATS[l.cat]].filter(Boolean).join(" ");
+const telHref = t => "tel:" + String(t).replace(/[^\d+]/g, "");
+const waHref = t => "https://wa.me/" + String(t).replace(/\D/g, "");
+const cle = l => norm(l.nom) + "_" + (aPosition(l) ? Math.round(l.lat * 1e4) + "_" + Math.round(l.lng * 1e4) : "x");
+function distM(a, b, c, d) { const R = 6371000, r = Math.PI / 180, x = (c - a) * r, y = (d - b) * r * Math.cos(a * r); return R * Math.sqrt(x * x + y * y); }
+const $ = id => document.getElementById(id);
+
+// ---- Favoris (gardés dans le téléphone, sans compte) ----
+let favs = [];
+try { favs = JSON.parse(localStorage.getItem("nexvia_fav") || "[]"); if (!Array.isArray(favs)) favs = []; } catch (e) { favs = []; }
+const estFav = l => favs.includes(cle(l));
+function basculerFav(l) {
+  const k = cle(l), i = favs.indexOf(k);
+  if (i >= 0) favs.splice(i, 1); else favs.push(k);
+  try { localStorage.setItem("nexvia_fav", JSON.stringify(favs)); } catch (e) {}
+}
 
 function badgeHTML(l) {
   const pre = l.source === "verifie" ? "✔ Vérifié · " : l.source === "reference" ? "Référencé · " : "OpenStreetMap · ";
@@ -191,245 +268,281 @@ function noteHTML(l) {
   if (!aPosition(l)) n += (n ? " " : "") + "Position exacte non précisée pour l'instant.";
   return n ? '<p class="note">' + esc(n) + '</p>' : "";
 }
-
+function actionsHTML(l) {
+  return '<div class="actions">' + (l.tel ? '<a class="btn" href="' + esc(telHref(l.tel)) + '">📞 Appeler</a>' : "") +
+    (l.tel && l.whatsapp ? '<a class="btn wa" target="_blank" rel="noopener" href="' + esc(waHref(l.tel)) + '">WhatsApp</a>' : "") +
+    (aPosition(l) ? '<a class="btn alt" target="_blank" rel="noopener" href="https://www.google.com/maps/dir/?api=1&destination=' + l.lat + ',' + l.lng + '">Itinéraire</a>' : "") + '</div>';
+}
 function fiche(l) {
   const col = COULEUR[l.cat] || COULEUR.autre;
   let h = '<div class="fiche">';
-  if (l.photos && l.photos.length) {
-    h += '<div class="photos">' + l.photos.map(src => '<img src="' + esc(src) + '" alt="Photo de ' + esc(l.nom) + '" loading="lazy" onerror="this.remove()">').join('') + '</div>';
-  } else {
-    h += '<div class="banniere" style="background:' + col + '" aria-hidden="true">' + emojiDe(l) + '</div>';
-  }
+  if (l.photos && l.photos.length) h += '<div class="photos">' + l.photos.map(src => '<img src="' + esc(src) + '" alt="Photo de ' + esc(l.nom) + '" loading="lazy" onerror="this.remove()">').join("") + '</div>';
+  else h += '<div class="banniere" style="background:' + col + '" aria-hidden="true">' + emojiDe(l) + '</div>';
   h += '<h2>' + esc(l.nom) + '</h2>' + badgeHTML(l);
   if (l.adresse) h += '<p>📍 ' + esc(l.adresse) + '</p>';
   if (l.horaires) h += '<p>🕒 ' + esc(l.horaires) + '</p>';
   if (l.tel) h += '<p>📞 ' + esc(l.tel) + '</p>';
-  h += noteHTML(l);
-  h += '<div class="actions">' + (l.tel ? '<a class="btn" href="' + esc(telHref(l.tel)) + '">Appeler</a>' : '') +
-    (aPosition(l) ? '<a class="btn alt" target="_blank" rel="noopener" href="https://www.google.com/maps/dir/?api=1&destination=' + l.lat + ',' + l.lng + '">Itinéraire</a>' : '') +
-    '</div></div>';
-  return h;
+  return h + noteHTML(l) + actionsHTML(l) + '</div>';
+}
+function itemHTML(l, mode) {
+  return '<article class="item" style="border-left-color:' + (COULEUR[l.cat] || COULEUR.autre) + '"><h3>' + emojiDe(l) + ' ' + esc(l.nom) + '</h3>' + badgeHTML(l) +
+    (l.adresse ? '<p>📍 ' + esc(l.adresse) + '</p>' : "") + (l.horaires ? '<p>🕒 ' + esc(l.horaires) + '</p>' : "") + (l.tel ? '<p>📞 ' + esc(l.tel) + '</p>' : "") +
+    (aPosition(l) ? "" : '<p class="note">Position exacte non précisée pour l\'instant.</p>') +
+    '<div class="actions">' + (l.tel ? '<a class="btn" href="' + esc(telHref(l.tel)) + '">Appeler</a>' : "") +
+    (aPosition(l) ? '<button type="button" class="btn alt" data-voir="' + esc(cle(l)) + '">Voir sur la carte</button>' : "") +
+    (mode === "fav" ? '<button type="button" class="btn alt" data-fav="' + esc(cle(l)) + '">♥ Retirer</button>' : '<button type="button" class="btn alt" data-fav="' + esc(cle(l)) + '" aria-label="Favori">' + (estFav(l) ? "♥" : "♡") + '</button>') +
+    '</div></article>';
+}
+
+let lieux = VERIFIES.map(l => ({ ...l, source: "verifie" }));
+let visibles = [], filtre = "tous", mode = "carte", tab = "decouvrir", courant = null;
+const trouver = k => lieux.find(l => cle(l) === k);
+
+const sheet = $("sheet");
+function setTab(t) {
+  tab = t;
+  document.querySelectorAll(".screen").forEach(s => s.classList.toggle("on", s.id === "s-" + t));
+  document.querySelectorAll("#tabs button").forEach(b => b.setAttribute("aria-current", b.dataset.tab === t ? "page" : "false"));
+  if (t !== "carte") fermerFiche();
+  if (t === "carte" && window.__carte) window.__carte.invalidateSize();
+  if (t === "favoris") rendreFavoris();
+}
+function fermerFiche() { sheet.classList.remove("open"); courant = null; }
+function ouvrirFiche(l) {
+  courant = l;
+  sheet.innerHTML = '<button type="button" class="x" aria-label="Fermer">✕</button><button type="button" class="fav" aria-label="Favori">' + (estFav(l) ? "♥" : "♡") + '</button>' + fiche(l);
+  sheet.scrollTop = 0;
+  sheet.classList.add("open");
+}
+sheet.addEventListener("click", e => {
+  if (e.target.closest(".x")) return fermerFiche();
+  if (e.target.closest(".fav") && courant) { basculerFav(courant); e.target.closest(".fav").textContent = estFav(courant) ? "♥" : "♡"; rendreFavoris(); }
+});
+document.querySelectorAll("#tabs button").forEach(b => b.addEventListener("click", () => setTab(b.dataset.tab)));
+
+function rendreFavoris() {
+  const items = lieux.filter(estFav).sort((a, b) => a.nom.localeCompare(b.nom, "fr"));
+  $("favList").innerHTML = items.length ? items.map(l => itemHTML(l, "fav")).join("") :
+    '<div class="vide">Vous n\'avez pas encore de favori.<br>Ouvrez la fiche d\'un lieu sur la carte et touchez ♡ pour le retrouver ici.</div>';
+}
+$("favList").addEventListener("click", clicItems);
+
+function clicItems(e) {
+  const v = e.target.closest("[data-voir]"), f = e.target.closest("[data-fav]");
+  if (v) { const l = trouver(v.dataset.voir); if (l) ouvrirLieu(l); }
+  if (f) {
+    const l = trouver(f.dataset.fav); if (!l) return;
+    basculerFav(l);
+    if (tab === "favoris") rendreFavoris(); else if (f.textContent.length < 3) f.textContent = estFav(l) ? "♥" : "♡";
+  }
+}
+
+// ---- suggestions / résultats ----
+const sugg = $("sugg");
+function corpsResultat(l) {
+  return '<b>' + esc(l.nom) + '</b><small>' + (l.source === "verifie" ? "✔ Vérifié" : l.source === "reference" ? "Référencé" : "OpenStreetMap") + " · " + esc(l.type || CAT_LABEL[l.cat]) +
+    (l.adresse ? " · " + esc(l.adresse) : "") + (aPosition(l) ? "" : " · sans position") + '</small>';
+}
+function meilleurs(q, n) {
+  return lieux.filter(l => correspond(texteRecherche(l), q)).sort((a, b) => (correspond(a.nom, q) ? 0 : 1) - (correspond(b.nom, q) ? 0 : 1) || ORDRE[a.source] - ORDRE[b.source]).slice(0, n);
+}
+function majSuggestions(q) {
+  const m = q && q.length >= 2 ? meilleurs(q, 6) : [];
+  if (!m.length) { sugg.style.display = "none"; return; }
+  sugg.innerHTML = m.map((l, i) => '<button type="button" role="option" data-s="' + i + '">' + corpsResultat(l) + '</button>').join("");
+  sugg._items = m; sugg.style.display = "block";
+}
+function choisir(l) {
+  $("recherche").value = l.nom;
+  setTab("carte"); window.afficher && window.afficher(false);
+  sugg.style.display = "none";
+  if (aPosition(l)) ouvrirLieu(l); else setMode("liste");
+}
+sugg.addEventListener("mousedown", e => e.preventDefault());
+sugg.addEventListener("click", e => {
+  const b = e.target.closest("button[data-s]"); if (!b) return;
+  sugg.style.display = "none"; choisir(sugg._items[Number(b.dataset.s)]);
+});
+const home = $("rechercheHome"), resHome = $("resHome");
+function majHome() {
+  const q = home.value.trim();
+  if (q.length < 2) { resHome.innerHTML = ""; return; }
+  const m = meilleurs(q, 8);
+  resHome._items = m;
+  resHome.innerHTML = m.length ? m.map((l, i) => '<button type="button" class="res" data-r="' + i + '"><span class="e" style="background:' + (COULEUR[l.cat] || COULEUR.autre) + '">' + emojiDe(l) + '</span><span>' + corpsResultat(l) + '</span></button>').join("") :
+    '<div class="vide">Aucun lieu trouvé pour « ' + esc(q) + ' ». Essayez un autre mot.</div>';
+}
+home.addEventListener("input", majHome);
+home.addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); const q = home.value.trim(); if (!q) return; $("recherche").value = q; setTab("carte"); window.afficher && window.afficher(true, true); home.blur(); } });
+resHome.addEventListener("click", e => { const b = e.target.closest("button[data-r]"); if (b) choisir(resHome._items[Number(b.dataset.r)]); });
+
+function rendreAccueil() {
+  const present = {};
+  lieux.forEach(l => { present[l.cat] = (present[l.cat] || 0) + 1; });
+  $("cats").innerHTML = Object.keys(CATS).filter(c => present[c]).map(c =>
+    '<button type="button" class="cat" data-c="' + c + '"><span class="e" style="background:' + COULEUR[c] + '">' + EMOJI[c] + '</span>' + esc(CAT_COURT[c]) + '<small>' + present[c] + '</small></button>').join("");
+  const pops = lieux.filter(l => l.source !== "osm" && aPosition(l)).sort((a, b) => ORDRE[a.source] - ORDRE[b.source] || (b.tel ? 1 : 0) - (a.tel ? 1 : 0)).slice(0, 10);
+  $("pops").innerHTML = pops.map((l, i) => '<button type="button" class="pop" data-p="' + i + '"><div class="top" style="background:' + (COULEUR[l.cat] || COULEUR.autre) + '">' + emojiDe(l) + '</div><div class="txt"><b>' + esc(l.nom) + '</b><small>' + (l.source === "verifie" ? "✔ Vérifié" : "Référencé") + " · " + esc(l.type || CAT_LABEL[l.cat]) + '</small></div></button>').join("");
+  $("pops")._items = pops;
+}
+$("cats").addEventListener("click", e => { const b = e.target.closest("[data-c]"); if (!b) return; filtre = b.dataset.c; $("recherche").value = ""; $("verifies").checked = false; setTab("carte"); construireFiltres(); window.afficher && window.afficher(true); setMode("carte"); });
+$("pops").addEventListener("click", e => { const b = e.target.closest("[data-p]"); if (b) ouvrirLieu($("pops")._items[Number(b.dataset.p)]); });
+
+// ---- installation ----
+let invite = null;
+window.addEventListener("beforeinstallprompt", e => {
+  e.preventDefault(); invite = e;
+  $("installTxt").innerHTML = 'Ajoutez Nexvia à votre écran d\'accueil pour l\'ouvrir comme une application.<br><button type="button" id="btnInstall">Installer</button>';
+  $("btnInstall").addEventListener("click", () => { invite.prompt(); invite = null; });
+});
+window.addEventListener("appinstalled", () => { $("install").style.display = "none"; });
+if (window.matchMedia && window.matchMedia("(display-mode: standalone)").matches) $("install").style.display = "none";
+if ("serviceWorker" in navigator && location.protocol.startsWith("http")) { try { navigator.serviceWorker.register("sw.js").catch(() => {}); } catch (e) {} }
+
+function setMode(m) {
+  mode = m;
+  $("map").style.display = m === "carte" ? "block" : "none";
+  $("moi").style.display = m === "carte" ? "block" : "none";
+  $("liste").style.display = m === "liste" ? "block" : "none";
+  $("btnCarte").setAttribute("aria-pressed", String(m === "carte"));
+  $("btnListe").setAttribute("aria-pressed", String(m === "liste"));
+  if (m === "carte" && window.__carte) window.__carte.invalidateSize();
+}
+function construireFiltres() {
+  const present = new Set(lieux.map(l => l.cat)), box = $("chips");
+  box.innerHTML = "";
+  ["tous"].concat(Object.keys(CATS).filter(c => present.has(c))).forEach(c => {
+    const b = document.createElement("button");
+    b.type = "button"; b.textContent = c === "tous" ? "Tous" : CATS[c];
+    b.setAttribute("aria-pressed", String(c === filtre));
+    b.addEventListener("click", () => { filtre = c; construireFiltres(); afficher(true); });
+    box.appendChild(b);
+  });
 }
 
 if (typeof L === "undefined") {
-  document.getElementById("map").style.display = "none";
-  document.getElementById("statut").style.display = "none";
-  document.getElementById("erreur").style.display = "block";
+  $("cartewrap").style.display = "none"; $("statut").style.display = "none"; $("erreur").style.display = "block";
+  rendreAccueil();
 } else {
-  const map = L.map("map").setView([-4.308, 15.298], 14);
-  L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
-    maxZoom: 19,
-    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> (ODbL)'
+  const map = L.map("map", { zoomControl: true }).setView([-4.308, 15.298], 14);
+  window.__carte = map;
+  L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 19, attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> (ODbL)' }).addTo(map);
+
+  const groupe = L.layerGroup().addTo(map); // lieux vérifiés : toujours visibles
+  const bulles = L.markerClusterGroup({
+    maxClusterRadius: 55, disableClusteringAtZoom: 17, showCoverageOnHover: false, spiderfyOnMaxZoom: false, zoomToBoundsOnClick: true,
+    iconCreateFunction: c => { const n = c.getChildCount(), t = n < 10 ? 40 : n < 50 ? 46 : 52; return L.divIcon({ className: "", html: '<div class="cl">' + n + '</div>', iconSize: [t, t] }); }
   }).addTo(map);
 
-  const groupe = L.layerGroup().addTo(map);
-
-  let lieux = VERIFIES.map(l => ({ ...l, source: "verifie" }));
-  let filtre = "tous", mode = "carte", visibles = [];
-
-  const tailleDe = l => {
-    const z = map.getZoom();
-    const base = z <= 13 ? 24 : z <= 14 ? 28 : z <= 15 ? 32 : 38;
-    return base + (l.source === "verifie" ? 6 : 0);
-  };
   function iconeDe(l) {
-    const col = COULEUR[l.cat] || COULEUR.autre, t = tailleDe(l), petit = t < 30;
-    const html = '<div class="ico' + (l.source === "verifie" ? " ver" : "") + '" style="background:' + col + ';font-size:' + Math.round(t * 0.52) + 'px">' + emojiDe(l) +
-      (l.source === "verifie" ? '<i class="ok">✔</i>' : "") + (l.tel && !petit ? '<i class="tel">☎</i>' : "") + '</div>';
-    return L.divIcon({ className: "", html, iconSize: [t, t], iconAnchor: [t / 2, t / 2], popupAnchor: [0, -t / 2] });
+    const col = COULEUR[l.cat] || COULEUR.autre, v = l.source === "verifie", t = v ? 42 : 34;
+    return L.divIcon({ className: "", iconSize: [t, t], iconAnchor: [t / 2, t / 2],
+      html: '<div class="ico' + (v ? " ver" : "") + '" style="background:' + col + ';font-size:' + Math.round(t * 0.5) + 'px">' + emojiDe(l) + (v ? '<i class="ok">✔</i>' : "") + (l.tel && !v ? '<i class="tel">☎</i>' : "") + '</div>' });
   }
   function creerMarqueur(l) {
-    const z = l.source === "verifie" ? 1000 : l.source === "reference" ? 500 : l.tel ? 300 : 0;
-    return L.marker([l.lat, l.lng], { icon: iconeDe(l), title: l.nom, keyboard: true, zIndexOffset: z }).bindPopup(fiche(l), { minWidth: 230, maxWidth: 260 });
+    const m = L.marker([l.lat, l.lng], { icon: iconeDe(l), title: l.nom, keyboard: true, zIndexOffset: l.source === "verifie" ? 1000 : l.tel ? 300 : 0 });
+    m.on("click", () => { ouvrirFiche(l); centrerSurLieu(l, false); });
+    return m;
   }
-  let tailleCourante = null;
-  map.on("zoomend", () => {
-    const z = map.getZoom(), t = z <= 13 ? 1 : z <= 14 ? 2 : z <= 15 ? 3 : 4;
-    if (t === tailleCourante) return;
-    tailleCourante = t;
-    visibles.forEach(l => { if (l._m) l._m.setIcon(iconeDe(l)); });
-  });
-
-  function construireFiltres() {
-    const present = new Set(lieux.map(l => l.cat));
-    const box = document.getElementById("chips");
-    box.innerHTML = "";
-    ["tous"].concat(Object.keys(CATS).filter(c => present.has(c))).forEach(c => {
-      const b = document.createElement("button");
-      b.textContent = c === "tous" ? "Tous" : CATS[c];
-      b.setAttribute("aria-pressed", String(c === filtre));
-      b.addEventListener("click", () => { filtre = c; construireFiltres(); afficher(true); });
-      box.appendChild(b);
-    });
+  function centrerSurLieu(l, zoom) {
+    const ll = [l.lat, l.lng];
+    if (zoom) map.setView(ll, Math.max(map.getZoom(), 17)); else map.panTo(ll);
+    setTimeout(() => { const h = sheet.offsetHeight; if (h) map.panBy([0, Math.round(h / 2)]); }, zoom ? 60 : 320);
   }
-
-  function setMode(m) {
-    mode = m;
-    document.getElementById("map").style.display = m === "carte" ? "block" : "none";
-    document.getElementById("liste").style.display = m === "liste" ? "block" : "none";
-    document.getElementById("btnCarte").setAttribute("aria-pressed", String(m === "carte"));
-    document.getElementById("btnListe").setAttribute("aria-pressed", String(m === "liste"));
-    if (m === "carte") map.invalidateSize();
-  }
-
-  const ORDRE = { verifie: 0, reference: 1, osm: 2 };
-  function rendreListe() {
-    const items = visibles.slice().sort((a, b) => ORDRE[a.source] - ORDRE[b.source] || a.nom.localeCompare(b.nom, "fr")).slice(0, 300);
-    visibles._liste = items;
-    const box = document.getElementById("liste");
-    if (!items.length) { box.innerHTML = '<p class="vide">Aucun lieu à afficher avec ces filtres.</p>'; return; }
-    box.innerHTML = items.map((l, i) =>
-      '<article class="item" style="border-left-color:' + (COULEUR[l.cat] || COULEUR.autre) + '"><h3>' + emojiDe(l) + ' ' + esc(l.nom) + '</h3>' + badgeHTML(l) +
-      (l.adresse ? '<p>📍 ' + esc(l.adresse) + '</p>' : '') +
-      (l.horaires ? '<p>🕒 ' + esc(l.horaires) + '</p>' : '') +
-      (l.tel ? '<p>📞 ' + esc(l.tel) + '</p>' : '') +
-      (aPosition(l) ? '' : '<p class="note">Position exacte non précisée pour l\'instant.</p>') +
-      '<div class="actions">' + (l.tel ? '<a class="btn" href="' + esc(telHref(l.tel)) + '">Appeler</a>' : '') +
-      (aPosition(l) ? '<button type="button" class="btn alt" data-i="' + i + '">Voir sur la carte</button>' : '') + '</div></article>'
-    ).join("");
-  }
-
-  function ouvrirLieu(l) {
-    setMode("carte");
-    map.setView([l.lat, l.lng], 17);
-    const m = l._m;
-    if (!m) return;
-    m.openPopup();
-  }
-
-  const sugg = document.getElementById("sugg");
-  function majSuggestions(q) {
-    if (!q || q.length < 2 || !visibles.length) { sugg.style.display = "none"; return; }
-    const meilleurs = visibles.slice().sort((a, b) => (correspond(a.nom, q) ? 0 : 1) - (correspond(b.nom, q) ? 0 : 1) || ORDRE[a.source] - ORDRE[b.source]).slice(0, 6);
-    sugg.innerHTML = meilleurs.map((l, i) => '<button type="button" role="option" data-s="' + i + '"><b>' + esc(l.nom) + '</b><small>' +
-      (l.source === "verifie" ? "✔ Vérifié" : l.source === "reference" ? "Référencé" : "OpenStreetMap") + " · " + esc(l.type || CAT_LABEL[l.cat]) +
-      (l.adresse ? " · " + esc(l.adresse) : "") + (aPosition(l) ? "" : " · sans position") + '</small></button>').join("");
-    sugg._items = meilleurs;
-    sugg.style.display = "block";
-  }
-  sugg.addEventListener("mousedown", e => e.preventDefault());
-  sugg.addEventListener("click", e => {
-    const b = e.target.closest("button[data-s]");
-    if (!b) return;
-    const l = sugg._items[Number(b.dataset.s)];
-    sugg.style.display = "none";
-    document.getElementById("recherche").value = l.nom;
-    afficher(false);
-    sugg.style.display = "none";
-    if (aPosition(l)) ouvrirLieu(l); else setMode("liste");
-  });
+  window.ouvrirLieu = function (l) {
+    setTab("carte"); setMode("carte");
+    map.invalidateSize();
+    ouvrirFiche(l);
+    if (aPosition(l)) centrerSurLieu(l, true);
+  };
+  map.on("click", fermerFiche);
 
   function afficher(recentrer, ouvrir) {
-    const q = document.getElementById("recherche").value.trim();
-    const seulV = document.getElementById("verifies").checked;
-    groupe.clearLayers();
+    const q = $("recherche").value.trim(), seulV = $("verifies").checked;
+    groupe.clearLayers(); bulles.clearLayers();
     visibles = lieux.filter(l => (q || filtre === "tous" || l.cat === filtre) && (q || !seulV || l.source === "verifie") && (!q || correspond(texteRecherche(l), q)));
-    const pts = [];
+    const pts = [], autres = [];
     visibles.forEach(l => {
       l._m = null;
       if (!aPosition(l)) return;
-      const m = creerMarqueur(l);
-      l._m = m;
-      pts.push([l.lat, l.lng]);
-      groupe.addLayer(m);
+      const m = creerMarqueur(l); l._m = m; pts.push([l.lat, l.lng]);
+      if (l.source === "verifie") groupe.addLayer(m); else autres.push(m);
     });
-    rendreListe();
-
-    const n = s => visibles.filter(l => l.source === s).length;
-    const sans = visibles.length - pts.length;
+    bulles.addLayers(autres);
+    rendreListe(); majSuggestions(q);
+    const n = s => visibles.filter(l => l.source === s).length, sans = visibles.length - pts.length;
     let txt = visibles.length + " lieu(x) : " + n("verifie") + " vérifié(s), " + n("reference") + " référencé(s), " + n("osm") + " OpenStreetMap.";
     if (sans) txt += " " + sans + " sans position (voir la Liste).";
     if (q && !visibles.length) txt = "Aucun lieu trouvé pour « " + q + " ». Essayez un autre mot.";
-    document.getElementById("statut").textContent = txt;
-
-    majSuggestions(q);
-
+    $("statut").textContent = txt;
     if (recentrer && mode === "carte") {
       const actif = q || filtre !== "tous" || seulV;
-      const proches = pts.filter(p => p[0] > ZONE_LARGE.s && p[0] < ZONE_LARGE.n && p[1] > ZONE_LARGE.o && p[1] < ZONE_LARGE.e);
-      const base = proches.length ? proches : pts;
-      if (!actif) map.fitBounds(GOMBE);
-      else if (base.length) map.fitBounds(L.latLngBounds(base).pad(0.2), { maxZoom: 16 });
+      const proches = pts.filter(p => p[0] > ZONE_LARGE.s && p[0] < ZONE_LARGE.n && p[1] > ZONE_LARGE.o && p[1] < ZONE_LARGE.e), base = proches.length ? proches : pts;
+      if (!actif) map.fitBounds(GOMBE); else if (base.length) map.fitBounds(L.latLngBounds(base).pad(0.2), { maxZoom: 16 });
     }
     if (ouvrir && visibles.length) {
-      if (visibles.length === 1 && pts.length === 1) ouvrirLieu(visibles[0]);
-      else if (!pts.length) setMode("liste");
-      else if (visibles.length === 1) setMode("liste");
+      if (visibles.length === 1 && pts.length === 1) window.ouvrirLieu(visibles[0]);
+      else if (!pts.length || visibles.length === 1) setMode("liste");
     }
   }
+  window.afficher = afficher;
+  function rendreListe() {
+    const items = visibles.slice().sort((a, b) => ORDRE[a.source] - ORDRE[b.source] || a.nom.localeCompare(b.nom, "fr")).slice(0, 300);
+    $("liste").innerHTML = items.length ? items.map(l => itemHTML(l, "liste")).join("") : '<p class="vide">Aucun lieu à afficher avec ces filtres.</p>';
+  }
+  $("liste").addEventListener("click", clicItems);
 
-  const champ = document.getElementById("recherche");
+  const champ = $("recherche");
   let minuterie = null;
-  champ.addEventListener("input", () => {
-    afficher(false);
-    clearTimeout(minuterie);
-    minuterie = setTimeout(() => { if (champ.value.trim().length >= 2) afficher(true); }, 450);
-  });
+  champ.addEventListener("input", () => { afficher(false); clearTimeout(minuterie); minuterie = setTimeout(() => { if (champ.value.trim().length >= 2) afficher(true); }, 450); });
   champ.addEventListener("blur", () => setTimeout(() => { sugg.style.display = "none"; }, 150));
-  champ.addEventListener("keydown", e => {
-    if (e.key === "Enter") { e.preventDefault(); clearTimeout(minuterie); afficher(true, true); sugg.style.display = "none"; champ.blur(); }
-  });
-  document.getElementById("verifies").addEventListener("change", () => afficher(true));
-  document.getElementById("btnCarte").addEventListener("click", () => { setMode("carte"); afficher(true); });
-  document.getElementById("btnListe").addEventListener("click", () => setMode("liste"));
-  document.getElementById("liste").addEventListener("click", e => {
-    const b = e.target.closest("button[data-i]");
-    if (b) ouvrirLieu(visibles._liste[Number(b.dataset.i)]);
-  });
-  document.getElementById("entrer").addEventListener("click", () => {
-    document.getElementById("accueil").style.display = "none";
-    map.invalidateSize();
-    map.fitBounds(GOMBE);
-  });
+  champ.addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); clearTimeout(minuterie); afficher(true, true); sugg.style.display = "none"; champ.blur(); } });
+  $("verifies").addEventListener("change", () => afficher(true));
+  $("btnCarte").addEventListener("click", () => { setMode("carte"); afficher(true); });
+  $("btnListe").addEventListener("click", () => setMode("liste"));
 
   let moiMarker = null;
-  document.getElementById("moi").addEventListener("click", () => {
-    const st = document.getElementById("statut");
-    setMode("carte");
+  $("moi").addEventListener("click", () => {
+    const st = $("statut");
     if (!navigator.geolocation) { st.textContent = "La localisation n'est pas disponible sur cet appareil."; return; }
     navigator.geolocation.getCurrentPosition(p => {
       const ll = [p.coords.latitude, p.coords.longitude];
       if (moiMarker) map.removeLayer(moiMarker);
-      moiMarker = L.circleMarker(ll, { radius: 8, color: "#fff", weight: 3, fillColor: "#2f6fed", fillOpacity: 1 }).addTo(map).bindTooltip("Vous êtes ici");
+      moiMarker = L.marker(ll, { icon: L.divIcon({ className: "", html: '<div class="mine"></div>', iconSize: [20, 20] }), interactive: false }).addTo(map);
       map.setView(ll, 16);
     }, () => { st.textContent = "Position indisponible. Autorisez la localisation dans votre navigateur, puis réessayez."; });
   });
 
-  // ---- Données supplémentaires : references.json (tableau d'Emmanuel) et osm.json (OpenStreetMap) ----
+  // ---- données supplémentaires ----
   const dejaPresent = l => lieux.some(x => norm(x.nom) === norm(l.nom) || (aPosition(l) && aPosition(x) && x.cat === l.cat && distM(x.lat, x.lng, l.lat, l.lng) < 40));
-
   function ajouterRefs(liste) {
-    (liste || []).forEach(r => {
-      if (!r.nom || dejaPresent(r)) return;
-      lieux.push({ nom: r.nom, cat: CATS[r.cat] ? r.cat : "autre", type: r.type || "", adresse: r.adresse || "", tel: r.tel || "", horaires: r.horaires || "", lat: r.lat, lng: r.lng, posSource: r.posSource || "", source: "reference" });
-    });
+    (liste || []).forEach(r => { if (!r.nom || dejaPresent(r)) return;
+      lieux.push({ nom: r.nom, cat: CATS[r.cat] ? r.cat : "autre", type: r.type || "", adresse: r.adresse || "", tel: r.tel || "", horaires: r.horaires || "", lat: r.lat, lng: r.lng, posSource: r.posSource || "", source: "reference" }); });
   }
   function ajouterOSM(data) {
     (data.elements || []).forEach(el => {
-      const t = el.tags || {};
-      const terrain = ["pitch", "sports_centre", "stadium"].includes(t.leisure);
+      const t = el.tags || {}, terrain = ["pitch", "sports_centre", "stadium"].includes(t.leisure);
       if (!t.name && !terrain) return;
       const nom = t.name || (t.sport === "soccer" ? "Terrain de football" : "Terrain de sport");
-      const lat = el.lat !== undefined ? el.lat : el.center && el.center.lat;
-      const lng = el.lon !== undefined ? el.lon : el.center && el.center.lon;
+      const lat = el.lat !== undefined ? el.lat : el.center && el.center.lat, lng = el.lon !== undefined ? el.lon : el.center && el.center.lon;
       if (typeof lat !== "number" || typeof lng !== "number") return;
       const cat = catOSM(t);
-      const l = { nom, cat, type: CAT_LABEL[cat], lat, lng, source: "osm", religion: t.religion || "", emoji: t.amenity === "cafe" ? "☕" : t.amenity === "fast_food" ? "🍔" : t.amenity === "nightclub" ? "🎶" : "", adresse: [t["addr:housenumber"], t["addr:street"]].filter(Boolean).join(" "), tel: t.phone || t["contact:phone"] || "", horaires: t.opening_hours || "" };
+      const l = { nom, cat, type: CAT_LABEL[cat], lat, lng, source: "osm", religion: t.religion || "", emoji: t.amenity === "cafe" ? "☕" : t.amenity === "fast_food" ? "🍔" : t.amenity === "nightclub" ? "🎶" : "",
+        adresse: [t["addr:housenumber"], t["addr:street"]].filter(Boolean).join(" "), tel: t.phone || t["contact:phone"] || "", horaires: t.opening_hours || "" };
       if (!dejaPresent(l)) lieux.push(l);
     });
   }
   const lireJSON = u => fetch(u, { cache: "no-cache" }).then(r => { if (!r.ok) throw new Error("absent"); return r.json(); }).catch(() => null);
 
-  construireFiltres();
-  afficher(true);
+  construireFiltres(); afficher(true); rendreAccueil();
   Promise.all([lireJSON("references.json"), lireJSON("osm.json")]).then(([refs, osm]) => {
     if (refs) ajouterRefs(refs);
     if (osm) ajouterOSM(osm);
-    construireFiltres();
-    afficher(true);
-    if (!refs && !osm) document.getElementById("statut").textContent += " (Données supplémentaires pas encore ajoutées.)";
+    construireFiltres(); afficher(true); rendreAccueil();
+    if (!refs && !osm) $("statut").textContent += " (Données supplémentaires pas encore ajoutées.)";
   });
 }
+
 </script>
 </body>
 </html>
