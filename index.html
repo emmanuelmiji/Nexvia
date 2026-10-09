@@ -193,7 +193,7 @@
       </div>
       <div class="install" id="install">📲 <b>Installer Nexvia sur votre téléphone</b><br><span id="installTxt">Dans le menu de votre navigateur, choisissez « Ajouter à l'écran d'accueil ». Nexvia s'ouvrira alors comme une application.</span></div>
       <p class="note-bas">Lieux « ✔ Vérifiés » : confirmés par l'équipe. « Référencés » : collectés, pas encore confirmés. « OpenStreetMap » : informations de la communauté. Appelez avant de vous déplacer.<br>Carte © contributeurs OpenStreetMap.</p>
-      <div class="pied"><div class="wax"></div>Fait avec ❤️ à Kinshasa · République démocratique du Congo<br>Contact : nexviacongolais@gmail.com</div>
+      <div class="pied"><div class="wax"></div>Fait avec ❤️ à Kinshasa · République démocratique du Congo<br>Contact : nexviacongolais@gmail.com<br><a href="confidentialite.html" style="color:inherit">Politique de confidentialité</a></div>
     </div>
   </section>
 
@@ -921,7 +921,7 @@ $("pres").addEventListener("click", () => {
 });
 $("partager").addEventListener("click", () => {
   const texte = "Nexvia : trouvez restaurants, pharmacies et services à Gombe, Kinshasa. Un projet congolais, soutenons-le !";
-  const url = "https://emmanuelmiji.github.io/Nexvia/";
+  const url = "https://nexvia-rdc.pages.dev/";
   if (navigator.share) { navigator.share({ title: "Nexvia", text: texte, url: url }).catch(() => {}); }
   else { window.open("https://wa.me/?text=" + encodeURIComponent(texte + " " + url), "_blank", "noopener"); }
 });
