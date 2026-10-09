@@ -32,7 +32,7 @@
   #statut { font-size: .75rem; padding: 5px 10px; background: #eef1f6; color: #3b4658; }
   .pin { width: 24px; height: 24px; border-radius: 50% 50% 50% 0; transform: rotate(-45deg); border: 2.5px solid #fff; box-shadow: 0 1px 5px rgba(0,0,0,.5); }
   .pin.big { width: 30px; height: 30px; }
-  .dot { width: 16px; height: 16px; border-radius: 50%; background: var(--osm); border: 2px solid #fff; box-shadow: 0 0 3px rgba(0,0,0,.5); }
+  .dot { width: 20px; height: 20px; border-radius: 50%; background: var(--osm); border: 2px solid #fff; box-shadow: 0 0 3px rgba(0,0,0,.5); }
   .photos { display: flex; gap: 6px; overflow-x: auto; scroll-snap-type: x mandatory; margin: 0 0 8px; }
   .photos img { flex: none; width: 100%; max-width: 230px; height: 120px; object-fit: cover; border-radius: 8px; scroll-snap-align: start; background: #e8ebf1; }
   .fiche h2 { font-size: 1rem; margin: 0 0 3px; }
@@ -65,8 +65,15 @@
   .vide { text-align: center; color: #5b6575; padding: 30px 10px; }
   .banniere { height: 64px; border-radius: 8px; margin-bottom: 8px; display: flex; align-items: center; justify-content: center; font-size: 2rem; }
   .badge.ref { background: #fff1cf; color: #7a5200; }
-  .touch { width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; }
+  .touch { width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; }
   .pin span { display: block; transform: rotate(45deg); color: #fff; font-weight: 800; font-size: 14px; line-height: 20px; text-align: center; }
+  .pin.tel span { font-size: 13px; line-height: 21px; }
+  .bar { position: relative; }
+  #sugg { display: none; position: absolute; left: 10px; right: 10px; top: 56px; z-index: 1500; background: #fff; border: 1px solid #c5ccd8; border-radius: 10px; box-shadow: 0 6px 18px rgba(0,0,0,.2); max-height: 300px; overflow-y: auto; }
+  #sugg button { display: block; width: 100%; text-align: left; padding: 10px 12px; border: 0; border-bottom: 1px solid #eef1f6; background: #fff; font-family: inherit; cursor: pointer; }
+  #sugg button:last-child { border-bottom: 0; }
+  #sugg b { display: block; font-size: .95rem; color: var(--ink); }
+  #sugg small { color: #5b6575; font-size: .78rem; }
   .pin.big span { line-height: 25px; }
   #accueil { position: fixed; inset: 0; z-index: 2000; background: linear-gradient(160deg, #14213d 0%, #1d3566 100%); color: #fff; display: flex; align-items: center; justify-content: center; padding: 24px 24px 110px; overflow-y: auto; }
   #accueil .carte { max-width: 460px; width: 100%; text-align: center; }
@@ -89,7 +96,8 @@
 </header>
 <div class="drapeau"></div>
 <div class="bar">
-  <input type="search" id="recherche" placeholder="Rechercher un lieu par son nom" aria-label="Rechercher un lieu">
+  <input type="search" id="recherche" placeholder="Rechercher un lieu (nom, avenue, type)" aria-label="Rechercher un lieu" autocomplete="off">
+  <div id="sugg" role="listbox"></div>
   <div class="chips" id="chips" role="group" aria-label="Catégories"></div>
   <div class="vues"><button type="button" id="btnCarte" aria-pressed="true">🗺️ Carte</button><button type="button" id="btnListe" aria-pressed="false">📋 Liste</button><button type="button" id="moi" class="moi">📍 Près de moi</button></div>
   <label class="opt"><input type="checkbox" id="verifies"> Afficher seulement les lieux vérifiés</label>
@@ -154,15 +162,17 @@ function esc(s) {
 }
 function norm(s) { return String(s).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]/g, ""); }
 function normS(s) { return norm(s).replace(/y/g, "i"); }
+const developper = s => String(s).replace(/\bbd\.?(?=\s|$)/gi, "boulevard").replace(/\bav\.?(?=\s|$)/gi, "avenue");
 function correspond(nom, requete) {
-  const n = normS(nom);
-  return String(requete).split(/\s+/).map(normS).filter(Boolean).every(t => n.includes(t));
+  const n = normS(developper(nom));
+  return String(developper(requete)).split(/\s+/).map(normS).filter(Boolean).every(t => n.includes(t));
 }
 function telHref(t) { return "tel:" + String(t).replace(/[^\d+]/g, ""); }
 function distM(a, b, c, d) {
   const R = 6371000, r = Math.PI / 180, x = (c - a) * r, y = (d - b) * r * Math.cos(a * r);
   return R * Math.sqrt(x * x + y * y);
 }
+const texteRecherche = l => [l.nom, l.adresse, l.type, CATS[l.cat]].filter(Boolean).join(" ");
 const aPosition = l => typeof l.lat === "number" && typeof l.lng === "number";
 
 function badgeHTML(l) {
@@ -221,9 +231,11 @@ if (typeof L === "undefined") {
     if (l.source === "verifie") {
       icon = L.divIcon({ className: "", html: '<div class="pin big" style="background:' + col + '"><span>✔</span></div>', iconSize: [30, 30], iconAnchor: [15, 30], popupAnchor: [0, -30] }); z = 1000;
     } else if (l.source === "reference") {
-      icon = L.divIcon({ className: "", html: '<div class="pin" style="background:' + col + '"><span></span></div>', iconSize: [24, 24], iconAnchor: [12, 24], popupAnchor: [0, -24] }); z = 500;
+      icon = L.divIcon({ className: "", html: '<div class="pin" style="background:' + col + '"><span></span></div>', iconSize: [26, 26], iconAnchor: [13, 26], popupAnchor: [0, -26] }); z = 500;
+    } else if (l.tel) {
+      icon = L.divIcon({ className: "", html: '<div class="pin tel" style="background:' + col + '"><span>☎</span></div>', iconSize: [26, 26], iconAnchor: [13, 26], popupAnchor: [0, -26] }); z = 300;
     } else {
-      icon = L.divIcon({ className: "", html: '<div class="touch"><div class="dot" style="background:' + col + '"></div></div>', iconSize: [34, 34], iconAnchor: [17, 17], popupAnchor: [0, -12] });
+      icon = L.divIcon({ className: "", html: '<div class="touch"><div class="dot" style="background:' + col + '"></div></div>', iconSize: [40, 40], iconAnchor: [20, 20], popupAnchor: [0, -14] });
     }
     return L.marker([l.lat, l.lng], { icon, title: l.nom, keyboard: true, zIndexOffset: z }).bindPopup(fiche(l), { minWidth: 230, maxWidth: 260 });
   }
@@ -272,15 +284,37 @@ if (typeof L === "undefined") {
     map.setView([l.lat, l.lng], 17);
     const m = l._m;
     if (!m) return;
-    if (l.source === "osm") groupeOSM.zoomToShowLayer(m, () => m.openPopup()); else m.openPopup();
+    if (groupeOSM.hasLayer(m)) groupeOSM.zoomToShowLayer(m, () => m.openPopup()); else m.openPopup();
   }
+
+  const sugg = document.getElementById("sugg");
+  function majSuggestions(q) {
+    if (!q || q.length < 2 || !visibles.length) { sugg.style.display = "none"; return; }
+    const meilleurs = visibles.slice().sort((a, b) => (correspond(a.nom, q) ? 0 : 1) - (correspond(b.nom, q) ? 0 : 1) || ORDRE[a.source] - ORDRE[b.source]).slice(0, 6);
+    sugg.innerHTML = meilleurs.map((l, i) => '<button type="button" role="option" data-s="' + i + '"><b>' + esc(l.nom) + '</b><small>' +
+      (l.source === "verifie" ? "✔ Vérifié" : l.source === "reference" ? "Référencé" : "OpenStreetMap") + " · " + esc(l.type || CAT_LABEL[l.cat]) +
+      (l.adresse ? " · " + esc(l.adresse) : "") + (aPosition(l) ? "" : " · sans position") + '</small></button>').join("");
+    sugg._items = meilleurs;
+    sugg.style.display = "block";
+  }
+  sugg.addEventListener("mousedown", e => e.preventDefault());
+  sugg.addEventListener("click", e => {
+    const b = e.target.closest("button[data-s]");
+    if (!b) return;
+    const l = sugg._items[Number(b.dataset.s)];
+    sugg.style.display = "none";
+    document.getElementById("recherche").value = l.nom;
+    afficher(false);
+    sugg.style.display = "none";
+    if (aPosition(l)) ouvrirLieu(l); else setMode("liste");
+  });
 
   function afficher(recentrer, ouvrir) {
     const q = document.getElementById("recherche").value.trim();
     const seulV = document.getElementById("verifies").checked;
     groupeFiables.clearLayers();
     groupeOSM.clearLayers();
-    visibles = lieux.filter(l => (filtre === "tous" || l.cat === filtre) && (!seulV || l.source === "verifie") && (!q || correspond(l.nom, q)));
+    visibles = lieux.filter(l => (q || filtre === "tous" || l.cat === filtre) && (q || !seulV || l.source === "verifie") && (!q || correspond(texteRecherche(l), q)));
     const osm = [], pts = [];
     visibles.forEach(l => {
       l._m = null;
@@ -288,7 +322,7 @@ if (typeof L === "undefined") {
       const m = creerMarqueur(l);
       l._m = m;
       pts.push([l.lat, l.lng]);
-      if (l.source === "osm") osm.push(m); else groupeFiables.addLayer(m);
+      if (l.source === "osm" && !l.tel) osm.push(m); else groupeFiables.addLayer(m);
     });
     groupeOSM.addLayers(osm);
     rendreListe();
@@ -299,6 +333,8 @@ if (typeof L === "undefined") {
     if (sans) txt += " " + sans + " sans position (voir la Liste).";
     if (q && !visibles.length) txt = "Aucun lieu trouvé pour « " + q + " ». Essayez un autre mot.";
     document.getElementById("statut").textContent = txt;
+
+    majSuggestions(q);
 
     if (recentrer && mode === "carte") {
       const actif = q || filtre !== "tous" || seulV;
@@ -315,9 +351,15 @@ if (typeof L === "undefined") {
   }
 
   const champ = document.getElementById("recherche");
-  champ.addEventListener("input", () => afficher(false));
+  let minuterie = null;
+  champ.addEventListener("input", () => {
+    afficher(false);
+    clearTimeout(minuterie);
+    minuterie = setTimeout(() => { if (champ.value.trim().length >= 2) afficher(true); }, 450);
+  });
+  champ.addEventListener("blur", () => setTimeout(() => { sugg.style.display = "none"; }, 150));
   champ.addEventListener("keydown", e => {
-    if (e.key === "Enter") { e.preventDefault(); afficher(true, true); champ.blur(); }
+    if (e.key === "Enter") { e.preventDefault(); clearTimeout(minuterie); afficher(true, true); sugg.style.display = "none"; champ.blur(); }
   });
   document.getElementById("verifies").addEventListener("change", () => afficher(true));
   document.getElementById("btnCarte").addEventListener("click", () => { setMode("carte"); afficher(true); });
