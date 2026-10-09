@@ -44,17 +44,6 @@
   "posSource": ""
  },
  {
-  "nom": "Kinshasa Mall",
-  "cat": "commerce",
-  "type": "Centre commercial",
-  "adresse": "av. du 24 Novembre (code Plus M7MR+VH9)",
-  "tel": "+243 990 854 519",
-  "horaires": "Généralement 08h–23h",
-  "lat": -4.315337,
-  "lng": 15.291484,
-  "posSource": "déduite du code Plus M7MR+VH9"
- },
- {
   "nom": "Terrain de Basketball de l'Eglise des Saints des derniers jours",
   "cat": "sport",
   "type": "Terrain de basket",
