@@ -1,44 +1,11 @@
 [
  {
-  "nom": "A Casa Mia Kinshasa",
-  "cat": "restaurant",
-  "type": "Restaurant",
-  "adresse": "70B, av. Uvira, Gombe",
-  "tel": "+243 812 331 938",
-  "horaires": "Mar–Dim 12h–22h30",
-  "lat": null,
-  "lng": null,
-  "posSource": ""
- },
- {
-  "nom": "Limoncello Italian Restaurant",
-  "cat": "restaurant",
-  "type": "Restaurant italien",
-  "adresse": "1, av. des Étoiles, Gombe",
-  "tel": "+243 815 141 111",
-  "horaires": "Lun–Sam 12h30–22h ; Dim 12h30–21h30",
-  "lat": null,
-  "lng": null,
-  "posSource": ""
- },
- {
   "nom": "Restaurant d'Vins",
   "cat": "restaurant",
   "type": "Restaurant méditerranéen",
   "adresse": "12, av. de la Mission, croisement av. Kalemie",
   "tel": "+243 844 427 118",
   "horaires": "Lun–Sam 11h–22h30",
-  "lat": null,
-  "lng": null,
-  "posSource": ""
- },
- {
-  "nom": "Aria Italian Restaurant",
-  "cat": "restaurant",
-  "type": "Restaurant italien",
-  "adresse": "09, av. de la Mongala",
-  "tel": "+243 998 386 718",
-  "horaires": "Tous les jours 12h–23h",
   "lat": null,
   "lng": null,
   "posSource": ""
@@ -55,72 +22,6 @@
   "posSource": ""
  },
  {
-  "nom": "Saveur d’Afrique",
-  "cat": "restaurant",
-  "type": "Restaurant africain",
-  "adresse": "Gombe (code Plus M7MF+G3M)",
-  "tel": "",
-  "horaires": "Tous les jours 12h–00h",
-  "lat": -4.316162,
-  "lng": 15.272672,
-  "posSource": "déduite du code Plus M7MF+G3M"
- },
- {
-  "nom": "Levantè",
-  "cat": "restaurant",
-  "type": "Restaurant italien",
-  "adresse": "Gombe",
-  "tel": "+243 979 333 332",
-  "horaires": "",
-  "lat": null,
-  "lng": null,
-  "posSource": ""
- },
- {
-  "nom": "K Lounge",
-  "cat": "bar",
-  "type": "Bar / lounge",
-  "adresse": "124, Bd du 30 Juin",
-  "tel": "+243 897 120 968",
-  "horaires": "Lun–Jeu 12h–01h ; Ven 12h–02h ; Sam 12h–03h ; Dim 12h–02h",
-  "lat": null,
-  "lng": null,
-  "posSource": ""
- },
- {
-  "nom": "Black gold l’or noir",
-  "cat": "bar",
-  "type": "Bar / lounge",
-  "adresse": "7A, av. du Port",
-  "tel": "",
-  "horaires": "Tous les jours 14h–03h",
-  "lat": null,
-  "lng": null,
-  "posSource": ""
- },
- {
-  "nom": "Chacha Bar",
-  "cat": "bar",
-  "type": "Bar",
-  "adresse": "Gombe",
-  "tel": "+243 973 860 001",
-  "horaires": "Ven–Sam 16h–04h ; Dim 16h–00h",
-  "lat": null,
-  "lng": null,
-  "posSource": ""
- },
- {
-  "nom": "Le klub lounge bar kinshasa",
-  "cat": "bar",
-  "type": "Bar lounge",
-  "adresse": "8, av. Isiro, Gombe",
-  "tel": "+243 810 001 899",
-  "horaires": "",
-  "lat": null,
-  "lng": null,
-  "posSource": ""
- },
- {
   "nom": "Live Music, Billard, archery, bowling",
   "cat": "bar",
   "type": "Discothèque / loisirs",
@@ -130,28 +31,6 @@
   "lat": null,
   "lng": null,
   "posSource": ""
- },
- {
-  "nom": "Alpha PHARMACY",
-  "cat": "pharmacie",
-  "type": "Pharmacie",
-  "adresse": "119, Bd du 30 Juin",
-  "tel": "+243 891 379 175",
-  "horaires": "Lun–Sam 08h–22h ; Dim 08h–21h",
-  "lat": null,
-  "lng": null,
-  "posSource": ""
- },
- {
-  "nom": "Pharmacie DE L'INDEPENDANCE",
-  "cat": "pharmacie",
-  "type": "Pharmacie",
-  "adresse": "Bd du 30 Juin, face à la Grande Poste",
-  "tel": "+243 850 444 444",
-  "horaires": "Lun–Sam 08h30–21h ; Dim 09h–21h",
-  "lat": -4.30376,
-  "lng": 15.30768,
-  "posSource": "coordonnées fournies"
  },
  {
   "nom": "Pharmacie NOTRE DAME",
@@ -165,61 +44,6 @@
   "posSource": ""
  },
  {
-  "nom": "City Market",
-  "cat": "commerce",
-  "type": "Supermarché",
-  "adresse": "713, av. des Aviateurs, intersection av. de l'Équateur",
-  "tel": "+243 817 270 707",
-  "horaires": "Lun–Sam 08h–22h ; Dim 09h–22h",
-  "lat": -4.3193,
-  "lng": 15.3094,
-  "posSource": "coordonnées fournies"
- },
- {
-  "nom": "GG Mart Super Marche",
-  "cat": "commerce",
-  "type": "Supermarché",
-  "adresse": "Av. Tombalbaye, Gombe",
-  "tel": "+243 971 060 620",
-  "horaires": "Lun–Sam 08h–21h30 ; Dim 08h–20h30",
-  "lat": null,
-  "lng": null,
-  "posSource": ""
- },
- {
-  "nom": "Newlys Super Marche (Gombe)",
-  "cat": "commerce",
-  "type": "Supermarché",
-  "adresse": "Av. Tombalbaye",
-  "tel": "+243 862 202 280",
-  "horaires": "Tous les jours 06h30–23h",
-  "lat": null,
-  "lng": null,
-  "posSource": ""
- },
- {
-  "nom": "New Lys – Supermarket",
-  "cat": "commerce",
-  "type": "Supermarché",
-  "adresse": "av. Tombalbaye (code Plus M8W8+7XP)",
-  "tel": "+243 890 011 628",
-  "horaires": "Lun–Sam 06h30–22h ; Dim 07h30–22h",
-  "lat": -4.304287,
-  "lng": 15.317453,
-  "posSource": "déduite du code Plus M8W8+7XP"
- },
- {
-  "nom": "Kin Mart",
-  "cat": "commerce",
-  "type": "Supermarché",
-  "adresse": "Gombe (code Plus M7JV+V2H)",
-  "tel": "+243 821 048 913",
-  "horaires": "Tous les jours 08h–22h",
-  "lat": -4.317812,
-  "lng": 15.292609,
-  "posSource": "déduite du code Plus M7JV+V2H"
- },
- {
   "nom": "Kinshasa Mall",
   "cat": "commerce",
   "type": "Centre commercial",
@@ -229,28 +53,6 @@
   "lat": -4.315337,
   "lng": 15.291484,
   "posSource": "déduite du code Plus M7MR+VH9"
- },
- {
-  "nom": "Ultras football center",
-  "cat": "sport",
-  "type": "Terrain de football",
-  "adresse": "av. de la Science (code Plus M7GQ+CQ9)",
-  "tel": "+243 851 999 991",
-  "horaires": "Lun 14h–18h30 ; Mar–Jeu 15h–18h30 ; Ven 10h–18h ; Sam 09h–18h ; Dim 09h–20h30",
-  "lat": -4.323962,
-  "lng": 15.289484,
-  "posSource": "déduite du code Plus M7GQ+CQ9"
- },
- {
-  "nom": "Terrain Flamboyant",
-  "cat": "sport",
-  "type": "Terrain de football",
-  "adresse": "av. des Flamboyants (code Plus M7PQ+P66)",
-  "tel": "+243 813 066 080",
-  "horaires": "",
-  "lat": -4.313212,
-  "lng": 15.288016,
-  "posSource": "déduite du code Plus M7PQ+P66"
  },
  {
   "nom": "Terrain de Basketball de l'Eglise des Saints des derniers jours",
@@ -275,17 +77,6 @@
   "posSource": "coordonnées fournies"
  },
  {
-  "nom": "BSK Stadium",
-  "cat": "sport",
-  "type": "Terrain / stade football",
-  "adresse": "av. des Mandariniers (code Plus M7PR+XQC)",
-  "tel": "+243 815 000 001",
-  "horaires": "",
-  "lat": -4.312562,
-  "lng": 15.291891,
-  "posSource": "déduite du code Plus M7PR+XQC"
- },
- {
   "nom": "EFA Training Center",
   "cat": "sport",
   "type": "Terrain de football",
@@ -295,28 +86,6 @@
   "lat": null,
   "lng": null,
   "posSource": ""
- },
- {
-  "nom": "OJ Fitness",
-  "cat": "sport",
-  "type": "Salle de sport",
-  "adresse": "8, av. Kalemie",
-  "tel": "+243 814 637 171",
-  "horaires": "Lun–Ven 06h30–21h ; Sam–Dim 07h30–18h30",
-  "lat": null,
-  "lng": null,
-  "posSource": ""
- },
- {
-  "nom": "Cathédrale Notre-Dame Du Congo",
-  "cat": "culte",
-  "type": "Cathédrale catholique",
-  "adresse": "Av. du 24 Novembre",
-  "tel": "",
-  "horaires": "À vérifier selon messes",
-  "lat": -4.32384,
-  "lng": 15.29463,
-  "posSource": "coordonnées fournies"
  },
  {
   "nom": "Paroisse Sacré-Cœur de Kinshasa",
@@ -350,27 +119,5 @@
   "lat": null,
   "lng": null,
   "posSource": ""
- },
- {
-  "nom": "Hilton Kinshasa",
-  "cat": "hotel",
-  "type": "Hôtel",
-  "adresse": "10, av. Wagenia",
-  "tel": "+243 815 590 080",
-  "horaires": "Réception 24h/24",
-  "lat": -4.29852,
-  "lng": 15.31212,
-  "posSource": "coordonnées fournies"
- },
- {
-  "nom": "Hotel Pour Vous",
-  "cat": "hotel",
-  "type": "Hôtel",
-  "adresse": "22, av. de la République du Tchad, Gombe",
-  "tel": "",
-  "horaires": "Réception / service 24h",
-  "lat": -4.30449,
-  "lng": 15.31223,
-  "posSource": "coordonnées fournies"
  }
 ]
