@@ -27,7 +27,8 @@
 
   /* ---------- barre du bas ---------- */
   nav#tabs { display: flex; background: #fff; border-top: 1px solid var(--line); padding-bottom: env(safe-area-inset-bottom); z-index: 1900; box-shadow: 0 -2px 10px rgba(20,33,61,.06); }
-  nav#tabs button { flex: 1; border: 0; background: none; padding: 8px 4px 7px; color: var(--muted); font-size: .72rem; font-weight: 700; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 2px; }
+  nav#tabs { justify-content: center; }
+  nav#tabs button { flex: 1; max-width: 220px; border: 0; background: none; padding: 8px 4px 7px; color: var(--muted); font-size: .72rem; font-weight: 700; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 2px; }
   nav#tabs button span.i { font-size: 1.35rem; line-height: 1.2; filter: grayscale(1) opacity(.7); }
   nav#tabs button[aria-current="page"] { color: var(--nav); }
   nav#tabs button[aria-current="page"] span.i { filter: none; }
@@ -35,29 +36,42 @@
 
   /* ---------- Découvrir ---------- */
   #s-decouvrir { overflow-y: auto; -webkit-overflow-scrolling: touch; }
-  .hero { position: relative; flex: none; color: #fff; padding: 18px 16px 74px; background: linear-gradient(180deg, #0b1530 0%, #14346b 60%, #1f5fae 100%); overflow: hidden; }
+  .hero { position: relative; flex: none; color: #fff; padding: 18px max(16px, calc((100% - 760px) / 2 + 16px)) 78px; background: radial-gradient(120% 90% at 85% 0%, #1790f0 0%, rgba(23,144,240,0) 60%), linear-gradient(180deg, #0a2a6b 0%, #0b57b5 62%, #1a86e0 100%); overflow: hidden; }
+  .hero .bande { position: absolute; z-index: 0; right: -34px; top: -30px; width: 58px; height: 330px; transform: rotate(36deg); transform-origin: top right; background: linear-gradient(90deg, #f7d618 0 15%, #ce1021 15% 85%, #f7d618 85%); opacity: .92; box-shadow: 0 0 24px rgba(0,0,0,.25); }
+  .hero .etoile { position: absolute; z-index: 0; right: 92px; top: 16px; width: 26px; height: 26px; opacity: .95; filter: drop-shadow(0 1px 3px rgba(0,0,0,.35)); }
+  .hero .salut { position: relative; z-index: 1; display: inline-flex; align-items: center; gap: 8px; margin-top: 14px; padding: 5px 12px 5px 6px; border-radius: 999px; background: rgba(255,255,255,.16); border: 1px solid rgba(255,255,255,.3); font-size: .82rem; font-weight: 700; backdrop-filter: blur(4px); }
+  .flag { border-radius: 3px; box-shadow: 0 0 0 1.5px rgba(255,255,255,.85), 0 1px 4px rgba(0,0,0,.35); flex: none; }
   .hero .ciel { position: absolute; left: 0; right: 0; bottom: 0; width: 100%; height: 56px; }
-  .hero .marque { position: relative; display: flex; align-items: center; gap: 8px; font-weight: 800; letter-spacing: .4px; font-size: 1rem; opacity: .95; }
+  .hero .marque { position: relative; z-index: 1; display: flex; align-items: center; gap: 8px; font-weight: 800; letter-spacing: .4px; font-size: 1rem; opacity: .95; }
   .hero .marque svg { width: 26px; height: 26px; }
-  .hero h1 { position: relative; margin: 14px 0 4px; font-size: 1.65rem; line-height: 1.15; text-shadow: 0 2px 8px rgba(0,0,0,.3); }
-  .hero p { position: relative; margin: 0; font-size: .92rem; opacity: .9; }
+  .hero h1 { position: relative; z-index: 1; margin: 10px 0 4px; font-size: 1.75rem; line-height: 1.15; text-shadow: 0 2px 8px rgba(0,0,0,.3); }
+  .hero p { position: relative; z-index: 1; margin: 0; max-width: 78%; font-size: .92rem; opacity: .95; }
+  .wax { height: 16px; flex: none; background: #14213d url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='16' viewBox='0 0 32 16'%3E%3Cpath d='M8 2L14 8 8 14 2 8Z' fill='%23f7d618'/%3E%3Ccircle cx='8' cy='8' r='2.2' fill='%23ce1021'/%3E%3Cpath d='M24 2L30 8 24 14 18 8Z' fill='%23ce1021'/%3E%3Ccircle cx='24' cy='8' r='2.2' fill='%23f7d618'/%3E%3Ccircle cx='16' cy='8' r='1.4' fill='%2300a3e0'/%3E%3Ccircle cx='0' cy='8' r='1.4' fill='%2300a3e0'/%3E%3C/svg%3E") repeat-x center; }
   .drapeau { height: 5px; flex: none; background: linear-gradient(90deg, #2e9bff 0 60%, #f2a900 60% 80%, #e03c31 80% 100%); }
-  .rech { position: relative; z-index: 3; margin: -26px 14px 0; }
+  .rech { position: relative; z-index: 3; margin: -26px auto 0; width: calc(100% - 28px); max-width: 732px; }
   .rech input, .bar input[type=search] { width: 100%; padding: 14px 18px; font-size: 1rem; border: 1.5px solid #c5ccd8; border-radius: 999px; color: var(--ink); background: #fff; font-family: inherit; }
   .rech input { box-shadow: 0 6px 18px rgba(20,33,61,.18); border-color: transparent; }
-  .corps { padding: 6px 14px 22px; }
-  .corps h2 { font-size: 1rem; margin: 18px 0 10px; }
+  .corps { padding: 6px 14px 22px; max-width: 760px; margin: 0 auto; width: 100%; }
+  .corps h2 { font-size: 1.02rem; margin: 20px 0 10px; display: flex; align-items: center; gap: 7px; }
+  .corps h2::before { content: "★"; color: var(--gold); font-size: 1rem; text-shadow: 0 0 0 #ce1021; }
+  .mission { position: relative; margin-top: 22px; padding: 18px 16px 16px; border-radius: 18px; color: #fff; overflow: hidden; background: linear-gradient(135deg, #0a2a6b 0%, #0b57b5 70%, #1a86e0 100%); box-shadow: 0 8px 22px rgba(11,87,181,.28); }
+  .mission::after { content: ""; position: absolute; right: -26px; top: -40px; width: 46px; height: 200px; transform: rotate(36deg); background: linear-gradient(90deg, #f7d618 0 15%, #ce1021 15% 85%, #f7d618 85%); opacity: .9; }
+  .mission .tt { position: relative; z-index: 1; display: flex; align-items: center; gap: 9px; font-weight: 800; font-size: 1.05rem; margin-bottom: 6px; }
+  .mission p { position: relative; z-index: 1; margin: 0 38px 12px 0; font-size: .86rem; line-height: 1.5; opacity: .96; }
+  .mission button { position: relative; z-index: 1; padding: 11px 16px; border: 0; border-radius: 999px; background: var(--gold); color: #14213d; font-weight: 800; font-size: .9rem; cursor: pointer; }
+  .pied { margin: 22px -14px 0; text-align: center; font-size: .78rem; color: var(--muted); }
+  .pied .wax { margin-bottom: 10px; }
   #resHome { margin-top: 10px; }
   .res { display: flex; gap: 10px; align-items: center; width: 100%; text-align: left; padding: 10px 12px; margin-bottom: 8px; background: #fff; border: 1px solid var(--line); border-radius: 12px; cursor: pointer; }
   .res .e { flex: none; width: 38px; height: 38px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.15rem; }
   .res b { display: block; font-size: .95rem; }
   .res small { color: var(--muted); font-size: .78rem; }
   .cats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
-  .cat { border: 1px solid var(--line); background: #fff; border-radius: 14px; padding: 10px 2px 8px; display: flex; flex-direction: column; align-items: center; gap: 6px; cursor: pointer; color: var(--ink); font-size: .72rem; font-weight: 700; text-align: center; line-height: 1.15; }
+  .cat { border: 1px solid var(--line); background: #fff; box-shadow: 0 2px 8px rgba(20,33,61,.06); border-radius: 14px; padding: 10px 2px 8px; display: flex; flex-direction: column; align-items: center; gap: 6px; cursor: pointer; color: var(--ink); font-size: .72rem; font-weight: 700; text-align: center; line-height: 1.15; }
   .cat .e { width: 42px; height: 42px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.3rem; }
   .cat small { color: var(--muted); font-weight: 600; font-size: .68rem; }
   .pops { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 6px; scroll-snap-type: x proximity; margin: 0 -14px; padding-left: 14px; padding-right: 14px; }
-  .pop { flex: none; width: 150px; scroll-snap-align: start; background: #fff; border: 1px solid var(--line); border-radius: 14px; overflow: hidden; text-align: left; cursor: pointer; padding: 0; }
+  .pop { box-shadow: 0 2px 10px rgba(20,33,61,.08); flex: none; width: 150px; scroll-snap-align: start; background: #fff; border: 1px solid var(--line); border-radius: 14px; overflow: hidden; text-align: left; cursor: pointer; padding: 0; }
   .pop .top { height: 54px; display: flex; align-items: center; justify-content: center; font-size: 1.8rem; }
   .pop .txt { padding: 8px 10px 10px; }
   .pop b { display: block; font-size: .85rem; line-height: 1.2; }
@@ -139,11 +153,14 @@
   <section class="screen on" id="s-decouvrir" aria-label="Découvrir">
     <div class="hero">
       <svg class="ciel" viewBox="0 0 600 46" preserveAspectRatio="xMidYMax slice" aria-hidden="true"><use href="#skyline"/></svg>
+      <div class="bande" aria-hidden="true"></div>
+      <svg class="etoile" viewBox="-11 -11 22 22" aria-hidden="true"><polygon points="0,-10 2.25,-3.09 9.51,-3.09 3.63,1.18 5.88,8.09 0,3.82 -5.88,8.09 -3.63,1.18 -9.51,-3.09 -2.25,-3.09" fill="#f7d618"/></svg>
       <div class="marque"><svg viewBox="0 0 40 40" aria-hidden="true"><rect width="40" height="40" rx="9" fill="#14213d" stroke="#f2a900" stroke-width="1.5"/><path d="M20 6c-6 0-10.5 4.7-10.5 10.6C9.5 24.2 20 34 20 34s10.5-9.8 10.5-17.4C30.5 10.7 26 6 20 6z" fill="#f2a900"/><circle cx="20" cy="16.5" r="4.2" fill="#14213d"/></svg><span>Nexvia</span></div>
+      <div class="salut"><svg class="flag " width="30" height="20" viewBox="0 0 60 40" aria-hidden="true"><rect width="60" height="40" fill="#0a8fe8"/><line x1="-4" y1="44" x2="64" y2="-4" stroke="#f7d618" stroke-width="13"/><line x1="-4" y1="44" x2="64" y2="-4" stroke="#ce1021" stroke-width="8"/><g transform="translate(11,11) scale(.62)"><polygon points="0,-10 2.25,-3.09 9.51,-3.09 3.63,1.18 5.88,8.09 0,3.82 -5.88,8.09 -3.63,1.18 -9.51,-3.09 -2.25,-3.09" fill="#f7d618"/></g></svg><span>Mbote ! Bienvenue à Kinshasa</span></div>
       <h1>Que cherchez-vous&nbsp;?</h1>
       <p>Restaurants, pharmacies et services à Gombe, Kinshasa</p>
     </div>
-    <div class="drapeau"></div>
+    <div class="wax"></div>
     <div class="rech"><input type="search" id="rechercheHome" placeholder="Un lieu, une avenue, un type…" aria-label="Rechercher un lieu" autocomplete="off"></div>
     <div class="corps">
       <div id="resHome"></div>
@@ -151,8 +168,14 @@
       <div class="cats" id="cats"></div>
       <h2>Lieux à découvrir</h2>
       <div class="pops" id="pops"></div>
+      <div class="mission">
+        <div class="tt"><svg class="flag " width="34" height="23" viewBox="0 0 60 40" aria-hidden="true"><rect width="60" height="40" fill="#0a8fe8"/><line x1="-4" y1="44" x2="64" y2="-4" stroke="#f7d618" stroke-width="13"/><line x1="-4" y1="44" x2="64" y2="-4" stroke="#ce1021" stroke-width="8"/><g transform="translate(11,11) scale(.62)"><polygon points="0,-10 2.25,-3.09 9.51,-3.09 3.63,1.18 5.88,8.09 0,3.82 -5.88,8.09 -3.63,1.18 -9.51,-3.09 -2.25,-3.09" fill="#f7d618"/></g></svg><span>Un projet congolais, fait à Kinshasa</span></div>
+        <p>Nexvia est créé ici, par un Congolais, pour aider les Congolais à trouver près de chez eux ce dont ils ont besoin. Chaque partage fait grandir le projet. Merci de le soutenir !</p>
+        <button type="button" id="partager">📲 Partager Nexvia</button>
+      </div>
       <div class="install" id="install">📲 <b>Installer Nexvia sur votre téléphone</b><br><span id="installTxt">Dans le menu de votre navigateur, choisissez « Ajouter à l'écran d'accueil ». Nexvia s'ouvrira alors comme une application.</span></div>
       <p class="note-bas">Lieux « ✔ Vérifiés » : confirmés par l'équipe. « Référencés » : collectés, pas encore confirmés. « OpenStreetMap » : informations de la communauté. Appelez avant de vous déplacer.<br>Carte © contributeurs OpenStreetMap.</p>
+      <div class="pied"><div class="wax"></div>Fait avec ❤️ à Kinshasa · République démocratique du Congo</div>
     </div>
   </section>
 
@@ -380,12 +403,18 @@ function rendreAccueil() {
   const present = {};
   lieux.forEach(l => { present[l.cat] = (present[l.cat] || 0) + 1; });
   $("cats").innerHTML = Object.keys(CATS).filter(c => present[c]).map(c =>
-    '<button type="button" class="cat" data-c="' + c + '"><span class="e" style="background:' + COULEUR[c] + '">' + EMOJI[c] + '</span>' + esc(CAT_COURT[c]) + '<small>' + present[c] + '</small></button>').join("");
+    '<button type="button" class="cat" data-c="' + c + '" style="background:linear-gradient(160deg,' + COULEUR[c] + '2e,#ffffff 70%)"><span class="e" style="background:' + COULEUR[c] + '">' + EMOJI[c] + '</span>' + esc(CAT_COURT[c]) + '<small>' + present[c] + '</small></button>').join("");
   const pops = lieux.filter(l => l.source !== "osm" && aPosition(l)).sort((a, b) => ORDRE[a.source] - ORDRE[b.source] || (b.tel ? 1 : 0) - (a.tel ? 1 : 0)).slice(0, 10);
   $("pops").innerHTML = pops.map((l, i) => '<button type="button" class="pop" data-p="' + i + '"><div class="top" style="background:' + (COULEUR[l.cat] || COULEUR.autre) + '">' + emojiDe(l) + '</div><div class="txt"><b>' + esc(l.nom) + '</b><small>' + (l.source === "verifie" ? "✔ Vérifié" : "Référencé") + " · " + esc(l.type || CAT_LABEL[l.cat]) + '</small></div></button>').join("");
   $("pops")._items = pops;
 }
 $("cats").addEventListener("click", e => { const b = e.target.closest("[data-c]"); if (!b) return; filtre = b.dataset.c; $("recherche").value = ""; $("verifies").checked = false; setTab("carte"); construireFiltres(); window.afficher && window.afficher(true); setMode("carte"); });
+$("partager").addEventListener("click", () => {
+  const texte = "Nexvia : trouvez restaurants, pharmacies et services à Gombe, Kinshasa. Un projet congolais, soutenons-le !";
+  const url = "https://emmanuelmiji.github.io/Nexvia/";
+  if (navigator.share) { navigator.share({ title: "Nexvia", text: texte, url: url }).catch(() => {}); }
+  else { window.open("https://wa.me/?text=" + encodeURIComponent(texte + " " + url), "_blank", "noopener"); }
+});
 $("pops").addEventListener("click", e => { const b = e.target.closest("[data-p]"); if (b) ouvrirLieu($("pops")._items[Number(b.dataset.p)]); });
 
 // ---- installation ----
