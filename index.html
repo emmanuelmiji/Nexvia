@@ -182,6 +182,10 @@
   #dem .boite { padding-top: 26px; }
   #dem h3::before { content: "★ "; color: #f7d618; text-shadow: 0 0 1px #b8960b; }
   #dem .grille button.on { background: #0b57b5; border-color: #0b57b5; }
+  /* ---------- Touches congolaises (accueil) ---------- */
+  #s-decouvrir { background: #faf6ee; }
+  .sep { height: 5px; border-radius: 5px; margin: 24px 0 2px; background: linear-gradient(90deg, #0b57b5 0 62%, #f7d618 62% 78%, #ce1021 78% 100%); opacity: .9; }
+  .contact { border-left: 6px solid #ce1021 !important; }
 </style>
 </head>
 <body>
@@ -206,6 +210,7 @@
       <button type="button" id="pres" class="pres">📍 Voir les lieux près de moi</button>
       <h2>Catégories</h2>
       <div class="cats" id="cats"></div>
+      <div class="sep" aria-hidden="true"></div>
       <h2>Lieux à découvrir</h2>
       <div class="pops" id="pops"></div>
       <div class="mission">
@@ -213,6 +218,7 @@
         <p>Nexvia est créé ici, par un Congolais, pour aider les Congolais à trouver près de chez eux ce dont ils ont besoin. Chaque partage fait grandir le projet. Merci de le soutenir !</p>
         <button type="button" id="partager">📲 Partager Nexvia</button>
       </div>
+      <div class="sep" aria-hidden="true"></div>
       <div class="contact">
         <div class="tt">💬 Une question ? Un souci ?</div>
         <p>Un lieu à corriger, un commerce à ajouter, une idée pour améliorer Nexvia ? Écrivez-nous, votre message nous aide à faire grandir le projet.</p>
