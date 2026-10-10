@@ -191,6 +191,18 @@
   #cartewrap::before { content: ""; position: absolute; top: 0; left: 0; right: 0; height: 6px; z-index: 900; pointer-events: none; background: linear-gradient(180deg, #14213d 0 3px, #f7d618 3px 6px); }
   #statut::before { content: ""; display: block; height: 24px; margin: -5px -10px 5px; background: url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 390 34%22 preserveAspectRatio=%22none%22%3E%3Cg fill=%22%2314213d%22%3E%3Crect x=%220%22 y=%2216%22 width=%2228%22 height=%2218%22/%3E%3Crect x=%2230%22 y=%228%22 width=%2218%22 height=%2226%22/%3E%3Crect x=%2250%22 y=%2218%22 width=%2230%22 height=%2216%22/%3E%3Crect x=%2282%22 y=%222%22 width=%2214%22 height=%2232%22/%3E%3Crect x=%2298%22 y=%2212%22 width=%2226%22 height=%2222%22/%3E%3Crect x=%22126%22 y=%2220%22 width=%2222%22 height=%2214%22/%3E%3Crect x=%22150%22 y=%226%22 width=%2220%22 height=%2228%22/%3E%3Crect x=%22172%22 y=%2214%22 width=%2230%22 height=%2220%22/%3E%3Crect x=%22204%22 y=%220%22 width=%2212%22 height=%2234%22/%3E%3Crect x=%22218%22 y=%2210%22 width=%2226%22 height=%2224%22/%3E%3Crect x=%22246%22 y=%2218%22 width=%2224%22 height=%2216%22/%3E%3Crect x=%22272%22 y=%224%22 width=%2218%22 height=%2230%22/%3E%3Crect x=%22292%22 y=%2214%22 width=%2230%22 height=%2220%22/%3E%3Crect x=%22324%22 y=%229%22 width=%2220%22 height=%2225%22/%3E%3Crect x=%22346%22 y=%2217%22 width=%2244%22 height=%2217%22/%3E%3C/g%3E%3Crect y=%2231%22 width=%22390%22 height=%223%22 fill=%22%23f7d618%22/%3E%3C/svg%3E") center bottom / 100% 100% no-repeat, #fff; }
   #cartewrap { box-shadow: inset 0 0 0 0 transparent; }
+  /* ---------- Favoris ---------- */
+  #s-favoris { background: #faf6ee; }
+  .tete { position: relative; overflow: hidden; background: linear-gradient(135deg, #0a2a6b 0%, #0b57b5 72%, #1a86e0 100%); border-bottom: 3px solid #f7d618; padding: 18px 16px 15px; }
+  .tete::after { content: ""; position: absolute; right: -22px; top: -36px; width: 40px; height: 170px; transform: rotate(36deg); background: linear-gradient(90deg, #f7d618 0 15%, #ce1021 15% 85%, #f7d618 85%); opacity: .92; }
+  .tete .tt { position: relative; z-index: 1; font-weight: 800; font-size: 1.2rem; }
+  .tete .sub { position: relative; z-index: 1; margin-top: 3px; font-size: .8rem; font-weight: 500; opacity: .92; }
+  .favvide { text-align: center; padding: 46px 22px 20px; color: #3b475e; }
+  .favvide .coeur { position: relative; width: 92px; height: 92px; margin: 0 auto 16px; border-radius: 50%; background: linear-gradient(135deg, #0b57b5, #0a2a6b); color: #ce1021; display: flex; align-items: center; justify-content: center; font-size: 2.6rem; box-shadow: 0 8px 20px rgba(10,42,107,.3); border: 3px solid #f7d618; }
+  .favvide .coeur span { position: absolute; top: -6px; right: -4px; width: 28px; height: 28px; border-radius: 50%; background: #f7d618; color: #0a2a6b; font-size: .95rem; display: flex; align-items: center; justify-content: center; }
+  .favvide b { display: block; font-size: 1.1rem; color: var(--ink); margin-bottom: 6px; }
+  .favvide p { margin: 0 auto 18px; max-width: 280px; font-size: .88rem; line-height: 1.5; }
+  .favvide button { padding: 12px 20px; border: 0; border-radius: 999px; background: #f7d618; color: #14213d; font-weight: 800; font-size: .92rem; cursor: pointer; box-shadow: 0 4px 12px rgba(10,42,107,.2); }
 </style>
 </head>
 <body>
@@ -264,7 +276,7 @@
 
   <!-- ===== FAVORIS ===== -->
   <section class="screen" id="s-favoris" aria-label="Favoris">
-    <div class="tete">❤️ Mes favoris</div>
+    <div class="tete"><div class="tt">❤️ Mes favoris</div><div class="sub" id="favSub">Vos adresses, toujours sous la main</div></div>
     <div id="favList"></div>
   </section>
 
@@ -904,9 +916,11 @@ document.querySelectorAll("#tabs button").forEach(b => b.addEventListener("click
 function rendreFavoris() {
   const items = lieux.filter(estFav).sort((a, b) => a.nom.localeCompare(b.nom, "fr"));
   $("favList").innerHTML = items.length ? items.map(l => itemHTML(l, "fav")).join("") :
-    '<div class="vide">Vous n\'avez pas encore de favori.<br>Ouvrez la fiche d\'un lieu sur la carte et touchez ♡ pour le retrouver ici.</div>';
+    '<div class="favvide"><div class="coeur">♥<span>★</span></div><b>Pas encore de favori</b><p>Ouvrez la fiche d\'un lieu sur la carte et touchez ♡ pour le retrouver ici, même sans chercher.</p><button type="button" id="favVers">🗺️ Découvrir des lieux</button></div>';
+  $("favSub").textContent = items.length ? items.length + (items.length > 1 ? " adresses gardées sous la main" : " adresse gardée sous la main") : "Vos adresses, toujours sous la main";
 }
 $("favList").addEventListener("click", clicItems);
+$("favList").addEventListener("click", e => { if (e.target.closest("#favVers")) setTab("carte"); });
 
 function clicItems(e) {
   const v = e.target.closest("[data-voir]"), f = e.target.closest("[data-fav]");
