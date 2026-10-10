@@ -154,6 +154,28 @@
   .tete { flex: none; background: var(--nav); color: #fff; padding: 16px 16px 14px; font-weight: 800; font-size: 1.15rem; }
   #favList { flex: 1; overflow-y: auto; padding: 10px; }
   .leaflet-container { font-family: inherit; }
+
+  /* ---------- Demande de commune ---------- */
+  .demcarte { margin-top: 16px; background: #fff; border: 1.5px solid #dde3ee; border-radius: 16px; padding: 14px; }
+  .demcarte .tt { font-weight: 800; font-size: 1rem; margin-bottom: 4px; }
+  .demcarte p { margin: 0 0 10px; font-size: .84rem; line-height: 1.45; color: #3b475e; }
+  .demcarte button { padding: 10px 16px; border: 0; border-radius: 999px; background: var(--nav); color: #fff; font-weight: 800; font-size: .88rem; cursor: pointer; }
+  #dem { position: fixed; inset: 0; z-index: 3000; display: none; align-items: flex-end; justify-content: center; background: rgba(10,20,45,.55); }
+  #dem.open { display: flex; }
+  #dem .boite { width: 100%; max-width: 560px; max-height: 88vh; overflow-y: auto; background: #fff; border-radius: 22px 22px 0 0; padding: 18px 16px calc(18px + env(safe-area-inset-bottom)); }
+  #dem h3 { margin: 0 0 6px; font-size: 1.1rem; }
+  #dem .intro { margin: 0 0 12px; font-size: .88rem; line-height: 1.45; color: #3b475e; }
+  #dem .grille { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
+  #dem .grille button { padding: 9px 13px; border-radius: 999px; border: 1.5px solid #cfd7e6; background: #fff; color: var(--ink); font-weight: 700; font-size: .84rem; cursor: pointer; }
+  #dem .grille button.on { background: var(--nav); border-color: var(--nav); color: #fff; }
+  #dem .grille button:disabled { opacity: .45; cursor: default; }
+  #dem .act { display: flex; gap: 10px; }
+  #dem .act button { flex: 1; padding: 12px; border-radius: 999px; border: 0; font-weight: 800; font-size: .92rem; cursor: pointer; }
+  #demEnvoi { background: var(--gold); color: #14213d; }
+  #demEnvoi:disabled { opacity: .45; cursor: default; }
+  #demFerme { background: #eef1f7; color: var(--ink); }
+  #demMsg { margin: 0 0 12px; font-size: .9rem; line-height: 1.45; font-weight: 600; }
+  #demMsg.ok { color: #1b7a43; } #demMsg.err { color: #b3261e; }
 </style>
 </head>
 <body>
@@ -190,6 +212,11 @@
         <p>Un lieu à corriger, un commerce à ajouter, une idée pour améliorer Nexvia ? Écrivez-nous, votre message nous aide à faire grandir le projet.</p>
         <div class="lignes"><a class="b" href="mailto:nexviacongolais@gmail.com?subject=Nexvia%20%E2%80%93%20Message&body=Bonjour%20l%27%C3%A9quipe%20Nexvia%2C%0A%0AMon%20message%20%3A%0A%0A">✉️ Nous écrire</a><a class="b alt" href="mailto:nexviacongolais@gmail.com?subject=Nexvia%20%E2%80%93%20Ajouter%20mon%20commerce&body=Bonjour%20l%27%C3%A9quipe%20Nexvia%2C%0A%0AJe%20souhaite%20ajouter%20mon%20commerce%20sur%20Nexvia.%0A%0ANom%20%3A%0ACat%C3%A9gorie%20%28restaurant%2C%20pharmacie%2C%20bar%2C%20commerce%E2%80%A6%29%20%3A%0AAdresse%20%28avenue%2C%20num%C3%A9ro%2C%20commune%29%20%3A%0AT%C3%A9l%C3%A9phone%20%2F%20WhatsApp%20%3A%0AHoraires%20%3A%0APhotos%20%3A%20%28joignez-les%20%C3%A0%20ce%20message%29%0A%0AJ%27autorise%20Nexvia%20%C3%A0%20afficher%20ces%20informations%20et%20ces%20photos%20%3A%20oui%0A%0AMerci%20%21%0A">➕ Ajouter mon commerce</a></div>
         <div class="mail">Contact : <b>nexviacongolais@gmail.com</b></div>
+      </div>
+      <div class="demcarte">
+        <div class="tt">🗺️ Votre commune n'est pas encore là ?</div>
+        <p>Nexvia commence à Gombe. Dites-nous dans quelle commune vous voulez la voir arriver.</p>
+        <button type="button" id="btnDem">Demander une commune</button>
       </div>
       <div class="install" id="install">📲 <b>Installer Nexvia sur votre téléphone</b><br><span id="installTxt">Dans le menu de votre navigateur, choisissez « Ajouter à l'écran d'accueil ». Nexvia s'ouvrira alors comme une application.</span></div>
       <p class="note-bas">Lieux « ✔ Vérifiés » : confirmés par l'équipe. « Référencés » : collectés, pas encore confirmés. « OpenStreetMap » : informations de la communauté. Appelez avant de vous déplacer.<br>Carte © contributeurs OpenStreetMap.</p>
@@ -233,6 +260,15 @@
   <button type="button" data-tab="favoris"><span class="i">❤️</span>Favoris</button>
 </nav>
 
+<div id="dem" role="dialog" aria-modal="true" aria-labelledby="demT">
+  <div class="boite">
+    <h3 id="demT">Demander une commune</h3>
+    <p class="intro" id="demIntro">Nexvia commence à Gombe. Choisissez la commune où vous voulez la voir arriver : les plus demandées seront ajoutées en premier.</p>
+    <div class="grille" id="demGrille"></div>
+    <p id="demMsg" hidden></p>
+    <div class="act"><button type="button" id="demFerme">Fermer</button><button type="button" id="demEnvoi" disabled>Envoyer ma demande</button></div>
+  </div>
+</div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/leaflet.markercluster.js"></script>
 <script>
@@ -916,7 +952,7 @@ function rendreAccueil() {
 $("cats").addEventListener("click", e => { const b = e.target.closest("[data-c]"); if (!b) return; filtre = b.dataset.c; $("recherche").value = ""; $("verifies").checked = false; setTab("carte"); construireFiltres(); window.afficher && window.afficher(true); setMode("carte"); });
 $("pres").addEventListener("click", () => {
   const b = $("pres"), txt = "📍 Voir les lieux près de moi"; b.textContent = "Recherche de votre position…";
-  localiser(() => { b.textContent = txt; setTab("carte"); setMode("liste"); if (window.afficher) window.afficher(false); },
+  localiser(() => { b.textContent = txt; setTab("carte"); setMode("liste"); if (window.afficher) window.afficher(false); if (maPos && loinDeGombe(maPos)) ouvrirDemande("Il semble que vous ne soyez pas à Gombe. Nexvia commence par cette commune : dites-nous où vous êtes pour que nous l'ajoutions."); },
     () => { b.textContent = "Position indisponible : autorisez la localisation puis réessayez"; setTimeout(() => { b.textContent = txt; }, 4000); });
 });
 $("partager").addEventListener("click", () => {
@@ -926,6 +962,39 @@ $("partager").addEventListener("click", () => {
   else { window.open("https://wa.me/?text=" + encodeURIComponent(texte + " " + url), "_blank", "noopener"); }
 });
 $("pops").addEventListener("click", e => { const b = e.target.closest("[data-p]"); if (b) ouvrirLieu($("pops")._items[Number(b.dataset.p)]); });
+
+// ---- demande de commune ----
+const COMMUNES_DEM = ["Bandalungwa","Barumbu","Bumbu","Kalamu","Kasa-Vubu","Kimbanseke","Kinshasa","Kintambo","Kisenso","Lemba","Limete","Lingwala","Makala","Maluku","Masina","Matete","Mont-Ngafula","Ndjili","Ngaba","Ngaliema","Ngiri-Ngiri","Nsele","Selembao","Autre ville du Congo"];
+const CLE_DEM = "nexvia_demandes";
+let communeChoisie = null;
+function demandesFaites() { try { return JSON.parse(localStorage.getItem(CLE_DEM) || "[]"); } catch (e) { return []; } }
+function memoriserDemande(c) { try { const l = demandesFaites(); if (!l.includes(c)) { l.push(c); localStorage.setItem(CLE_DEM, JSON.stringify(l)); } } catch (e) {} }
+function messageDem(txt, type) { const m = $("demMsg"); m.hidden = !txt; m.textContent = txt || ""; m.className = type || ""; }
+function dessinerDem() {
+  const faites = demandesFaites();
+  $("demGrille").innerHTML = COMMUNES_DEM.map(c => '<button type="button" data-c="' + esc(c) + '" class="' + (c === communeChoisie ? "on" : "") + '"' + (faites.includes(c) ? " disabled" : "") + '>' + esc(c) + (faites.includes(c) ? " ✓" : "") + '</button>').join("");
+  $("demEnvoi").disabled = !communeChoisie;
+}
+function ouvrirDemande(intro) {
+  communeChoisie = null; messageDem("");
+  $("demIntro").textContent = intro || "Nexvia commence à Gombe. Choisissez la commune où vous voulez la voir arriver : les plus demandées seront ajoutées en premier.";
+  dessinerDem(); $("dem").classList.add("open");
+}
+function fermerDemande() { $("dem").classList.remove("open"); }
+$("btnDem").addEventListener("click", () => ouvrirDemande());
+$("demFerme").addEventListener("click", fermerDemande);
+$("dem").addEventListener("click", e => { if (e.target === $("dem")) fermerDemande(); });
+$("demGrille").addEventListener("click", e => { const b = e.target.closest("[data-c]"); if (!b || b.disabled) return; communeChoisie = b.dataset.c; messageDem(""); dessinerDem(); });
+$("demEnvoi").addEventListener("click", () => {
+  if (!communeChoisie) return;
+  const c = communeChoisie, bt = $("demEnvoi"); bt.disabled = true; bt.textContent = "Envoi…";
+  fetch("/api/demande", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ commune: c }) })
+    .then(r => { if (!r.ok) throw new Error("echec"); return r.json(); })
+    .then(j => { if (!j.ok) throw new Error("echec"); memoriserDemande(c); communeChoisie = null; dessinerDem(); messageDem("Merci ! Votre demande pour « " + c + " » a bien été reçue. Les communes les plus demandées seront ajoutées en premier. Merci de nous aider à construire Nexvia.", "ok"); })
+    .catch(() => { messageDem("Impossible d'envoyer votre demande pour le moment. Vérifiez votre connexion puis réessayez.", "err"); dessinerDem(); })
+    .finally(() => { bt.textContent = "Envoyer ma demande"; bt.disabled = !communeChoisie; });
+});
+function loinDeGombe(pos) { const R = 6371, r = x => x * Math.PI / 180, la = -4.3050, lo = 15.2915; const a = Math.sin(r(pos[0] - la) / 2) ** 2 + Math.cos(r(la)) * Math.cos(r(pos[0])) * Math.sin(r(pos[1] - lo) / 2) ** 2; return 2 * R * Math.asin(Math.sqrt(a)) > 5; }
 
 // ---- installation ----
 let invite = null;
