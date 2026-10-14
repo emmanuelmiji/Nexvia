@@ -1,4 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url><loc>https://nexvia-rdc.pages.dev/</loc></url>
+  <url><loc>https://nexvia-rdc.pages.dev/restaurants-gombe/</loc></url>
+  <url><loc>https://nexvia-rdc.pages.dev/pharmacies-gombe/</loc></url>
+  <url><loc>https://nexvia-rdc.pages.dev/banques-gombe/</loc></url>
+  <url><loc>https://nexvia-rdc.pages.dev/hotels-gombe/</loc></url>
+  <url><loc>https://nexvia-rdc.pages.dev/stations-service-gombe/</loc></url>
+  <url><loc>https://nexvia-rdc.pages.dev/bars-gombe/</loc></url>
+  <url><loc>https://nexvia-rdc.pages.dev/ecoles-gombe/</loc></url>
+  <url><loc>https://nexvia-rdc.pages.dev/distributeurs-gombe/</loc></url>
 </urlset>
