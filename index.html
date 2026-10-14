@@ -7,7 +7,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Nexvia">
-<title>Nexvia RDC – Restaurants, pharmacies, banques et services à Gombe, Kinshasa</title>
+<title>Nexvia RDC – Lieux et services à Gombe, Kinshasa</title>
 <meta name="description" content="Nexvia RDC : l'application pour trouver restaurants, pharmacies, banques, hôtels et services à Gombe, Kinshasa. Plus de 350 lieux sur une carte.">
 <link rel="canonical" href="https://nexvia-rdc.pages.dev/">
 <meta property="og:type" content="website"><meta property="og:site_name" content="Nexvia">
@@ -876,7 +876,7 @@ function actionsHTML(l) {
 function fiche(l) {
   const col = COULEUR[l.cat] || COULEUR.autre;
   let h = '<div class="fiche">';
-  if (l.photos && l.photos.length) h += '<div class="photos">' + l.photos.map(src => '<img src="' + esc(src) + '" alt="Photo de ' + esc(l.nom) + '" loading="lazy" onerror="this.remove()">').join("") + '</div>';
+  if (l.photos && l.photos.length) h += '<div class="photos">' + l.photos.map(src => '<' + 'img src="' + esc(src) + '" alt="Photo de ' + esc(l.nom) + '" loading="lazy" onerror="this.remove()">').join("") + '</div>';
   else h += '<div class="banniere" style="background:' + col + '" aria-hidden="true">' + emojiDe(l) + '</div>';
   h += '<h2>' + esc(l.nom) + '</h2>' + badgeHTML(l);
   if (l.adresse) h += '<p>📍 ' + esc(l.adresse) + '</p>';
