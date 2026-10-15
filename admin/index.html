@@ -95,6 +95,13 @@
   }
 
   // ---------- outils ----------
+  function mailBloc() {
+    const etat = d.mail_configure;
+    return h("div", { class: "card" }, h("h3", {}, "✉️ E-mails de vérification"),
+      h("p", { class: "muted" }, etat ? "L'envoi est configuré : chaque création de compte et chaque connexion demandent un code reçu par e-mail." : "L'envoi n'est pas configuré. Tant qu'il ne l'est pas, les inscriptions sont fermées et la connexion reste directe."),
+      h("div", { class: "alerte " + (etat ? "ok" : "warn") }, etat ? "✔ Configuré" : "Variables manquantes : MAIL_UTILISATEUR et MAIL_MOT_DE_PASSE"),
+      h("p", {}, h("button", { class: "btn alt small", disabled: !etat, onclick: async ev => { ev.target.disabled = true; try { const r = await api("POST", "admin/test-mail", {}); toast("E-mail de test envoyé à " + r.envoye_a + " (regardez aussi les spams)."); } catch (er) { toast(er.message, true); } ev.target.disabled = false; } }, "M'envoyer un e-mail de test")));
+  }
   function mdpBloc() {
     const e = h("input", { type: "email", placeholder: "e-mail du commerçant", maxlength: 120 });
     return h("div", { class: "card" }, h("h3", {}, "🔑 Mot de passe oublié"), h("p", { class: "muted" }, "Génère un mot de passe temporaire à transmettre au commerçant (par WhatsApp). Ses sessions en cours sont fermées."), e,
@@ -126,7 +133,7 @@
         h("div", {}, sec("Paiements à vérifier", d.a_verifier.length), ...(d.a_verifier.length ? d.a_verifier.map(ligneVerif) : [vide("✓", "Rien à vérifier.")]),
           sec("En attente de l'import", d.en_attente.length), d.en_attente.length ? tableAttente() : vide("·", "Aucun paiement en attente."))));
     } else {
-      main.append(h("div", { class: "cols" }, h("div", {}, sec("Comptes"), mdpBloc()), h("div", {}, sec("Outils"), raccourcis())));
+      main.append(h("div", { class: "cols" }, h("div", {}, sec("Comptes"), mdpBloc(), mailBloc()), h("div", {}, sec("Outils"), raccourcis())));
     }
     main.append(h("div", { class: "pied-rdc" }, drapeau(22), "Nexvia RDC · fait à Kinshasa"));
     app.append(main);

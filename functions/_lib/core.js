@@ -52,6 +52,7 @@ const SCHEMA = [
   `CREATE TABLE IF NOT EXISTS demandes_paiement (id INTEGER PRIMARY KEY AUTOINCREMENT, marque_id INTEGER NOT NULL, user_id INTEGER NOT NULL, plan TEXT NOT NULL, ref TEXT NOT NULL UNIQUE, statut TEXT NOT NULL DEFAULT 'en_attente', tentatives INTEGER NOT NULL DEFAULT 0, motif TEXT, created_at TEXT NOT NULL, traite_at TEXT)`,
   `CREATE INDEX IF NOT EXISTS idx_demandes_marque ON demandes_paiement (marque_id)`,
   `CREATE TABLE IF NOT EXISTS zola_paiements (ref TEXT PRIMARY KEY, date TEXT, montant REAL, devise TEXT, statut TEXT, operateur TEXT, beneficiaire TEXT, settle_montant REAL, settle_statut TEXT, maj TEXT)`,
+  `CREATE TABLE IF NOT EXISTS verifs (id TEXT PRIMARY KEY, email TEXT NOT NULL, but TEXT NOT NULL, code_hash TEXT NOT NULL, donnees TEXT, essais INTEGER NOT NULL DEFAULT 0, envois INTEGER NOT NULL DEFAULT 1, expire INTEGER NOT NULL, envoye INTEGER NOT NULL)`,
   `CREATE TABLE IF NOT EXISTS imports (id INTEGER PRIMARY KEY AUTOINCREMENT, ts TEXT NOT NULL, lignes INTEGER NOT NULL, activees INTEGER NOT NULL, a_verifier INTEGER NOT NULL, par INTEGER)`,
 ];
 let schemaPret = null;

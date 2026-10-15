@@ -29,20 +29,32 @@
     h("div", { class: "mbote" }, drapeau(24), "Mbote !"),
     h("h1", {}, titre), h("p", {}, sous)), h("div", { class: "auth-bande" }));
 
+  let etape = null;   // { vid, but, masque, minutes, depuis } quand on attend le code reçu par e-mail
+
   function formulaire() {
     const f = {};
     const champ = (id, lib, attrs) => [h("label", { for: id }, lib), f[id] = h("input", { id, ...attrs })];
     const msg = h("div", {});
     const insc = mode === "inscription";
-    const voir = h("button", { type: "button", onclick: () => { const v = f.mdp.type === "password"; f.mdp.type = v ? "text" : "password"; voir.textContent = v ? "Masquer" : "Afficher"; } }, "Afficher");
+    const voir = h("button", { type: "button", onclick: () => { const v = f.mdp.type === "password"; f.mdp.type = f.conf ? (f.conf.type = v ? "text" : "password") : v ? "text" : "password"; voir.textContent = v ? "Masquer" : "Afficher"; } }, "Afficher");
+    const regles = insc ? [["Au moins 8 caractères", m => m.length >= 8], ["Au moins une lettre", m => /[A-Za-zÀ-ÿ]/.test(m)], ["Au moins un chiffre", m => /\d/.test(m)]] : [];
+    const liste = insc ? h("ul", { class: "regles" }, regles.map(([t]) => h("li", {}, t))) : null;
+    const majRegles = () => { regles.forEach(([, t], i) => liste.children[i].className = t(f.mdp.value) ? "ok" : ""); };
     const form = h("form", { novalidate: true, onsubmit: async ev => {
-      ev.preventDefault(); vider(msg); const btn = form.querySelector("button[type=submit]"); btn.disabled = true;
+      ev.preventDefault(); vider(msg); const btn = form.querySelector("button[type=submit]");
+      if (insc) {
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(f.email.value.trim())) return msg.append(h("div", { class: "alerte bad" }, "Cette adresse e-mail n'est pas valide. Exemple : prenom@gmail.com"));
+        if (regles.some(([, t]) => !t(f.mdp.value))) return msg.append(h("div", { class: "alerte bad" }, "Le mot de passe ne respecte pas encore toutes les conditions de la liste."));
+        if (f.mdp.value !== f.conf.value) return msg.append(h("div", { class: "alerte bad" }, "Les deux mots de passe ne sont pas identiques."));
+      }
+      btn.disabled = true; btn.textContent = "Envoi du code…";
       try {
         const corps = { email: f.email.value, mot_de_passe: f.mdp.value };
-        if (insc) Object.assign(corps, { nom: f.nom.value, tel: f.tel.value, type });
-        const r = await api("POST", insc ? "auth/inscription" : "auth/connexion", corps);
-        aller(r.utilisateur);
-      } catch (e) { msg.append(h("div", { class: "alerte bad" }, e.message)); btn.disabled = false; }
+        if (insc) Object.assign(corps, { nom: f.nom.value, tel: f.tel.value, type, confirmation: f.conf.value });
+        const r = await api("POST", insc ? "auth/inscription/demande" : "auth/connexion", corps);
+        if (r.etape === "code") { etape = { vid: r.vid, but: insc ? "inscription" : "connexion", masque: r.email_masque, minutes: r.valide_minutes, depuis: Date.now(), attente: r.renvoi_secondes }; rendre(); }
+        else aller(r.utilisateur);
+      } catch (e) { msg.append(h("div", { class: "alerte bad" }, e.message)); btn.disabled = false; btn.textContent = insc ? "Recevoir mon code" : "Me connecter"; }
     } },
       insc ? [
         h("label", {}, "Vous êtes"),
@@ -53,12 +65,45 @@
         champ("tel", "Téléphone (WhatsApp de préférence)", { type: "tel", autocomplete: "tel", maxlength: 30 }),
       ] : null,
       champ("email", "Adresse e-mail", { type: "email", autocomplete: "email", required: true, maxlength: 120, inputmode: "email" }),
-      h("label", { for: "mdp" }, insc ? "Mot de passe (8 caractères minimum)" : "Mot de passe"),
-      h("div", { class: "oeil" }, f.mdp = h("input", { id: "mdp", type: "password", autocomplete: insc ? "new-password" : "current-password", required: true, maxlength: 100 }), voir),
+      insc ? h("p", { class: "muted petit" }, "Une vraie adresse (Gmail, Yahoo, Outlook…) : nous y envoyons un code pour confirmer votre compte.") : null,
+      h("label", { for: "mdp" }, "Mot de passe"),
+      h("div", { class: "oeil" }, f.mdp = h("input", { id: "mdp", type: "password", autocomplete: insc ? "new-password" : "current-password", required: true, maxlength: 100, oninput: insc ? majRegles : null }), voir),
+      liste,
+      insc ? [h("label", { for: "conf" }, "Confirmez le mot de passe"), f.conf = h("input", { id: "conf", type: "password", autocomplete: "new-password", required: true, maxlength: 100 })] : null,
       msg,
-      h("p", { style: "margin-top:16px" }, h("button", { class: "btn gold grand", type: "submit" }, insc ? "Créer mon compte" : "Me connecter")),
-      insc ? h("p", { class: "muted" }, "Le compte est gratuit. Les utilisateurs n'ont jamais besoin d'en créer un pour chercher un lieu sur la carte.") : h("p", { class: "muted" }, "Mot de passe oublié ? Écrivez-nous sur WhatsApp : nous le réinitialisons.")
+      h("p", { style: "margin-top:16px" }, h("button", { class: "btn gold grand", type: "submit" }, insc ? "Recevoir mon code" : "Me connecter")),
+      insc ? h("p", { class: "muted" }, "Le compte est gratuit. Les utilisateurs n'ont jamais besoin d'en créer un pour chercher un lieu sur la carte.") : h("p", { class: "muted" }, "Un code de confirmation vous sera envoyé par e-mail. Mot de passe oublié ? Écrivez-nous sur WhatsApp : nous le réinitialisons.")
     );
+    return form;
+  }
+
+  function ecranCode() {
+    const msg = h("div", {}), champCode = h("input", { id: "code", inputmode: "numeric", autocomplete: "one-time-code", maxlength: 7, placeholder: "000000", class: "code-saisie", "aria-label": "Code à 6 chiffres" });
+    const renvoi = h("button", { type: "button", class: "btn alt small" }, "Renvoyer le code");
+    const insc = etape.but === "inscription";
+    let t0 = Date.now() + etape.attente * 1000;
+    const tic = () => { const s = Math.ceil((t0 - Date.now()) / 1000); renvoi.disabled = s > 0; renvoi.textContent = s > 0 ? "Renvoyer le code (" + s + " s)" : "Renvoyer le code"; };
+    tic(); const minuteur = setInterval(() => { if (!document.body.contains(renvoi)) return clearInterval(minuteur); tic(); }, 1000);
+    const valider = async ev => {
+      ev && ev.preventDefault(); vider(msg); const btn = form.querySelector("button[type=submit]"); btn.disabled = true;
+      try { const r = await api("POST", insc ? "auth/inscription/confirmer" : "auth/connexion/confirmer", { vid: etape.vid, code: champCode.value }); aller(r.utilisateur); }
+      catch (e) { msg.append(h("div", { class: "alerte bad" }, e.message)); btn.disabled = false; champCode.select(); }
+    };
+    renvoi.onclick = async () => {
+      vider(msg); renvoi.disabled = true;
+      try { const r = await api("POST", "auth/code/renvoyer", { vid: etape.vid }); t0 = Date.now() + r.renvoi_secondes * 1000; msg.append(h("div", { class: "alerte ok" }, "Un nouveau code vient d'être envoyé.")); }
+      catch (e) { msg.append(h("div", { class: "alerte bad" }, e.message)); }
+      tic();
+    };
+    champCode.oninput = () => { champCode.value = champCode.value.replace(/[^\d ]/g, ""); if (champCode.value.replace(/\s/g, "").length === 6) valider(); };
+    const form = h("form", { novalidate: true, onsubmit: valider },
+      h("div", { class: "code-icone" }, "✉️"),
+      h("p", {}, "Nous avons envoyé un code à 6 chiffres à ", h("b", {}, etape.masque), ". Il est valable ", etape.minutes, " minutes."),
+      h("label", { for: "code" }, "Code reçu par e-mail"), champCode, msg,
+      h("p", { style: "margin-top:16px" }, h("button", { class: "btn gold grand", type: "submit" }, insc ? "Confirmer et créer mon compte" : "Confirmer et me connecter")),
+      h("div", { class: "alerte info" }, "Le message est envoyé automatiquement par un robot : ", h("b", {}, "ne répondez pas"), " à cet e-mail, tapez seulement le code ici. Vous ne le trouvez pas ? Regardez dans vos courriers indésirables (spam)."),
+      h("div", { class: "row between", style: "margin-top:12px" }, renvoi, h("button", { type: "button", class: "btn fantome small", onclick: () => { etape = null; rendre(); } }, "Changer d'adresse")));
+    setTimeout(() => champCode.focus(), 50);
     return form;
   }
 
@@ -78,11 +123,12 @@
           h("p", { style: "text-align:center" }, h("button", { class: "btn alt small", onclick: async () => { try { await api("POST", "auth/deconnexion"); } catch (e) {} u = null; rendre(); } }, "Me déconnecter")))));
     } else {
       const insc = mode === "inscription";
+      if (etape) { app.append(haut("Vérifiez votre e-mail", etape.but === "inscription" ? "Dernière étape avant de créer votre compte." : "Pour votre sécurité, confirmez que c'est bien vous."), h("div", { class: "auth-carte" }, h("div", { class: "boite" }, ecranCode())), h("p", { class: "auth-pied" }, h("a", { href: "/" }, "Retour à la carte"))); return; }
       app.append(haut(insc ? "Faites-vous trouver à Gombe" : "Bon retour !", insc ? "Créez votre compte gratuit et présentez votre commerce aux habitants de Kinshasa." : "Connectez-vous pour gérer votre commerce."),
         h("div", { class: "auth-carte" }, h("div", { class: "boite" },
           h("div", { class: "onglets" },
-            h("button", { class: mode === "connexion" ? "actif" : "", onclick: () => { mode = "connexion"; rendre(); } }, "Connexion"),
-            h("button", { class: mode === "inscription" ? "actif" : "", onclick: () => { mode = "inscription"; rendre(); } }, "Créer un compte")),
+            h("button", { class: mode === "connexion" ? "actif" : "", onclick: () => { mode = "connexion"; etape = null; rendre(); } }, "Connexion"),
+            h("button", { class: mode === "inscription" ? "actif" : "", onclick: () => { mode = "inscription"; etape = null; rendre(); } }, "Créer un compte")),
           formulaire(),
           insc && type === "commerce" ? h("ul", { class: "avantages" }, h("li", {}, "Formule Gratuit : 1 adresse, sans carte bancaire"), h("li", {}, "Vous choisissez ensuite Gratuit, Standard ou Premium"), h("li", {}, "Nous vérifions votre fiche avant de la publier")) : null),
           h("p", { class: "auth-pied" }, h("a", { href: "/tarifs/" }, "Voir les tarifs"), " · ", h("a", { href: "/" }, "Retour à la carte"))));

@@ -1,6 +1,7 @@
 // Nexvia RDC – API des comptes, des commerces, des abonnements et de l'administration.
 // Les routes /api/vue et /api/demande (statistiques anonymes) restent dans leurs propres fichiers.
 import * as C from "../_lib/core.js";
+import * as Mail from "../_lib/courriel.js";
 const { json, refuse, texte, lireJson, PLANS } = C;
 
 export async function onRequest({ request, env }) {
@@ -35,7 +36,12 @@ async function router(request, env) {
 const ROUTES = {
   "GET plans": async () => json({ ok: true, plans: PLANS, total_avec_frais: C.TOTAL_AVEC_FRAIS, duree_jours: C.DUREE_JOURS, categories: C.CATEGORIES }),
   "POST auth/inscription": inscription,
+  "POST auth/inscription/demande": inscription,
+  "POST auth/inscription/confirmer": inscriptionConfirmer,
   "POST auth/connexion": connexion,
+  "POST auth/connexion/confirmer": connexionConfirmer,
+  "POST auth/code/renvoyer": codeRenvoyer,
+  "POST admin/test-mail": adminTestMail,
   "POST auth/deconnexion": async ({ request, env }) => { await C.finSession(request, env); return json({ ok: true }, 200, { "set-cookie": C.cookieVide() }); },
   "GET auth/moi": moi,
   "GET commerce/etat": etatCommerce,
@@ -63,22 +69,60 @@ async function moi({ request, env }) {
   const m = await marqueDe(await C.base(env), u.id);
   return json({ ok: true, utilisateur: { ...pub(u), commerce: m ? m.nom : null, commerce_statut: m ? m.statut : null, plan: m ? C.planEffectif(m) : null } });
 }
+// --- vérification par e-mail : un code à 6 chiffres, valable 10 minutes, 5 essais, renvoi toutes les 60 s ---
+const VALIDITE = 600000, ESSAIS_MAX = 5, ATTENTE_RENVOI = 60000, ENVOIS_MAX = 5;
+const masquer = e => { const [l, d] = e.split("@"); return l.slice(0, Math.min(2, l.length)) + "•••@" + d; };
+function nouveauCode() { for (;;) { const n = crypto.getRandomValues(new Uint32Array(1))[0]; if (n < 4290000000) return String(n % 1000000).padStart(6, "0"); } }
+async function envoyerCode(env, db, { id, email, but, donnees }) {
+  const code = nouveauCode(), now = Date.now();
+  await db.prepare("DELETE FROM verifs WHERE expire < ?").bind(now - 3600000).run();
+  try { await Mail.envoyerCourriel(env, email, "Votre code Nexvia RDC : " + code, Mail.texteCode(code, but)); }
+  catch (e) { console.error("nexvia-mail", e && e.message || e); refuse("L'e-mail n'a pas pu être envoyé. Vérifiez l'adresse puis réessayez dans un instant.", 502); }
+  const hash = await C.sha256hex(id + ":" + code);
+  await db.prepare("INSERT INTO verifs (id, email, but, code_hash, donnees, expire, envoye) VALUES (?, ?, ?, ?, ?, ?, ?)").bind(id, email, but, hash, JSON.stringify(donnees || {}), now + VALIDITE, now).run();
+  return { ok: true, etape: "code", vid: id, email_masque: masquer(email), valide_minutes: 10, renvoi_secondes: ATTENTE_RENVOI / 1000 };
+}
+const nouvelId = () => [...crypto.getRandomValues(new Uint8Array(18))].map(b => b.toString(16).padStart(2, "0")).join("");
+async function controlerCode(env, db, b, but) {
+  const vid = String(b.vid || ""), code = String(b.code || "").replace(/\s+/g, "");
+  if (!/^[0-9a-f]{36}$/.test(vid)) refuse("Demande introuvable. Recommencez.", 404);
+  const v = await db.prepare("SELECT * FROM verifs WHERE id = ? AND but = ?").bind(vid, but).first();
+  if (!v) refuse("Demande introuvable ou déjà utilisée. Recommencez.", 404);
+  if (Date.now() > v.expire) { await db.prepare("DELETE FROM verifs WHERE id = ?").bind(vid).run(); refuse("Ce code a expiré. Demandez-en un nouveau.", 410); }
+  if (v.essais >= ESSAIS_MAX) { await db.prepare("DELETE FROM verifs WHERE id = ?").bind(vid).run(); refuse("Trop d'essais. Recommencez pour recevoir un nouveau code.", 429); }
+  if (!/^\d{6}$/.test(code)) refuse("Le code contient 6 chiffres.");
+  if ((await C.sha256hex(vid + ":" + code)) !== v.code_hash) {
+    await db.prepare("UPDATE verifs SET essais = essais + 1 WHERE id = ?").bind(vid).run();
+    const reste = ESSAIS_MAX - v.essais - 1;
+    refuse(reste > 0 ? "Code incorrect. Il vous reste " + reste + " essai" + (reste > 1 ? "s" : "") + "." : "Code incorrect. Recommencez pour recevoir un nouveau code.", 400);
+  }
+  await db.prepare("DELETE FROM verifs WHERE id = ?").bind(vid).run();    // un code ne sert qu'une fois
+  return { ...v, donnees: JSON.parse(v.donnees || "{}") };
+}
 async function inscription({ request, env, ip }) {
   const b = await lireJson(request);
-  const email = texte(b.email, 120, true, "e-mail").toLowerCase();
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) refuse("Adresse e-mail invalide.");
+  const ve = Mail.verifierEmail(b.email); if (ve.erreur) refuse(ve.erreur);
+  const email = ve.email, nom = texte(b.nom, 80, true, "nom"), tel = texte(b.tel, 30);
   const mdp = String(b.mot_de_passe || "");
-  if (mdp.length < 8 || mdp.length > 100) refuse("Le mot de passe doit contenir au moins 8 caractères.");
-  const nom = texte(b.nom, 80, true, "nom"), tel = texte(b.tel, 30);
+  if (b.confirmation !== undefined && String(b.confirmation) !== mdp) refuse("Les deux mots de passe ne sont pas identiques.");
+  const pb = Mail.verifierMotDePasse(mdp, { email, nom }); if (pb) refuse(pb);
   const type = b.type === "commerce" ? "commerce" : "utilisateur";
-  if (!(await C.limiter(env, "ins:" + ip, 5, 3600))) refuse("Trop de tentatives. Réessayez plus tard.", 429);
+  if (!Mail.mailConfigure(env)) refuse("La vérification par e-mail n'est pas encore activée sur Nexvia. L'inscription est momentanément fermée, réessayez bientôt.", 503);
+  if (!(await C.limiter(env, "ins:" + ip, 8, 3600)) || !(await C.limiter(env, "insmail:" + email, 5, 3600))) refuse("Trop de tentatives. Réessayez plus tard.", 429);
   const db = await C.base(env);
-  if (await db.prepare("SELECT id FROM users WHERE email = ?").bind(email).first()) refuse("Un compte existe déjà avec cette adresse e-mail.", 409);
+  if (await db.prepare("SELECT id FROM users WHERE email = ?").bind(email).first()) refuse("Un compte existe déjà avec cette adresse e-mail. Connectez-vous.", 409);
+  if (!(await Mail.domaineAccepteLesMails(ve.domaine, env))) refuse("Le domaine « " + ve.domaine + " » ne semble pas pouvoir recevoir d'e-mails. Vérifiez l'adresse.");
   const sel = C.nouveauSel(), hash = await C.hacherMdp(mdp, sel);
-  const r = await db.prepare("INSERT INTO users (email, nom, tel, type, pass_hash, pass_salt, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)").bind(email, nom, tel, type, hash, sel, new Date().toISOString()).run();
+  return json(await envoyerCode(env, db, { id: nouvelId(), email, but: "inscription", donnees: { nom, tel, type, hash, sel } }));
+}
+async function inscriptionConfirmer({ request, env, ip }) {
+  const b = await lireJson(request);
+  if (!(await C.limiter(env, "cod:" + ip, 40, 900))) refuse("Trop de tentatives. Réessayez plus tard.", 429);
+  const db = await C.base(env), v = await controlerCode(env, db, b, "inscription"), d = v.donnees;
+  if (await db.prepare("SELECT id FROM users WHERE email = ?").bind(v.email).first()) refuse("Un compte existe déjà avec cette adresse e-mail. Connectez-vous.", 409);
+  const r = await db.prepare("INSERT INTO users (email, nom, tel, type, pass_hash, pass_salt, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)").bind(v.email, d.nom, d.tel, d.type, d.hash, d.sel, new Date().toISOString()).run();
   const cookie = await C.ouvrirSession(env, r.meta.last_row_id);
-  const u = { id: r.meta.last_row_id, email, nom, type, admin: C.adminsDe(env).includes(email) };
-  return json({ ok: true, utilisateur: u }, 200, { "set-cookie": cookie });
+  return json({ ok: true, utilisateur: { id: r.meta.last_row_id, email: v.email, nom: d.nom, type: d.type, admin: C.adminsDe(env).includes(v.email) } }, 200, { "set-cookie": cookie });
 }
 async function connexion({ request, env, ip }) {
   const b = await lireJson(request);
@@ -87,9 +131,48 @@ async function connexion({ request, env, ip }) {
   const db = await C.base(env);
   const u = await db.prepare("SELECT * FROM users WHERE email = ?").bind(email).first();
   if (!u || !(await C.mdpValide(mdp, u))) refuse("E-mail ou mot de passe incorrect.", 401);
+  // Le mot de passe est bon : si l'envoi d'e-mails est actif, on exige le code reçu par e-mail.
+  // (Tant que l'envoi n'est pas configuré, la connexion reste directe, pour ne jamais enfermer l'administrateur dehors.)
+  if (Mail.mailConfigure(env)) {
+    if (!(await C.limiter(env, "logmail:" + email, 6, 3600))) refuse("Trop de codes demandés pour cette adresse. Réessayez plus tard.", 429);
+    return json(await envoyerCode(env, db, { id: nouvelId(), email, but: "connexion", donnees: { uid: u.id } }));
+  }
   const cookie = await C.ouvrirSession(env, u.id);
   u.admin = C.adminsDe(env).includes(email);
   return json({ ok: true, utilisateur: pub(u) }, 200, { "set-cookie": cookie });
+}
+async function connexionConfirmer({ request, env, ip }) {
+  const b = await lireJson(request);
+  if (!(await C.limiter(env, "cod:" + ip, 40, 900))) refuse("Trop de tentatives. Réessayez plus tard.", 429);
+  const db = await C.base(env), v = await controlerCode(env, db, b, "connexion");
+  const u = await db.prepare("SELECT * FROM users WHERE id = ? AND email = ?").bind(v.donnees.uid, v.email).first();
+  if (!u) refuse("Compte introuvable.", 404);
+  const cookie = await C.ouvrirSession(env, u.id);
+  u.admin = C.adminsDe(env).includes(v.email);
+  return json({ ok: true, utilisateur: pub(u) }, 200, { "set-cookie": cookie });
+}
+async function codeRenvoyer({ request, env, ip }) {
+  const b = await lireJson(request), vid = String(b.vid || "");
+  if (!(await C.limiter(env, "ren:" + ip, 15, 3600))) refuse("Trop de tentatives. Réessayez plus tard.", 429);
+  const db = await C.base(env);
+  const v = /^[0-9a-f]{36}$/.test(vid) ? await db.prepare("SELECT * FROM verifs WHERE id = ?").bind(vid).first() : null;
+  if (!v) refuse("Demande introuvable. Recommencez.", 404);
+  const now = Date.now();
+  if (now - v.envoye < ATTENTE_RENVOI) refuse("Patientez " + Math.ceil((ATTENTE_RENVOI - (now - v.envoye)) / 1000) + " secondes avant de redemander un code.", 429);
+  if (v.envois >= ENVOIS_MAX) { await db.prepare("DELETE FROM verifs WHERE id = ?").bind(vid).run(); refuse("Trop de codes envoyés. Recommencez depuis le début.", 429); }
+  const code = nouveauCode();
+  try { await Mail.envoyerCourriel(env, v.email, "Votre code Nexvia RDC : " + code, Mail.texteCode(code, v.but)); }
+  catch (e) { console.error("nexvia-mail", e && e.message || e); refuse("L'e-mail n'a pas pu être envoyé. Réessayez dans un instant.", 502); }
+  await db.prepare("UPDATE verifs SET code_hash = ?, essais = 0, envois = envois + 1, expire = ?, envoye = ? WHERE id = ?").bind(await C.sha256hex(vid + ":" + code), now + VALIDITE, now, vid).run();
+  return json({ ok: true, etape: "code", vid, email_masque: masquer(v.email), valide_minutes: 10, renvoi_secondes: ATTENTE_RENVOI / 1000 });
+}
+async function adminTestMail({ request, env }) {
+  const u = await exigerAdmin(request, env);
+  if (!Mail.mailConfigure(env)) refuse("L'envoi d'e-mails n'est pas configuré (MAIL_UTILISATEUR et MAIL_MOT_DE_PASSE manquent).", 503);
+  if (!(await C.limiter(env, "testmail:" + u.id, 5, 3600))) refuse("Trop d'essais. Réessayez plus tard.", 429);
+  try { await Mail.envoyerCourriel(env, u.email, "Test d'envoi Nexvia RDC", Mail.texteCode("123456", "inscription").replace("Voici votre code pour créer votre compte Nexvia RDC :", "Ceci est un e-mail de test (le code ci-dessous est fictif) :")); }
+  catch (e) { refuse("Échec de l'envoi : " + String(e && e.message || e).slice(0, 200), 502); }
+  return json({ ok: true, envoye_a: u.email });
 }
 
 // ---------- espace commerce ----------
@@ -268,7 +351,7 @@ async function fileAdmin({ request, env }) {
     const ph = await tout("SELECT id, adresse_id, type FROM photos WHERE adresse_id IN (" + adresses.map(() => "?").join(",") + ") ORDER BY id", ...adresses.map(a => a.id));
     for (const a of adresses) { a.photos = ph.filter(p => p.adresse_id === a.id && p.type !== "menu").map(p => p.id); a.menu_photos = ph.filter(p => p.adresse_id === a.id && p.type === "menu").map(p => p.id); a.plan_effectif = C.planEffectif(a); }
   }
-  return json({ ok: true, marques, adresses, a_verifier: averifier, en_attente: attente, imports, stats, whatsapp: C.WHATSAPP });
+  return json({ ok: true, marques, adresses, a_verifier: averifier, en_attente: attente, imports, stats, whatsapp: C.WHATSAPP, mail_configure: Mail.mailConfigure(env) });
 }
 async function adminMarque({ request, env }) {
   await exigerAdmin(request, env); const db = await C.base(env), b = await lireJson(request);
