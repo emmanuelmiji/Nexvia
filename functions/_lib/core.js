@@ -53,12 +53,15 @@ const SCHEMA = [
   `CREATE INDEX IF NOT EXISTS idx_demandes_marque ON demandes_paiement (marque_id)`,
   `CREATE TABLE IF NOT EXISTS zola_paiements (ref TEXT PRIMARY KEY, date TEXT, montant REAL, devise TEXT, statut TEXT, operateur TEXT, beneficiaire TEXT, settle_montant REAL, settle_statut TEXT, maj TEXT)`,
   `CREATE TABLE IF NOT EXISTS verifs (id TEXT PRIMARY KEY, email TEXT NOT NULL, but TEXT NOT NULL, code_hash TEXT NOT NULL, donnees TEXT, essais INTEGER NOT NULL DEFAULT 0, envois INTEGER NOT NULL DEFAULT 1, expire INTEGER NOT NULL, envoye INTEGER NOT NULL)`,
+  `CREATE TABLE IF NOT EXISTS sanctions (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, email TEXT, nom TEXT, action TEXT NOT NULL, motif TEXT, jusqua TEXT, par TEXT, at TEXT NOT NULL)`,
+  `CREATE TABLE IF NOT EXISTS reclamations (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL, message TEXT NOT NULL, statut TEXT NOT NULL DEFAULT 'en_attente', reponse TEXT, created_at TEXT NOT NULL, traite_at TEXT)`,
+  `CREATE INDEX IF NOT EXISTS idx_reclam_user ON reclamations (user_id)`,
   `CREATE TABLE IF NOT EXISTS imports (id INTEGER PRIMARY KEY AUTOINCREMENT, ts TEXT NOT NULL, lignes INTEGER NOT NULL, activees INTEGER NOT NULL, a_verifier INTEGER NOT NULL, par INTEGER)`,
 ];
 let schemaPret = null;
 // Ajouts de colonnes sur une base déjà créée (sans effet si la colonne existe déjà).
 const migrer = env => async () => {
-  for (const sql of ["ALTER TABLE marques ADD COLUMN plan_souhaite TEXT", "ALTER TABLE photos ADD COLUMN type TEXT NOT NULL DEFAULT 'lieu'", "ALTER TABLE users ADD COLUMN banni INTEGER NOT NULL DEFAULT 0", "ALTER TABLE users ADD COLUMN banni_motif TEXT", "ALTER TABLE users ADD COLUMN banni_at TEXT"]) {
+  for (const sql of ["ALTER TABLE marques ADD COLUMN plan_souhaite TEXT", "ALTER TABLE photos ADD COLUMN type TEXT NOT NULL DEFAULT 'lieu'", "ALTER TABLE users ADD COLUMN banni INTEGER NOT NULL DEFAULT 0", "ALTER TABLE users ADD COLUMN banni_motif TEXT", "ALTER TABLE users ADD COLUMN banni_at TEXT", "ALTER TABLE users ADD COLUMN banni_jusqua TEXT"]) {
     try { await env.DB.prepare(sql).run(); }
     catch (e) { if (!/duplicate column/i.test(String(e && (e.message || e)))) throw e; }
   }

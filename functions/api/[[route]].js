@@ -45,6 +45,9 @@ const ROUTES = {
   "GET admin/comptes": adminComptes,
   "POST admin/bannir": adminBannir,
   "POST admin/debannir": adminDebannir,
+  "POST admin/supprimer": adminSupprimer,
+  "POST admin/reclamation": adminReclamation,
+  "POST auth/reclamation": reclamationUtilisateur,
   "POST auth/deconnexion": async ({ request, env }) => { await C.finSession(request, env); return json({ ok: true }, 200, { "set-cookie": C.cookieVide() }); },
   "GET auth/moi": moi,
   "GET commerce/etat": etatCommerce,
@@ -134,7 +137,8 @@ async function connexion({ request, env, ip }) {
   const db = await C.base(env);
   const u = await db.prepare("SELECT * FROM users WHERE email = ?").bind(email).first();
   if (!u || !(await C.mdpValide(mdp, u))) refuse("E-mail ou mot de passe incorrect.", 401);
-  if (u.banni) refuse("Ce compte a été suspendu par l'équipe Nexvia. Pour en savoir plus, contactez-nous sur WhatsApp.", 403);
+  await leverBans(db);
+  const ban = await infosBan(db, u.id); if (ban) return json({ ok: true, etape: "banni", ...ban });
   // Le mot de passe est bon : si l'envoi d'e-mails est actif, on exige le code reçu par e-mail.
   // (Tant que l'envoi n'est pas configuré, la connexion reste directe, pour ne jamais enfermer l'administrateur dehors.)
   if (Mail.mailConfigure(env)) {
@@ -151,7 +155,7 @@ async function connexionConfirmer({ request, env, ip }) {
   const db = await C.base(env), v = await controlerCode(env, db, b, "connexion");
   const u = await db.prepare("SELECT * FROM users WHERE id = ? AND email = ?").bind(v.donnees.uid, v.email).first();
   if (!u) refuse("Compte introuvable.", 404);
-  if (u.banni) refuse("Ce compte a été suspendu par l'équipe Nexvia. Pour en savoir plus, contactez-nous sur WhatsApp.", 403);
+  await leverBans(db); if (await infosBan(db, u.id)) refuse("Ce compte est suspendu.", 403);
   const cookie = await C.ouvrirSession(env, u.id);
   u.admin = C.adminsDe(env).includes(v.email);
   return json({ ok: true, utilisateur: pub(u) }, 200, { "set-cookie": cookie });
@@ -350,7 +354,7 @@ async function fileAdmin({ request, env }) {
     tout("SELECT d.id, d.plan, d.ref, d.motif, d.created_at, d.tentatives, m.nom AS marque_nom, u.email, u.tel AS user_tel FROM demandes_paiement d JOIN marques m ON m.id = d.marque_id JOIN users u ON u.id = d.user_id WHERE d.statut = 'a_verifier' ORDER BY d.id"),
     tout("SELECT d.id, d.plan, d.ref, d.motif, d.created_at, d.tentatives, m.nom AS marque_nom, u.email FROM demandes_paiement d JOIN marques m ON m.id = d.marque_id JOIN users u ON u.id = d.user_id WHERE d.statut = 'en_attente' ORDER BY d.id"),
     tout("SELECT * FROM imports ORDER BY id DESC LIMIT 5"),
-    db.prepare("SELECT (SELECT COUNT(*) FROM users) AS comptes, (SELECT COUNT(*) FROM marques) AS marques, (SELECT COUNT(*) FROM adresses WHERE statut = 'validee') AS adresses_validees, (SELECT COUNT(*) FROM marques WHERE plan != 'gratuit' AND plan_fin > ?) AS abonnes").bind(new Date().toISOString()).first(),
+    db.prepare("SELECT (SELECT COUNT(*) FROM users) AS comptes, (SELECT COUNT(*) FROM reclamations WHERE statut = 'en_attente') AS reclamations, (SELECT COUNT(*) FROM marques) AS marques, (SELECT COUNT(*) FROM adresses WHERE statut = 'validee') AS adresses_validees, (SELECT COUNT(*) FROM marques WHERE plan != 'gratuit' AND plan_fin > ?) AS abonnes").bind(new Date().toISOString()).first(),
   ]);
   if (adresses.length) {
     const ph = await tout("SELECT id, adresse_id, type FROM photos WHERE adresse_id IN (" + adresses.map(() => "?").join(",") + ") ORDER BY id", ...adresses.map(a => a.id));
@@ -397,28 +401,85 @@ async function adminImport({ request, env }) {
   const b = await lireJson(request, 2200000);
   return json({ ok: true, ...(await C.importerEtRapprocher(env, b.csv, admin.id)) });
 }
-async function adminComptes({ request, env, url }) {
-  await exigerAdmin(request, env); const db = await C.base(env);
-  const q = String(url.searchParams.get("q") || "").trim().toLowerCase().slice(0, 80).replace(/[%_\\]/g, "");
-  const filtre = url.searchParams.get("banni") === "1" ? " AND u.banni = 1" : "";
-  const like = "%" + q + "%";
-  const lignes = (await db.prepare("SELECT u.id, u.email, u.nom, u.tel, u.type, u.banni, u.banni_motif, u.banni_at, u.created_at, m.nom AS commerce FROM users u LEFT JOIN marques m ON m.owner_id = u.id WHERE (lower(u.email) LIKE ? OR lower(u.nom) LIKE ? OR lower(IFNULL(m.nom, '')) LIKE ?)" + filtre + " ORDER BY u.banni DESC, u.id DESC LIMIT 30").bind(like, like, like).all()).results || [];
-  const admins = C.adminsDe(env);
-  return json({ ok: true, comptes: lignes.map(c => ({ ...c, admin: admins.includes(String(c.email).toLowerCase()) })) });
+// --- sanctions : bannissement (définitif ou pour une durée), suppression, réclamations ---
+const JOURNAL = (db, u, action, motif, jusqua, par) => db.prepare("INSERT INTO sanctions (user_id, email, nom, action, motif, jusqua, par, at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)").bind(u.id, u.email, u.nom || "", action, motif || "", jusqua || null, par, new Date().toISOString());
+async function leverBans(db) { await db.prepare("UPDATE users SET banni = 0, banni_motif = NULL, banni_at = NULL, banni_jusqua = NULL WHERE banni = 1 AND banni_jusqua IS NOT NULL AND banni_jusqua <= ?").bind(new Date().toISOString()).run(); }
+async function infosBan(db, uid) {
+  const u = await db.prepare("SELECT banni, banni_motif, banni_at, banni_jusqua FROM users WHERE id = ?").bind(uid).first();
+  if (!u || !u.banni) return null;
+  const r = await db.prepare("SELECT statut, reponse FROM reclamations WHERE user_id = ? AND created_at >= ? ORDER BY id DESC LIMIT 1").bind(uid, u.banni_at || "").first();
+  return { motif: u.banni_motif || "", jusqua: u.banni_jusqua || null, definitif: !u.banni_jusqua, reclamation: r ? { statut: r.statut, reponse: r.reponse || "" } : null, peut_reclamer: !r };
 }
-async function adminBannir({ request, env }) {
-  const moi = await exigerAdmin(request, env), db = await C.base(env), b = await lireJson(request), id = ent(b.id);
-  const cible = await db.prepare("SELECT id, email FROM users WHERE id = ?").bind(id).first();
-  if (!cible) refuse("Compte introuvable.", 404);
-  if (cible.id === moi.id || C.adminsDe(env).includes(String(cible.email).toLowerCase())) refuse("Un compte administrateur ne peut pas être banni.", 403);
-  const motif = texte(b.motif, 300);
-  await db.batch([db.prepare("UPDATE users SET banni = 1, banni_motif = ?, banni_at = ? WHERE id = ?").bind(motif, new Date().toISOString(), id), db.prepare("DELETE FROM sessions WHERE user_id = ?").bind(id)]);
+async function reclamationUtilisateur({ request, env, ip }) {
+  const b = await lireJson(request);
+  const email = texte(b.email, 120, true, "e-mail").toLowerCase(), mdp = String(b.mot_de_passe || ""), message = texte(b.message, 1000, true, "message");
+  if (message.length < 10) refuse("Expliquez votre situation en quelques phrases (10 caractères minimum).");
+  if (!(await C.limiter(env, "log:" + ip + ":" + email, 8, 900))) refuse("Trop de tentatives. Réessayez dans 15 minutes.", 429);
+  const db = await C.base(env); await leverBans(db);
+  const u = await db.prepare("SELECT * FROM users WHERE email = ?").bind(email).first();
+  if (!u || !(await C.mdpValide(mdp, u))) refuse("E-mail ou mot de passe incorrect.", 401);
+  const ban = await infosBan(db, u.id); if (!ban) refuse("Ce compte n'est pas suspendu.", 400);
+  if (!ban.peut_reclamer) refuse("Vous avez déjà envoyé une réclamation pour cette suspension.", 409);
+  await db.prepare("INSERT INTO reclamations (user_id, message, created_at) VALUES (?, ?, ?)").bind(u.id, message, new Date().toISOString()).run();
   return json({ ok: true });
 }
+async function adminComptes({ request, env, url }) {
+  await exigerAdmin(request, env); const db = await C.base(env); await leverBans(db);
+  const q = String(url.searchParams.get("q") || "").trim().toLowerCase().slice(0, 80).replace(/[%_\\]/g, "");
+  const filtre = url.searchParams.get("banni") === "1" ? " AND u.banni = 1" : url.searchParams.get("reclam") === "1" ? " AND EXISTS (SELECT 1 FROM reclamations r WHERE r.user_id = u.id AND r.statut = 'en_attente')" : "";
+  const like = "%" + q + "%";
+  const lignes = (await db.prepare("SELECT u.id, u.email, u.nom, u.tel, u.type, u.banni, u.banni_motif, u.banni_at, u.banni_jusqua, u.created_at, m.nom AS commerce, (SELECT r.id FROM reclamations r WHERE r.user_id = u.id AND r.statut = 'en_attente' ORDER BY r.id DESC LIMIT 1) AS rec_id, (SELECT r.message FROM reclamations r WHERE r.user_id = u.id AND r.statut = 'en_attente' ORDER BY r.id DESC LIMIT 1) AS rec_message FROM users u LEFT JOIN marques m ON m.owner_id = u.id WHERE (lower(u.email) LIKE ? OR lower(u.nom) LIKE ? OR lower(IFNULL(m.nom, '')) LIKE ?)" + filtre + " ORDER BY (rec_id IS NOT NULL) DESC, u.banni DESC, u.id DESC LIMIT 30").bind(like, like, like).all()).results || [];
+  const journal = (await db.prepare("SELECT id, user_id, email, nom, action, motif, jusqua, par, at FROM sanctions ORDER BY id DESC LIMIT 25").all()).results || [];
+  const admins = C.adminsDe(env);
+  return json({ ok: true, comptes: lignes.map(c => ({ ...c, admin: admins.includes(String(c.email).toLowerCase()) })), journal });
+}
+async function cibleModeration(env, db, moi, id) {
+  const cible = await db.prepare("SELECT id, email, nom FROM users WHERE id = ?").bind(id).first();
+  if (!cible) refuse("Compte introuvable.", 404);
+  if (cible.id === moi.id || C.adminsDe(env).includes(String(cible.email).toLowerCase())) refuse("Un compte administrateur ne peut pas être sanctionné.", 403);
+  return cible;
+}
+const motifRequis = v => { const m = texte(v, 300, true, "raison"); if (m.length < 3) refuse("Indiquez ce que la personne a fait (raison obligatoire)."); return m; };
+async function adminBannir({ request, env }) {
+  const moi = await exigerAdmin(request, env), db = await C.base(env), b = await lireJson(request), id = ent(b.id);
+  const cible = await cibleModeration(env, db, moi, id), motif = motifRequis(b.motif);
+  const jours = Number(b.jours || 0); if (jours && ![1, 7, 30, 90].includes(jours)) refuse("Durée invalide.");
+  const now = new Date(), jusqua = jours ? new Date(now.getTime() + jours * 86400000).toISOString() : null;
+  await db.batch([db.prepare("UPDATE users SET banni = 1, banni_motif = ?, banni_at = ?, banni_jusqua = ? WHERE id = ?").bind(motif, now.toISOString(), jusqua, id), db.prepare("DELETE FROM sessions WHERE user_id = ?").bind(id), JOURNAL(db, cible, "ban", motif, jusqua, moi.email)]);
+  return json({ ok: true, jusqua });
+}
 async function adminDebannir({ request, env }) {
-  await exigerAdmin(request, env); const db = await C.base(env), b = await lireJson(request);
-  const r = await db.prepare("UPDATE users SET banni = 0, banni_motif = NULL, banni_at = NULL WHERE id = ?").bind(ent(b.id)).run();
-  if (!r.meta.changes) refuse("Compte introuvable.", 404);
+  const moi = await exigerAdmin(request, env), db = await C.base(env), b = await lireJson(request), id = ent(b.id);
+  const cible = await db.prepare("SELECT id, email, nom FROM users WHERE id = ?").bind(id).first(); if (!cible) refuse("Compte introuvable.", 404);
+  await db.batch([db.prepare("UPDATE users SET banni = 0, banni_motif = NULL, banni_at = NULL, banni_jusqua = NULL WHERE id = ?").bind(id), db.prepare("UPDATE reclamations SET statut = 'acceptee', traite_at = ? WHERE user_id = ? AND statut = 'en_attente'").bind(new Date().toISOString(), id), JOURNAL(db, cible, "deban", "", null, moi.email)]);
+  return json({ ok: true });
+}
+async function adminReclamation({ request, env }) {
+  const moi = await exigerAdmin(request, env), db = await C.base(env), b = await lireJson(request);
+  const r = await db.prepare("SELECT * FROM reclamations WHERE id = ? AND statut = 'en_attente'").bind(ent(b.id)).first(); if (!r) refuse("Réclamation introuvable ou déjà traitée.", 404);
+  const cible = await db.prepare("SELECT id, email, nom FROM users WHERE id = ?").bind(r.user_id).first();
+  const reponse = texte(b.reponse, 300), maintenant = new Date().toISOString();
+  if (b.decision === "accepter") {
+    await db.batch([db.prepare("UPDATE users SET banni = 0, banni_motif = NULL, banni_at = NULL, banni_jusqua = NULL WHERE id = ?").bind(r.user_id), db.prepare("UPDATE reclamations SET statut = 'acceptee', reponse = ?, traite_at = ? WHERE id = ?").bind(reponse, maintenant, r.id), JOURNAL(db, cible, "reclamation_acceptee", reponse, null, moi.email)]);
+  } else if (b.decision === "refuser") {
+    if (reponse.length < 3) refuse("Écrivez une courte réponse : la personne la verra.");
+    await db.batch([db.prepare("UPDATE reclamations SET statut = 'refusee', reponse = ?, traite_at = ? WHERE id = ?").bind(reponse, maintenant, r.id), JOURNAL(db, cible, "reclamation_refusee", reponse, null, moi.email)]);
+  } else refuse("Décision inconnue.");
+  return json({ ok: true });
+}
+async function adminSupprimer({ request, env }) {
+  const moi = await exigerAdmin(request, env), db = await C.base(env), b = await lireJson(request), id = ent(b.id);
+  const cible = await cibleModeration(env, db, moi, id), motif = motifRequis(b.motif);
+  await db.batch([
+    JOURNAL(db, cible, "suppression", motif, null, moi.email),
+    db.prepare("DELETE FROM photos WHERE adresse_id IN (SELECT a.id FROM adresses a JOIN marques m ON m.id = a.marque_id WHERE m.owner_id = ?)").bind(id),
+    db.prepare("DELETE FROM adresses WHERE marque_id IN (SELECT id FROM marques WHERE owner_id = ?)").bind(id),
+    db.prepare("DELETE FROM demandes_paiement WHERE user_id = ?").bind(id),
+    db.prepare("DELETE FROM marques WHERE owner_id = ?").bind(id),
+    db.prepare("DELETE FROM sessions WHERE user_id = ?").bind(id),
+    db.prepare("DELETE FROM reclamations WHERE user_id = ?").bind(id),
+    db.prepare("DELETE FROM verifs WHERE email = ?").bind(cible.email),
+    db.prepare("DELETE FROM users WHERE id = ?").bind(id)]);
   return json({ ok: true });
 }
 async function adminMotDePasse({ request, env }) {
@@ -436,7 +497,7 @@ async function adminMotDePasse({ request, env }) {
 // ---------- données publiques pour l'application (badge, photos, menu, placement) ----------
 async function publicCommerces({ env }) {
   const db = await C.base(env), now = new Date();
-  const rows = (await db.prepare("SELECT a.*, m.plan, m.plan_fin, m.id AS mid FROM adresses a JOIN marques m ON m.id = a.marque_id WHERE a.statut = 'validee' AND m.statut = 'validee' AND m.owner_id NOT IN (SELECT id FROM users WHERE banni = 1) ORDER BY a.marque_id, a.id LIMIT 1000").all()).results || [];
+  const rows = (await db.prepare("SELECT a.*, m.plan, m.plan_fin, m.id AS mid FROM adresses a JOIN marques m ON m.id = a.marque_id WHERE a.statut = 'validee' AND m.statut = 'validee' AND m.owner_id NOT IN (SELECT id FROM users WHERE banni = 1 AND (banni_jusqua IS NULL OR banni_jusqua > '"+new Date().toISOString()+"')) ORDER BY a.marque_id, a.id LIMIT 1000").all()).results || [];
   const phs = (await db.prepare("SELECT p.id, p.adresse_id, p.type FROM photos p JOIN adresses a ON a.id = p.adresse_id WHERE a.statut = 'validee' ORDER BY p.id").all()).results || [];
   const parMarque = {}, sortie = [];
   for (const a of rows) {

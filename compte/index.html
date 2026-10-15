@@ -29,6 +29,7 @@
     h("div", { class: "mbote" }, drapeau(24), "Mbote !"),
     h("h1", {}, titre), h("p", {}, sous)), h("div", { class: "auth-bande" }));
 
+  let ban = null;     // compte suspendu : infos + identifiants gardés en mémoire pour la réclamation
   let etape = null;   // { vid, but, masque, minutes, depuis } quand on attend le code reçu par e-mail
 
   function formulaire() {
@@ -52,6 +53,7 @@
         const corps = { email: f.email.value, mot_de_passe: f.mdp.value };
         if (insc) Object.assign(corps, { nom: f.nom.value, tel: f.tel.value, type, confirmation: f.conf.value });
         const r = await api("POST", insc ? "auth/inscription/demande" : "auth/connexion", corps);
+        if (r.etape === "banni") { ban = { ...r, email: f.email.value, mdp: f.mdp.value }; rendre(); return; }
         if (r.etape === "code") { etape = { vid: r.vid, but: insc ? "inscription" : "connexion", masque: r.email_masque, minutes: r.valide_minutes, depuis: Date.now(), attente: r.renvoi_secondes }; rendre(); }
         else aller(r.utilisateur);
       } catch (e) { msg.append(h("div", { class: "alerte bad" }, e.message)); btn.disabled = false; btn.textContent = insc ? "Recevoir mon code" : "Me connecter"; }
@@ -107,6 +109,21 @@
     return form;
   }
 
+
+  function ecranBan() {
+    const msg = h("div", {}), zone = h("textarea", { rows: 5, maxlength: 1000, placeholder: "Expliquez calmement votre situation (10 caractères minimum)…" });
+    const rec = ban.reclamation;
+    const bloc = rec
+      ? h("div", { class: "alerte " + (rec.statut === "refusee" ? "bad" : "info") }, rec.statut === "refusee" ? [h("b", {}, "Votre réclamation a été refusée."), rec.reponse ? h("p", {}, "Réponse de l'équipe : « " + rec.reponse + " »") : null] : "Votre réclamation a bien été envoyée. L'équipe Nexvia va l'examiner. Revenez vous connecter plus tard pour voir la réponse.")
+      : h("form", { novalidate: true, onsubmit: async ev => {
+          ev.preventDefault(); vider(msg); const btn = ev.target.querySelector("button"); btn.disabled = true;
+          try { await api("POST", "auth/reclamation", { email: ban.email, mot_de_passe: ban.mdp, message: zone.value }); ban.reclamation = { statut: "en_attente", reponse: "" }; rendre(); }
+          catch (e) { msg.append(h("div", { class: "alerte bad" }, e.message)); btn.disabled = false; }
+        } }, h("label", { for: "rec" }, "Vous pensez que c'est une erreur ? Envoyez une réclamation"), Object.assign(zone, { id: "rec" }), msg, h("p", { style: "margin-top:12px" }, h("button", { class: "btn gold grand", type: "submit" }, "Envoyer ma réclamation")));
+    return h("div", {}, h("div", { class: "alerte bad" }, h("b", {}, ban.definitif ? "Votre compte est suspendu définitivement." : "Votre compte est suspendu jusqu'au " + NX.date(ban.jusqua) + "."), ban.motif ? h("p", {}, "Raison : « " + ban.motif + " »") : null),
+      bloc, h("p", { style: "margin-top:12px" }, h("button", { class: "btn fantome", onclick: () => { ban = null; rendre(); } }, "Retour")));
+  }
+
   function rendre() {
     vider(app);
     if (u) {
@@ -123,6 +140,7 @@
           h("p", { style: "text-align:center" }, h("button", { class: "btn alt small", onclick: async () => { try { await api("POST", "auth/deconnexion"); } catch (e) {} u = null; rendre(); } }, "Me déconnecter")))));
     } else {
       const insc = mode === "inscription";
+      if (ban) { app.append(haut("Compte suspendu", "Votre accès à Nexvia RDC est bloqué pour le moment."), h("div", { class: "auth-carte" }, h("div", { class: "boite" }, ecranBan())), h("p", { class: "auth-pied" }, h("a", { href: "/" }, "Retour à la carte"))); return; }
       if (etape) { app.append(haut("Vérifiez votre e-mail", etape.but === "inscription" ? "Dernière étape avant de créer votre compte." : "Pour votre sécurité, confirmez que c'est bien vous."), h("div", { class: "auth-carte" }, h("div", { class: "boite" }, ecranCode())), h("p", { class: "auth-pied" }, h("a", { href: "/" }, "Retour à la carte"))); return; }
       app.append(haut(insc ? "Faites-vous trouver à Gombe" : "Bon retour !", insc ? "Créez votre compte gratuit et présentez votre commerce aux habitants de Kinshasa." : "Connectez-vous pour gérer votre commerce."),
         h("div", { class: "auth-carte" }, h("div", { class: "boite" },

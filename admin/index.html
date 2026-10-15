@@ -94,33 +94,46 @@
         h("button", { class: "btn danger small", onclick: ev => { const n = prompt("Motif du refus (visible par le commerce) :", ""); if (n !== null) agir(ev.target, () => api("POST", "admin/adresse", { id: a.id, action: "refuser", note: n }), "Adresse refusée."); } }, "Refuser")));
   }
 
-  // ---------- gestion des comptes (recherche, bannissement) ----------
-  let listeComptes = null, rechercheComptes = "", seulBannis = false;
-  async function chargerComptes() { try { listeComptes = (await api("GET", "admin/comptes?q=" + encodeURIComponent(rechercheComptes) + (seulBannis ? "&banni=1" : ""))).comptes; } catch (e) { toast(e.message, true); listeComptes = []; } rendre(); }
+  // ---------- gestion des comptes (recherche, bannissement, suppression, réclamations) ----------
+  let listeComptes = null, journal = [], rechercheComptes = "", filtreComptes = "";
+  async function chargerComptes() { try { const r = await api("GET", "admin/comptes?q=" + encodeURIComponent(rechercheComptes) + (filtreComptes ? "&" + filtreComptes + "=1" : "")); listeComptes = r.comptes; journal = r.journal; } catch (e) { toast(e.message, true); listeComptes = []; } rendre(); }
+  const ACTIONS = { ban: "🚫 Banni", deban: "✅ Rétabli", suppression: "🗑️ Supprimé", reclamation_acceptee: "✅ Réclamation acceptée", reclamation_refusee: "❌ Réclamation refusée" };
+  const DUREES = [["1", "24 heures"], ["7", "7 jours"], ["30", "30 jours"], ["90", "90 jours"], ["0", "Définitivement"]];
+  const agirCompte = (ev, chemin, corps, ok) => { ev.target.disabled = true; return api("POST", chemin, corps).then(async () => { toast(ok); await charger(); return chargerComptes(); }).catch(er => { toast(er.message, true); ev.target.disabled = false; }); };
   function comptesBloc() {
-    if (listeComptes === null) chargerComptes();
+    if (listeComptes === null) { listeComptes = []; chargerComptes(); }
     const champ = h("input", { type: "search", placeholder: "Chercher par e-mail, nom ou commerce", maxlength: 80, value: rechercheComptes });
-    champ.onkeydown = ev => { if (ev.key === "Enter") { rechercheComptes = champ.value; chargerComptes(); } };
+    const chercher = () => { rechercheComptes = champ.value; chargerComptes(); };
+    champ.onkeydown = ev => { if (ev.key === "Enter") chercher(); };
+    const filtre = (cle, lib) => h("button", { type: "button", class: "btn small " + (filtreComptes === cle ? "gold" : "fantome"), onclick: () => { filtreComptes = filtreComptes === cle ? "" : cle; rechercheComptes = champ.value; chargerComptes(); } }, lib);
     const ligne = c => {
-      const motif = h("input", { type: "text", placeholder: "Raison (facultatif)", maxlength: 300 }), zone = h("div", { style: "display:none;margin-top:8px" }, motif,
-        h("div", { class: "row", style: "margin-top:8px" },
-          h("button", { class: "btn danger small", onclick: async ev => { ev.target.disabled = true; try { await api("POST", "admin/bannir", { id: c.id, motif: motif.value }); toast("Compte banni."); chargerComptes(); } catch (er) { toast(er.message, true); ev.target.disabled = false; } } }, "Confirmer le bannissement"),
-          h("button", { class: "btn fantome small", onclick: () => { zone.style.display = "none"; } }, "Annuler")));
+      const motif = h("input", { type: "text", placeholder: "Qu'a-t-il fait ? (obligatoire, il le verra)", maxlength: 300 });
+      const duree = h("select", {}, DUREES.map(([v, t]) => h("option", { value: v }, t)));
+      const zoneBan = h("div", { style: "display:none;margin-top:8px" }, h("label", {}, "Durée du bannissement"), duree, motif,
+        h("div", { class: "row", style: "margin-top:8px" }, h("button", { class: "btn danger small", onclick: ev => agirCompte(ev, "admin/bannir", { id: c.id, motif: motif.value, jours: Number(duree.value) }, "Compte banni.") }, "Confirmer le bannissement"), h("button", { class: "btn fantome small", onclick: () => { zoneBan.style.display = "none"; } }, "Annuler")));
+      const motifSup = h("input", { type: "text", placeholder: "Raison (obligatoire, gardée dans le journal)", maxlength: 300 });
+      const zoneSup = h("div", { style: "display:none;margin-top:8px" }, h("div", { class: "alerte bad" }, "Suppression définitive : le compte, le commerce, les adresses, les photos et l'abonnement sont effacés. La personne ne pourra pas réclamer. Irréversible."), motifSup,
+        h("div", { class: "row", style: "margin-top:8px" }, h("button", { class: "btn danger small", onclick: ev => agirCompte(ev, "admin/supprimer", { id: c.id, motif: motifSup.value }, "Compte supprimé.") }, "Supprimer pour toujours"), h("button", { class: "btn fantome small", onclick: () => { zoneSup.style.display = "none"; } }, "Annuler")));
+      const rep = h("input", { type: "text", placeholder: "Réponse (obligatoire si tu refuses)", maxlength: 300 });
+      const reclam = c.rec_id ? h("div", { class: "alerte warn" }, h("b", {}, "📨 Réclamation : "), h("span", { style: "white-space:pre-wrap" }, c.rec_message), rep,
+        h("div", { class: "row", style: "margin-top:8px" }, h("button", { class: "btn gold small", onclick: ev => agirCompte(ev, "admin/reclamation", { id: c.rec_id, decision: "accepter", reponse: rep.value }, "Réclamation acceptée : compte rétabli.") }, "Accepter et rétablir"), h("button", { class: "btn danger small", onclick: ev => agirCompte(ev, "admin/reclamation", { id: c.rec_id, decision: "refuser", reponse: rep.value }, "Réclamation refusée.") }, "Refuser"))) : null;
       return h("div", { class: "dem" },
-        h("div", { class: "row between" }, h("b", {}, c.nom || "(sans nom)"), c.banni ? h("span", { class: "pastille-formule", style: "background:#fde8e8;color:#b00020" }, "Banni") : c.admin ? h("span", { class: "pastille-formule premium" }, "Admin") : null),
+        h("div", { class: "row between" }, h("b", {}, c.nom || "(sans nom)"), c.banni ? h("span", { class: "pastille-formule", style: "background:#fde8e8;color:#b00020" }, c.banni_jusqua ? "Banni jusqu'au " + date(c.banni_jusqua) : "Banni définitivement") : c.admin ? h("span", { class: "pastille-formule premium" }, "Admin") : null),
         h("p", { class: "muted" }, c.email + (c.tel ? " · " + c.tel : "") + " · " + (c.commerce ? "Commerce : " + c.commerce : c.type === "commerce" ? "Commerce (fiche pas encore créée)" : "Utilisateur") + " · inscrit le " + date(c.created_at)),
         c.banni && c.banni_motif ? h("p", { class: "muted" }, "Raison : " + c.banni_motif) : null,
-        c.admin ? null : c.banni
-          ? h("button", { class: "btn alt small", onclick: async ev => { ev.target.disabled = true; try { await api("POST", "admin/debannir", { id: c.id }); toast("Compte rétabli."); chargerComptes(); } catch (er) { toast(er.message, true); ev.target.disabled = false; } } }, "Rétablir le compte")
-          : h("button", { class: "btn danger small", onclick: () => { zone.style.display = "block"; motif.focus(); } }, "Bannir ce compte"),
-        zone);
+        reclam,
+        c.admin ? null : h("div", { class: "row" },
+          c.banni ? h("button", { class: "btn alt small", onclick: ev => agirCompte(ev, "admin/debannir", { id: c.id }, "Compte rétabli.") }, "Rétablir le compte") : h("button", { class: "btn danger small", onclick: () => { zoneBan.style.display = "block"; motif.focus(); } }, "Bannir"),
+          h("button", { class: "btn fantome small", onclick: () => { zoneSup.style.display = "block"; motifSup.focus(); } }, "Supprimer")),
+        zoneBan, zoneSup);
     };
-    return h("div", { class: "card" }, h("h3", {}, "🚫 Comptes et bannissement"),
-      h("p", { class: "muted" }, "Un compte banni est déconnecté tout de suite, ne peut plus se connecter, et ses commerces disparaissent de l'application. Tu peux le rétablir à tout moment."),
+    const histo = journal.length ? h("details", { style: "margin-top:12px" }, h("summary", {}, "Journal des sanctions (" + journal.length + " dernières)"),
+      journal.map(j => h("p", { class: "muted", style: "margin:6px 0" }, date(j.at) + " · " + (ACTIONS[j.action] || j.action) + " · " + (j.nom || "") + " <" + j.email + ">" + (j.jusqua ? " · jusqu'au " + date(j.jusqua) : j.action === "ban" ? " · définitif" : "") + (j.motif ? " · « " + j.motif + " »" : "")))) : null;
+    return h("div", { class: "card" }, h("h3", {}, "🚫 Comptes, bannissements et suppressions"),
+      h("p", { class: "muted" }, "Bannir : la personne est déconnectée, ne peut plus se connecter, ses commerces disparaissent de l'application. Elle voit la raison et peut envoyer une réclamation. Supprimer : tout est effacé, sans réclamation possible. Tout est noté dans le journal."),
       champ,
-      h("div", { class: "row", style: "margin:8px 0" }, h("button", { class: "btn alt small", onclick: () => { rechercheComptes = champ.value; chargerComptes(); } }, "Chercher"),
-        h("label", { class: "row", style: "gap:6px;font-weight:500" }, h("input", { type: "checkbox", checked: seulBannis, onchange: ev => { seulBannis = ev.target.checked; rechercheComptes = champ.value; chargerComptes(); } }), "Seulement les bannis")),
-      listeComptes === null ? h("p", { class: "muted" }, "Chargement…") : listeComptes.length ? listeComptes.map(ligne) : h("p", { class: "muted" }, "Aucun compte trouvé."));
+      h("div", { class: "row", style: "margin:8px 0" }, h("button", { class: "btn alt small", onclick: chercher }, "Chercher"), filtre("banni", "Bannis"), filtre("reclam", "Réclamations" + (d.stats.reclamations ? " (" + d.stats.reclamations + ")" : ""))),
+      !listeComptes.length ? h("p", { class: "muted" }, "Aucun compte trouvé.") : listeComptes.map(ligne), histo);
   }
   // ---------- outils ----------
   function mailBloc() {
@@ -149,7 +162,7 @@
       h("div", { class: "kpis" }, kpi(s.comptes, s.comptes > 1 ? "comptes" : "compte"), kpi(s.marques, s.marques > 1 ? "commerces" : "commerce"), kpi(s.adresses_validees, s.adresses_validees > 1 ? "adresses validées" : "adresse validée"), kpi(s.abonnes, s.abonnes > 1 ? "abonnés actifs" : "abonné actif")))),
       h("div", { class: "bande-rdc" }));
     const tab = (cle, lib, n) => h("button", { class: onglet === cle ? "on" : "", onclick: () => { onglet = cle; rendre(); } }, lib, pastille(n));
-    app.append(h("div", { class: "onglets-admin" }, tab("validations", "✅ Validations", nVal), tab("paiements", "💳 Paiements", nPay), tab("outils", "🧰 Outils")));
+    app.append(h("div", { class: "onglets-admin" }, tab("validations", "✅ Validations", nVal), tab("paiements", "💳 Paiements", nPay), tab("outils", "🧰 Outils", s.reclamations)));
     const main = h("main", { class: "large" });
     if (onglet === "validations") {
       main.append(h("div", { class: "cols" },
