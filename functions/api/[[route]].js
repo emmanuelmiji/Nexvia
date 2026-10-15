@@ -42,6 +42,9 @@ const ROUTES = {
   "POST auth/connexion/confirmer": connexionConfirmer,
   "POST auth/code/renvoyer": codeRenvoyer,
   "POST admin/test-mail": adminTestMail,
+  "GET admin/comptes": adminComptes,
+  "POST admin/bannir": adminBannir,
+  "POST admin/debannir": adminDebannir,
   "POST auth/deconnexion": async ({ request, env }) => { await C.finSession(request, env); return json({ ok: true }, 200, { "set-cookie": C.cookieVide() }); },
   "GET auth/moi": moi,
   "GET commerce/etat": etatCommerce,
@@ -131,6 +134,7 @@ async function connexion({ request, env, ip }) {
   const db = await C.base(env);
   const u = await db.prepare("SELECT * FROM users WHERE email = ?").bind(email).first();
   if (!u || !(await C.mdpValide(mdp, u))) refuse("E-mail ou mot de passe incorrect.", 401);
+  if (u.banni) refuse("Ce compte a été suspendu par l'équipe Nexvia. Pour en savoir plus, contactez-nous sur WhatsApp.", 403);
   // Le mot de passe est bon : si l'envoi d'e-mails est actif, on exige le code reçu par e-mail.
   // (Tant que l'envoi n'est pas configuré, la connexion reste directe, pour ne jamais enfermer l'administrateur dehors.)
   if (Mail.mailConfigure(env)) {
@@ -147,6 +151,7 @@ async function connexionConfirmer({ request, env, ip }) {
   const db = await C.base(env), v = await controlerCode(env, db, b, "connexion");
   const u = await db.prepare("SELECT * FROM users WHERE id = ? AND email = ?").bind(v.donnees.uid, v.email).first();
   if (!u) refuse("Compte introuvable.", 404);
+  if (u.banni) refuse("Ce compte a été suspendu par l'équipe Nexvia. Pour en savoir plus, contactez-nous sur WhatsApp.", 403);
   const cookie = await C.ouvrirSession(env, u.id);
   u.admin = C.adminsDe(env).includes(v.email);
   return json({ ok: true, utilisateur: pub(u) }, 200, { "set-cookie": cookie });
@@ -392,6 +397,30 @@ async function adminImport({ request, env }) {
   const b = await lireJson(request, 2200000);
   return json({ ok: true, ...(await C.importerEtRapprocher(env, b.csv, admin.id)) });
 }
+async function adminComptes({ request, env, url }) {
+  await exigerAdmin(request, env); const db = await C.base(env);
+  const q = String(url.searchParams.get("q") || "").trim().toLowerCase().slice(0, 80).replace(/[%_\\]/g, "");
+  const filtre = url.searchParams.get("banni") === "1" ? " AND u.banni = 1" : "";
+  const like = "%" + q + "%";
+  const lignes = (await db.prepare("SELECT u.id, u.email, u.nom, u.tel, u.type, u.banni, u.banni_motif, u.banni_at, u.created_at, m.nom AS commerce FROM users u LEFT JOIN marques m ON m.owner_id = u.id WHERE (lower(u.email) LIKE ? OR lower(u.nom) LIKE ? OR lower(IFNULL(m.nom, '')) LIKE ?)" + filtre + " ORDER BY u.banni DESC, u.id DESC LIMIT 30").bind(like, like, like).all()).results || [];
+  const admins = C.adminsDe(env);
+  return json({ ok: true, comptes: lignes.map(c => ({ ...c, admin: admins.includes(String(c.email).toLowerCase()) })) });
+}
+async function adminBannir({ request, env }) {
+  const moi = await exigerAdmin(request, env), db = await C.base(env), b = await lireJson(request), id = ent(b.id);
+  const cible = await db.prepare("SELECT id, email FROM users WHERE id = ?").bind(id).first();
+  if (!cible) refuse("Compte introuvable.", 404);
+  if (cible.id === moi.id || C.adminsDe(env).includes(String(cible.email).toLowerCase())) refuse("Un compte administrateur ne peut pas être banni.", 403);
+  const motif = texte(b.motif, 300);
+  await db.batch([db.prepare("UPDATE users SET banni = 1, banni_motif = ?, banni_at = ? WHERE id = ?").bind(motif, new Date().toISOString(), id), db.prepare("DELETE FROM sessions WHERE user_id = ?").bind(id)]);
+  return json({ ok: true });
+}
+async function adminDebannir({ request, env }) {
+  await exigerAdmin(request, env); const db = await C.base(env), b = await lireJson(request);
+  const r = await db.prepare("UPDATE users SET banni = 0, banni_motif = NULL, banni_at = NULL WHERE id = ?").bind(ent(b.id)).run();
+  if (!r.meta.changes) refuse("Compte introuvable.", 404);
+  return json({ ok: true });
+}
 async function adminMotDePasse({ request, env }) {
   await exigerAdmin(request, env); const db = await C.base(env), b = await lireJson(request);
   const email = texte(b.email, 120, true, "e-mail").toLowerCase();
@@ -407,7 +436,7 @@ async function adminMotDePasse({ request, env }) {
 // ---------- données publiques pour l'application (badge, photos, menu, placement) ----------
 async function publicCommerces({ env }) {
   const db = await C.base(env), now = new Date();
-  const rows = (await db.prepare("SELECT a.*, m.plan, m.plan_fin, m.id AS mid FROM adresses a JOIN marques m ON m.id = a.marque_id WHERE a.statut = 'validee' AND m.statut = 'validee' ORDER BY a.marque_id, a.id LIMIT 1000").all()).results || [];
+  const rows = (await db.prepare("SELECT a.*, m.plan, m.plan_fin, m.id AS mid FROM adresses a JOIN marques m ON m.id = a.marque_id WHERE a.statut = 'validee' AND m.statut = 'validee' AND m.owner_id NOT IN (SELECT id FROM users WHERE banni = 1) ORDER BY a.marque_id, a.id LIMIT 1000").all()).results || [];
   const phs = (await db.prepare("SELECT p.id, p.adresse_id, p.type FROM photos p JOIN adresses a ON a.id = p.adresse_id WHERE a.statut = 'validee' ORDER BY p.id").all()).results || [];
   const parMarque = {}, sortie = [];
   for (const a of rows) {

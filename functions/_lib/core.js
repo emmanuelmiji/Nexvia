@@ -58,7 +58,7 @@ const SCHEMA = [
 let schemaPret = null;
 // Ajouts de colonnes sur une base déjà créée (sans effet si la colonne existe déjà).
 const migrer = env => async () => {
-  for (const sql of ["ALTER TABLE marques ADD COLUMN plan_souhaite TEXT", "ALTER TABLE photos ADD COLUMN type TEXT NOT NULL DEFAULT 'lieu'"]) {
+  for (const sql of ["ALTER TABLE marques ADD COLUMN plan_souhaite TEXT", "ALTER TABLE photos ADD COLUMN type TEXT NOT NULL DEFAULT 'lieu'", "ALTER TABLE users ADD COLUMN banni INTEGER NOT NULL DEFAULT 0", "ALTER TABLE users ADD COLUMN banni_motif TEXT", "ALTER TABLE users ADD COLUMN banni_at TEXT"]) {
     try { await env.DB.prepare(sql).run(); }
     catch (e) { if (!/duplicate column/i.test(String(e && (e.message || e)))) throw e; }
   }
@@ -97,7 +97,7 @@ export async function utilisateur(request, env) {
   const jeton = lireCookie(request);
   if (!jeton) return null;
   const db = await base(env);
-  const u = await db.prepare("SELECT u.id, u.email, u.nom, u.tel, u.type FROM sessions s JOIN users u ON u.id = s.user_id WHERE s.token_hash = ? AND s.expires_at > ?").bind(await sha256hex(jeton), new Date().toISOString()).first();
+  const u = await db.prepare("SELECT u.id, u.email, u.nom, u.tel, u.type FROM sessions s JOIN users u ON u.id = s.user_id WHERE s.token_hash = ? AND s.expires_at > ? AND u.banni = 0").bind(await sha256hex(jeton), new Date().toISOString()).first();
   if (!u) return null;
   u.admin = adminsDe(env).includes(String(u.email).toLowerCase());
   return u;

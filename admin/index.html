@@ -94,6 +94,34 @@
         h("button", { class: "btn danger small", onclick: ev => { const n = prompt("Motif du refus (visible par le commerce) :", ""); if (n !== null) agir(ev.target, () => api("POST", "admin/adresse", { id: a.id, action: "refuser", note: n }), "Adresse refusée."); } }, "Refuser")));
   }
 
+  // ---------- gestion des comptes (recherche, bannissement) ----------
+  let listeComptes = null, rechercheComptes = "", seulBannis = false;
+  async function chargerComptes() { try { listeComptes = (await api("GET", "admin/comptes?q=" + encodeURIComponent(rechercheComptes) + (seulBannis ? "&banni=1" : ""))).comptes; } catch (e) { toast(e.message, true); listeComptes = []; } rendre(); }
+  function comptesBloc() {
+    if (listeComptes === null) chargerComptes();
+    const champ = h("input", { type: "search", placeholder: "Chercher par e-mail, nom ou commerce", maxlength: 80, value: rechercheComptes });
+    champ.onkeydown = ev => { if (ev.key === "Enter") { rechercheComptes = champ.value; chargerComptes(); } };
+    const ligne = c => {
+      const motif = h("input", { type: "text", placeholder: "Raison (facultatif)", maxlength: 300 }), zone = h("div", { style: "display:none;margin-top:8px" }, motif,
+        h("div", { class: "row", style: "margin-top:8px" },
+          h("button", { class: "btn danger small", onclick: async ev => { ev.target.disabled = true; try { await api("POST", "admin/bannir", { id: c.id, motif: motif.value }); toast("Compte banni."); chargerComptes(); } catch (er) { toast(er.message, true); ev.target.disabled = false; } } }, "Confirmer le bannissement"),
+          h("button", { class: "btn fantome small", onclick: () => { zone.style.display = "none"; } }, "Annuler")));
+      return h("div", { class: "dem" },
+        h("div", { class: "row between" }, h("b", {}, c.nom || "(sans nom)"), c.banni ? h("span", { class: "pastille-formule", style: "background:#fde8e8;color:#b00020" }, "Banni") : c.admin ? h("span", { class: "pastille-formule premium" }, "Admin") : null),
+        h("p", { class: "muted" }, c.email + (c.tel ? " · " + c.tel : "") + " · " + (c.commerce ? "Commerce : " + c.commerce : c.type === "commerce" ? "Commerce (fiche pas encore créée)" : "Utilisateur") + " · inscrit le " + date(c.created_at)),
+        c.banni && c.banni_motif ? h("p", { class: "muted" }, "Raison : " + c.banni_motif) : null,
+        c.admin ? null : c.banni
+          ? h("button", { class: "btn alt small", onclick: async ev => { ev.target.disabled = true; try { await api("POST", "admin/debannir", { id: c.id }); toast("Compte rétabli."); chargerComptes(); } catch (er) { toast(er.message, true); ev.target.disabled = false; } } }, "Rétablir le compte")
+          : h("button", { class: "btn danger small", onclick: () => { zone.style.display = "block"; motif.focus(); } }, "Bannir ce compte"),
+        zone);
+    };
+    return h("div", { class: "card" }, h("h3", {}, "🚫 Comptes et bannissement"),
+      h("p", { class: "muted" }, "Un compte banni est déconnecté tout de suite, ne peut plus se connecter, et ses commerces disparaissent de l'application. Tu peux le rétablir à tout moment."),
+      champ,
+      h("div", { class: "row", style: "margin:8px 0" }, h("button", { class: "btn alt small", onclick: () => { rechercheComptes = champ.value; chargerComptes(); } }, "Chercher"),
+        h("label", { class: "row", style: "gap:6px;font-weight:500" }, h("input", { type: "checkbox", checked: seulBannis, onchange: ev => { seulBannis = ev.target.checked; rechercheComptes = champ.value; chargerComptes(); } }), "Seulement les bannis")),
+      listeComptes === null ? h("p", { class: "muted" }, "Chargement…") : listeComptes.length ? listeComptes.map(ligne) : h("p", { class: "muted" }, "Aucun compte trouvé."));
+  }
   // ---------- outils ----------
   function mailBloc() {
     const etat = d.mail_configure;
@@ -133,7 +161,7 @@
         h("div", {}, sec("Paiements à vérifier", d.a_verifier.length), ...(d.a_verifier.length ? d.a_verifier.map(ligneVerif) : [vide("✓", "Rien à vérifier.")]),
           sec("En attente de l'import", d.en_attente.length), d.en_attente.length ? tableAttente() : vide("·", "Aucun paiement en attente."))));
     } else {
-      main.append(h("div", { class: "cols" }, h("div", {}, sec("Comptes"), mdpBloc(), mailBloc()), h("div", {}, sec("Outils"), raccourcis())));
+      main.append(h("div", { class: "cols" }, h("div", {}, sec("Comptes"), comptesBloc(), mdpBloc(), mailBloc()), h("div", {}, sec("Outils"), raccourcis())));
     }
     main.append(h("div", { class: "pied-rdc" }, drapeau(22), "Nexvia RDC · fait à Kinshasa"));
     app.append(main);
