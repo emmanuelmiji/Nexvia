@@ -170,6 +170,17 @@
       for (let i = 0; i < tout.length; i++) { btn.textContent = "Envoi des photos (" + (i + 1) + "/" + tout.length + ")…"; try { await api("POST", "commerce/photo", { adresse_id: id, type: tout[i][1], ...tout[i][0].r }); } catch (e) { echecs++; } }
       return echecs;
     }
+    // « Mon commerce existe déjà sur Nexvia RDC » : bouton à côté du titre ; la fiche réclamée subit une vérification approfondie.
+    const panneauReclame = h("div", { class: "reclame", hidden: true },
+      h("div", { class: "alerte warn" }, h("b", {}, "Vérification approfondie."), " Votre commerce figure déjà sur Nexvia RDC. Pour éviter qu'on profite de la fiche ou de l'abonnement d'un autre, nous contrôlons que vous en êtes bien le propriétaire (appel au numéro officiel, document de l'entreprise) avant de vous l'attribuer."),
+      h("label", { for: "f_lieu" }, "Retrouvez votre commerce"), chercher, sugg);
+    let identite;
+    const bouton = h("button", { type: "button", class: "btn alt small bouton-reclame", onclick: () => {
+      panneauReclame.hidden = !panneauReclame.hidden;
+      if (panneauReclame.hidden) { lieu = ""; chercher.value = ""; vider(sugg); }
+      bouton.textContent = panneauReclame.hidden ? "🔎 Mon commerce existe déjà sur Nexvia" : "✕ Fermer";
+      if (!panneauReclame.hidden) chercher.focus();
+    } }, "🔎 Mon commerce existe déjà sur Nexvia");
     const form = h("form", { novalidate: true, onsubmit: ev => {
       ev.preventDefault(); const btn = form.querySelector("button[type=submit]"), er = hor && hor.erreur();
       if (er) return toast(er, true);
@@ -189,8 +200,8 @@
       dem ? h("div", { class: "alerte info" }, "Formule choisie : ", h("b", {}, couronne(choix, 15), " ", p.nom, " (" + dollars(p.prix) + (p.prix ? " / mois" : "") + ")"), " · les limites de saisie ci-dessous suivent cette formule.") : null,
       dem && !etat.marque ? rub("Votre commerce", "Le nom de votre commerce ou de votre marque. Plusieurs adresses (restaurants, agences…) seront regroupées sous ce nom.",
         champ("marque", "Nom du commerce ou de la marque", f.marque = h("input", { id: "f_marque", required: true, maxlength: 100, placeholder: "Ex. Pizza Inn" }))) : null,
-      rub("Identité", creation ? "Votre commerce existe déjà sur Nexvia RDC ? Retrouvez-le pour réclamer votre fiche (facultatif)." : null,
-        creation ? [h("label", { for: "f_lieu" }, "Fiche existante ", h("small", {}, "(facultatif)")), chercher, sugg] : null,
+      identite = rub("Identité", null,
+        creation ? panneauReclame : null,
         champ("nom", "Nom de cette adresse", inp("nom", { required: true, maxlength: 100, placeholder: "Ex. Pizza Inn Gombe" })),
         champ("categorie", "Catégorie", f.categorie),
         champ("description", "Description", f.description)),
@@ -215,6 +226,7 @@
       h("div", { class: "row" },
         h("button", { type: "submit", class: "btn gold grand" }, dem ? "Envoyer ma demande" : creation ? "Envoyer pour vérification" : "Enregistrer les modifications"),
         h("button", { type: "button", class: "btn alt", onclick: () => { edition = null; if (dem) vue = "choix"; rendre(); } }, dem ? "← Changer de formule" : "Annuler")));
+    if (creation) identite.querySelector("h3").append(bouton);
     return form;
   }
 

@@ -1255,7 +1255,10 @@ if (typeof L === "undefined") {
   // ---- données supplémentaires ----
   const dejaPresent = l => lieux.some(x => norm(x.nom) === norm(l.nom) || (norm(l.nom).length >= 7 && norm(x.nom).length >= 7 && (norm(x.nom).indexOf(norm(l.nom)) >= 0 || norm(l.nom).indexOf(norm(x.nom)) >= 0) && (!aPosition(l) || !aPosition(x) || distM(x.lat, x.lng, l.lat, l.lng) < 300)) || (aPosition(l) && aPosition(x) && x.cat === l.cat && distM(x.lat, x.lng, l.lat, l.lng) < 40));
   // Garde uniquement les lieux de Kinshasa : exclut la rive nord du fleuve (Brazzaville, République du Congo).
+  // Lieux signalés comme n'étant pas à Kinshasa (à compléter au besoin).
+  const EXCLUS_NOMS = [/^\s*(le\s+)?glad\b/i];
   function horsRDC(lat, lng, adresse, tel, nom) {
+    if (EXCLUS_NOMS.some(re => re.test(String(nom || "")))) return true;
     if (typeof lat === "number" && typeof lng === "number" && (lat > -4.285 || lat < -4.36 || lng < 15.24 || lng > 15.36)) return true;
     if (/brazzaville|poto-?poto|bacongo|moungali|ouenz[eé]|talanga[iï]|mfilou|makél?él?é?kélé/i.test([nom, adresse].join(" "))) return true;
     return /^\s*(\+|00)?\s*242/.test(String(tel || "").replace(/[^\d+]/g, "")) ;

@@ -84,13 +84,13 @@
       h("p", {}, h("span", { class: "badge " + (a.plan_effectif !== "gratuit" ? "ok" : payant ? "warn" : "gris") }, "Formule choisie : " + choisie + (payant ? (a.plan_effectif === a.plan_souhaite ? " · payée" : " · pas encore payée") : "")), " ", h("span", { class: "badge gris" }, CAT[a.categorie] || "Autre")),
       rangee("🏠", a.adresse + (a.commune ? ", " + a.commune : "")), rangee("📞", a.tel),
       rangee("🕘", a.horaires ? horairesJolis(a.horaires).join(" · ") : ""), rangee("📝", a.description),
-      a.lieu_existant ? h("p", {}, h("span", { class: "badge gris" }, "Réclame la fiche existante : " + a.lieu_existant)) : null,
+      a.lieu_existant ? h("div", { class: "alerte bad" }, h("b", {}, "⚠️ Réclame une fiche existante : " + a.lieu_existant + "."), " Vérification approfondie obligatoire : appelez le numéro officiel du commerce ou demandez un document (RCCM, facture, pièce d'identité du gérant) avant de valider. Ne laissez personne profiter de la fiche ou de l'abonnement d'un autre.") : null,
       h("h3", { style: "margin-top:10px" }, "📷 Photos du lieu"), galerie(a.photos) || h("p", { class: "muted" }, "Aucune photo envoyée."),
       a.menu_photos && a.menu_photos.length ? [h("h3", { style: "margin-top:6px" }, "📋 Menu (photos)"), galerie(a.menu_photos, "menus")] : null,
       h("p", { style: "margin-top:10px" }, "Code attendu par WhatsApp : ", h("span", { class: "code" }, a.code), " (doit venir du numéro ", h("b", {}, a.tel), ")"),
       h("div", { class: "row" },
         a.tel_verifie ? null : h("button", { class: "btn alt small", onclick: ev => agir(ev.target, () => api("POST", "admin/adresse", { id: a.id, action: "tel_ok" }), "Numéro marqué vérifié.") }, "Code reçu : numéro vérifié"),
-        h("button", { class: "btn teal small", onclick: ev => { if (a.tel_verifie || confirm("Le numéro n'est pas marqué comme vérifié. Valider quand même ?")) agir(ev.target, () => api("POST", "admin/adresse", { id: a.id, action: "valider" }), "Adresse validée."); } }, "Valider l'adresse"),
+        h("button", { class: "btn teal small", onclick: ev => { if ((a.tel_verifie || confirm("Le numéro n'est pas marqué comme vérifié. Valider quand même ?")) && (!a.lieu_existant || confirm("Cette adresse réclame la fiche existante « " + a.lieu_existant + " ». Avez-vous vérifié que la personne en est bien le propriétaire ?"))) agir(ev.target, () => api("POST", "admin/adresse", { id: a.id, action: "valider" }), "Adresse validée."); } }, "Valider l'adresse"),
         h("button", { class: "btn danger small", onclick: ev => { const n = prompt("Motif du refus (visible par le commerce) :", ""); if (n !== null) agir(ev.target, () => api("POST", "admin/adresse", { id: a.id, action: "refuser", note: n }), "Adresse refusée."); } }, "Refuser")));
   }
 
