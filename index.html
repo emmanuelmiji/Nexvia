@@ -38,6 +38,24 @@
   nav#tabs button span.i { font-size: 1.35rem; line-height: 1.2; filter: grayscale(1) opacity(.7); }
   nav#tabs button[aria-current="page"] { color: var(--nav); }
   nav#tabs button[aria-current="page"] span.i { filter: none; }
+  nav#tabs button { position: relative; }
+  nav#tabs .cour { position: absolute; top: 3px; left: calc(50% + 6px); width: 15px; height: 15px; display: none; filter: drop-shadow(0 1px 1px rgba(0,0,0,.25)); }
+  nav#tabs button.standard .cour, nav#tabs button.premium .cour { display: block; }
+  nav#tabs button.standard .cour { color: #8e9bb0; }
+  nav#tabs button.premium .cour { color: #f2a900; }
+  #compteCorps { flex: 1; overflow-y: auto; padding: 14px; }
+  .cptc { background: #fff; border: 1px solid var(--line); border-radius: 16px; padding: 16px; margin-bottom: 12px; }
+  .cptc h3 { margin: 0 0 6px; font-size: 1.05rem; }
+  .cptc p { margin: 6px 0; font-size: .9rem; line-height: 1.45; color: #3b475e; }
+  .cptc ul { margin: 8px 0; padding-left: 18px; font-size: .88rem; color: #3b475e; }
+  .cptc .actions { flex-direction: column; }
+  .cptc .actions .btn { flex: none; display: block; padding: 13px 10px; }
+  .cptc .btn.or { background: linear-gradient(180deg, #ffd93d, #f2a900); color: #1c1c1c !important; }
+  .cptc .pill { display: inline-flex; align-items: center; gap: 5px; padding: 3px 11px 3px 8px; border-radius: 999px; font-weight: 800; font-size: .82rem; background: #eef1f6; color: #4a5568; }
+  .cptc .pill.premium { background: #fff2cc; color: #8a5a00; }
+  .cptc .pill svg { width: 15px; height: 15px; }
+  .cptc .pill.standard svg { color: #8e9bb0; }
+  .cptc .pill.premium svg { color: #f2a900; }
   nav#tabs button[aria-current="page"]::after { content: ""; width: 26px; height: 3px; border-radius: 3px; background: var(--gold); margin-top: 1px; }
 
   /* ---------- Découvrir ---------- */
@@ -288,6 +306,12 @@
     <div id="favList"></div>
   </section>
 
+  <!-- ===== COMPTE ===== -->
+  <section class="screen" id="s-compte" aria-label="Compte">
+    <div class="tete"><div class="tt">👤 Mon compte</div><div class="sub" id="compteSub">Pour les commerces : présentez votre établissement</div></div>
+    <div id="compteCorps"></div>
+  </section>
+
   <div id="sheet" role="dialog" aria-label="Fiche du lieu"></div>
 </div>
 
@@ -295,6 +319,7 @@
   <button type="button" data-tab="decouvrir" aria-current="page"><span class="i">🧭</span>Découvrir</button>
   <button type="button" data-tab="carte"><span class="i">🗺️</span>Carte</button>
   <button type="button" data-tab="favoris"><span class="i">❤️</span>Favoris</button>
+  <button type="button" data-tab="compte"><span class="i">👤</span>Compte<svg class="cour" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 8l4.5 4L12 5l4.5 7L21 8l-2 11H5L3 8z" fill="currentColor"/></svg></button>
 </nav>
 
 <div id="dem" role="dialog" aria-modal="true" aria-labelledby="demT">
@@ -924,6 +949,7 @@ function setTab(t) {
   if (t !== "carte") fermerFiche();
   if (t === "carte" && window.__carte) window.__carte.invalidateSize();
   if (t === "favoris") rendreFavoris();
+  if (t === "compte") rendreCompte();
 }
 function fermerFiche() { sheet.classList.remove("open"); courant = null; }
 function ouvrirFiche(l) {
@@ -937,6 +963,48 @@ sheet.addEventListener("click", e => {
   if (e.target.closest(".fav") && courant) { basculerFav(courant); e.target.closest(".fav").textContent = estFav(courant) ? "♥" : "♡"; rendreFavoris(); }
 });
 document.querySelectorAll("#tabs button").forEach(b => b.addEventListener("click", () => setTab(b.dataset.tab)));
+
+// ---------- onglet Compte (commerces) ----------
+const NOMS_PLAN = { gratuit: "Gratuit", standard: "Standard", premium: "Premium" };
+const COURONNE = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 8l4.5 4L12 5l4.5 7L21 8l-2 11H5L3 8z" fill="currentColor"/></svg>';
+let compteInfo;   // undefined = pas encore chargé, null = non connecté, objet = connecté
+function couronneOnglet(plan) {
+  const b = document.querySelector('#tabs button[data-tab="compte"]'); if (!b) return;
+  b.classList.remove("standard", "premium"); if (plan === "standard" || plan === "premium") b.classList.add(plan);
+}
+try { couronneOnglet(localStorage.getItem("nx_plan")); } catch (e) {}
+async function chargerCompte() {
+  try {
+    const r = await fetch("/api/auth/moi", { credentials: "same-origin" }), d = await r.json();
+    compteInfo = d && d.utilisateur ? d.utilisateur : null;
+    try { localStorage.setItem("nx_plan", compteInfo && compteInfo.plan ? compteInfo.plan : ""); } catch (e) {}
+    couronneOnglet(compteInfo && compteInfo.plan);
+  } catch (e) { /* hors ligne : on garde la couronne mémorisée */ }
+}
+function rendreCompte() {
+  const corps = $("compteCorps"), sub = $("compteSub");
+  if (compteInfo === undefined) { corps.innerHTML = '<div class="vide">Chargement…</div>'; chargerCompte().then(() => { if (tab === "compte") rendreCompte(); }); return; }
+  if (compteInfo === null) {
+    sub.textContent = "Pour les commerces : présentez votre établissement";
+    corps.innerHTML = '<div class="cptc"><h3>Votre commerce sur Nexvia RDC</h3><p>Restaurant, pharmacie, hôtel, boutique… Faites-vous trouver par les habitants de Kinshasa.</p><ul><li>Formule <b>Gratuit</b> : 1 adresse, sans paiement</li><li><b>Standard</b> 3,30 $ et <b>Premium</b> 5,30 $ par mois</li><li>Chaque fiche est vérifiée avant publication</li></ul>' +
+      '<div class="actions"><a class="btn or" href="/compte/?mode=inscription&amp;type=commerce">Créer mon compte commerce</a><a class="btn alt" href="/compte/">J\'ai déjà un compte</a><a class="btn alt" href="/tarifs/">Voir les tarifs</a></div></div>' +
+      '<p class="note" style="text-align:center">Chercher un lieu reste gratuit et sans compte.</p>';
+    return;
+  }
+  const u = compteInfo, plan = u.plan || "gratuit";
+  sub.textContent = u.email;
+  corps.innerHTML = '<div class="cptc"><h3>Bonjour ' + esc(u.nom || "") + '</h3>' +
+    (u.commerce ? '<p><b>' + esc(u.commerce) + '</b></p><p><span class="pill ' + plan + '">' + ((plan === "standard" || plan === "premium") ? COURONNE : "") + 'Formule ' + NOMS_PLAN[plan] + '</span></p>'
+      : '<p>Votre compte est prêt. Créez votre commerce pour apparaître sur la carte.</p>') +
+    '<div class="actions"><a class="btn or" href="/commerce/">' + (u.commerce ? "Mon espace commerce" : "Créer mon commerce") + '</a>' +
+    (u.admin ? '<a class="btn" href="/admin/">Administration</a>' : "") +
+    '<a class="btn alt" href="/tarifs/">Voir les tarifs</a><button type="button" class="btn alt" id="cptSortir">Me déconnecter</button></div></div>';
+  $("cptSortir").onclick = async () => {
+    try { await fetch("/api/auth/deconnexion", { method: "POST", credentials: "same-origin", headers: { "x-nx": "1", "content-type": "application/json" }, body: "{}" }); } catch (e) {}
+    compteInfo = null; try { localStorage.setItem("nx_plan", ""); } catch (e) {} couronneOnglet(""); rendreCompte();
+  };
+}
+chargerCompte();
 
 function rendreFavoris() {
   const items = lieux.filter(estFav).sort((a, b) => a.nom.localeCompare(b.nom, "fr"));

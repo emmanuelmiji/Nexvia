@@ -49,9 +49,14 @@ const SCHEMA = [
   `CREATE TABLE IF NOT EXISTS imports (id INTEGER PRIMARY KEY AUTOINCREMENT, ts TEXT NOT NULL, lignes INTEGER NOT NULL, activees INTEGER NOT NULL, a_verifier INTEGER NOT NULL, par INTEGER)`,
 ];
 let schemaPret = null;
+// Ajouts de colonnes sur une base déjà créée (sans effet si la colonne existe déjà).
+const migrer = env => async () => {
+  try { await env.DB.prepare("ALTER TABLE marques ADD COLUMN plan_souhaite TEXT").run(); }
+  catch (e) { if (!/duplicate column/i.test(String(e && (e.message || e)))) throw e; }
+};
 export function base(env) {
   if (!env.DB) refuse("La base de données n'est pas encore configurée.", 503);
-  if (!schemaPret) schemaPret = env.DB.batch(SCHEMA.map(s => env.DB.prepare(s))).catch(e => { schemaPret = null; throw e; });
+  if (!schemaPret) schemaPret = env.DB.batch(SCHEMA.map(s => env.DB.prepare(s))).then(migrer(env)).catch(e => { schemaPret = null; throw e; });
   return schemaPret.then(() => env.DB);
 }
 
@@ -106,6 +111,13 @@ export const codeVerif = () => "NX-" + String(crypto.getRandomValues(new Uint32A
 export function planEffectif(marque, maintenant = new Date()) {
   if (marque && marque.plan && marque.plan !== "gratuit" && PLANS[marque.plan] && marque.plan_fin && new Date(marque.plan_fin) > maintenant) return marque.plan;
   return "gratuit";
+}
+// Formule utilisée pour remplir la fiche : la plus haute entre l'abonnement actif et la formule choisie à l'inscription.
+// Elle ne sert qu'aux limites de saisie ; l'affichage public suit toujours l'abonnement réellement payé (planEffectif).
+const RANG = { gratuit: 0, standard: 1, premium: 2 };
+export function planEdition(marque, maintenant = new Date()) {
+  const eff = planEffectif(marque, maintenant), voulu = marque && PLANS[marque.plan_souhaite] ? marque.plan_souhaite : "gratuit";
+  return RANG[voulu] > RANG[eff] ? voulu : eff;
 }
 export function nouvelleFin(marque, plan, maintenant = new Date()) {
   let base = maintenant;

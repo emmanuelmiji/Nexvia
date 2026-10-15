@@ -41,11 +41,18 @@ window.NX = (function () {
   function entete(utilisateur) {
     const nav = h("nav", {}, h("a", { href: "/" }, "Carte"), h("a", { href: "/tarifs/" }, "Tarifs"));
     if (utilisateur) {
-      nav.append(h("a", { href: "/commerce/" }, "Mon commerce"));
+      nav.append(h("a", { href: "/commerce/" }, "Mon commerce", utilisateur.plan ? [" ", couronne(utilisateur.plan, 14)] : null));
       if (utilisateur.admin) nav.append(h("a", { href: "/admin/" }, "Admin"));
       nav.append(h("a", { href: "/compte/" }, "Mon compte"));
     } else nav.append(h("a", { href: "/compte/" }, "Connexion"));
     return h("header", { class: "nx" }, h("a", { class: "marque", href: "/" }, "Nexvia ", h("b", {}, "RDC")), nav);
+  }
+  // Petite couronne (SVG) : grise pour Standard, dorée pour Premium.
+  function couronne(plan, px) {
+    if (plan !== "standard" && plan !== "premium") return null;
+    const ns = "http://www.w3.org/2000/svg", s = document.createElementNS(ns, "svg"), p = document.createElementNS(ns, "path");
+    s.setAttribute("viewBox", "0 0 24 24"); s.setAttribute("width", px || 18); s.setAttribute("height", px || 18); s.setAttribute("class", "couronne " + plan); s.setAttribute("aria-label", "Formule " + plan);
+    p.setAttribute("d", "M3 8l4.5 4L12 5l4.5 7L21 8l-2 11H5L3 8z"); p.setAttribute("fill", "currentColor"); s.append(p); return s;
   }
   async function moi() { try { return (await api("GET", "auth/moi")).utilisateur; } catch (e) { return null; } }
   // Réduit une photo dans le navigateur (≈ 900 px, JPEG) avant l'envoi : rapide sur 4G et peu coûteux à stocker.
@@ -61,5 +68,5 @@ window.NX = (function () {
       img.src = url;
     });
   }
-  return { CFG, api, h, vider, toast, wa, chiffres, date, dollars, entete, moi, reduirePhoto };
+  return { CFG, api, h, vider, toast, wa, chiffres, date, dollars, entete, moi, reduirePhoto, couronne };
 })();

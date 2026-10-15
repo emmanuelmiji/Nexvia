@@ -37,9 +37,10 @@ const ROUTES = {
   "POST auth/inscription": inscription,
   "POST auth/connexion": connexion,
   "POST auth/deconnexion": async ({ request, env }) => { await C.finSession(request, env); return json({ ok: true }, 200, { "set-cookie": C.cookieVide() }); },
-  "GET auth/moi": async ({ request, env }) => json({ ok: true, utilisateur: pub(await C.utilisateur(request, env)) }),
+  "GET auth/moi": moi,
   "GET commerce/etat": etatCommerce,
   "POST commerce/marque": creerMarque,
+  "POST commerce/formule": choisirFormule,
   "POST commerce/adresse": sauverAdresse,
   "POST commerce/adresse/supprimer": supprimerAdresse,
   "POST commerce/photo": ajouterPhoto,
@@ -56,6 +57,12 @@ const ROUTES = {
 };
 
 // ---------- comptes ----------
+async function moi({ request, env }) {
+  const u = await C.utilisateur(request, env);
+  if (!u) return json({ ok: true, utilisateur: null });
+  const m = await marqueDe(await C.base(env), u.id);
+  return json({ ok: true, utilisateur: { ...pub(u), commerce: m ? m.nom : null, commerce_statut: m ? m.statut : null, plan: m ? C.planEffectif(m) : null } });
+}
 async function inscription({ request, env, ip }) {
   const b = await lireJson(request);
   const email = texte(b.email, 120, true, "e-mail").toLowerCase();
@@ -90,29 +97,37 @@ async function marqueDe(db, userId) { return db.prepare("SELECT * FROM marques W
 async function etatCommerce({ request, env }) {
   const user = await exigerUser(request, env), db = await C.base(env);
   const marque = await marqueDe(db, user.id);
-  if (!marque) return json({ ok: true, utilisateur: pub(user), marque: null });
+  if (!marque) return json({ ok: true, utilisateur: pub(user), marque: null, adresses: [], demandes: [], plans: PLANS, total_avec_frais: C.TOTAL_AVEC_FRAIS, whatsapp: C.WHATSAPP });
   const plan = C.planEffectif(marque);
   const adresses = (await db.prepare("SELECT * FROM adresses WHERE marque_id = ? ORDER BY id").bind(marque.id).all()).results || [];
   const phs = (await db.prepare("SELECT p.id, p.adresse_id FROM photos p JOIN adresses a ON a.id = p.adresse_id WHERE a.marque_id = ? ORDER BY p.id").bind(marque.id).all()).results || [];
   for (const a of adresses) a.photos = phs.filter(p => p.adresse_id === a.id).map(p => p.id);
   const demandes = (await db.prepare("SELECT id, plan, ref, statut, motif, created_at, traite_at FROM demandes_paiement WHERE marque_id = ? ORDER BY id DESC LIMIT 20").bind(marque.id).all()).results || [];
-  return json({ ok: true, utilisateur: pub(user), marque: { ...marque, plan_effectif: plan }, adresses, demandes, plans: PLANS, total_avec_frais: C.TOTAL_AVEC_FRAIS, whatsapp: C.WHATSAPP });
+  return json({ ok: true, utilisateur: pub(user), marque: { ...marque, plan_effectif: plan, plan_edition: C.planEdition(marque) }, adresses, demandes, plans: PLANS, total_avec_frais: C.TOTAL_AVEC_FRAIS, whatsapp: C.WHATSAPP });
 }
 async function creerMarque({ request, env }) {
   const user = await exigerUser(request, env), db = await C.base(env);
   const b = await lireJson(request), nom = texte(b.nom, 100, true, "nom du commerce ou de la marque");
   if (await marqueDe(db, user.id)) refuse("Vous avez déjà un commerce enregistré sur ce compte.", 409);
+  const voulu = PLANS[b.plan] ? b.plan : "gratuit";
   await db.batch([
-    db.prepare("INSERT INTO marques (owner_id, nom, created_at) VALUES (?, ?, ?)").bind(user.id, nom, new Date().toISOString()),
+    db.prepare("INSERT INTO marques (owner_id, nom, plan_souhaite, created_at) VALUES (?, ?, ?, ?)").bind(user.id, nom, voulu, new Date().toISOString()),
     db.prepare("UPDATE users SET type = 'commerce' WHERE id = ?").bind(user.id),
   ]);
+  return json({ ok: true });
+}
+async function choisirFormule({ request, env }) {
+  const user = await exigerUser(request, env), db = await C.base(env), marque = await marqueDe(db, user.id);
+  if (!marque) refuse("Créez d'abord votre commerce.", 409);
+  const b = await lireJson(request); if (!PLANS[b.plan]) refuse("Choisissez une formule.");
+  await db.prepare("UPDATE marques SET plan_souhaite = ? WHERE id = ?").bind(b.plan, marque.id).run();
   return json({ ok: true });
 }
 const nombreOuNull = (v, min, max) => { if (v === "" || v == null) return null; const n = Number(v); return Number.isFinite(n) && n >= min && n <= max ? n : null; };
 async function sauverAdresse({ request, env }) {
   const user = await exigerUser(request, env), db = await C.base(env);
   const marque = await marqueDe(db, user.id); if (!marque) refuse("Créez d'abord votre commerce.", 409);
-  const plan = PLANS[C.planEffectif(marque)];
+  const plan = PLANS[C.planEdition(marque)];
   const b = await lireJson(request);
   const champs = {
     nom: texte(b.nom, 100, true, "nom de l'adresse"),
@@ -173,7 +188,7 @@ async function ajouterPhoto({ request, env }) {
   const mime = String(b.mime || ""), data = String(b.data || "");
   if (!MIMES[mime] || !data.startsWith(MIMES[mime]) || !/^[A-Za-z0-9+/=]+$/.test(data)) refuse("Image non acceptée (JPEG, PNG ou WebP).");
   if (data.length > 260000) refuse("Image trop lourde. Elle est normalement réduite automatiquement : réessayez avec une autre photo.", 413);
-  const plan = PLANS[C.planEffectif(marque)];
+  const plan = PLANS[C.planEdition(marque)];
   const n = (await db.prepare("SELECT COUNT(*) AS n FROM photos WHERE adresse_id = ?").bind(a.id).first()).n;
   if (n >= plan.photos) refuse("La formule " + plan.nom + " permet " + plan.photos + " photo" + (plan.photos > 1 ? "s" : "") + " par adresse.", 403);
   const r = await db.prepare("INSERT INTO photos (adresse_id, mime, data, created_at) VALUES (?, ?, ?, ?)").bind(a.id, mime, data, new Date().toISOString()).run();
@@ -225,13 +240,17 @@ async function fileAdmin({ request, env }) {
   await exigerAdmin(request, env);
   const db = await C.base(env), tout = async (sql, ...p) => (await db.prepare(sql).bind(...p).all()).results || [];
   const [marques, adresses, averifier, attente, imports, stats] = await Promise.all([
-    tout("SELECT m.id, m.nom, m.created_at, u.email, u.nom AS user_nom, u.tel AS user_tel FROM marques m JOIN users u ON u.id = m.owner_id WHERE m.statut = 'en_attente' ORDER BY m.id"),
-    tout("SELECT a.id, a.nom, a.categorie, a.commune, a.adresse, a.tel, a.code, a.tel_verifie, a.lieu_existant, a.created_at, m.nom AS marque_nom, m.statut AS marque_statut, u.email FROM adresses a JOIN marques m ON m.id = a.marque_id JOIN users u ON u.id = m.owner_id WHERE a.statut = 'en_attente' ORDER BY a.id"),
+    tout("SELECT m.id, m.nom, m.plan_souhaite, m.created_at, u.email, u.nom AS user_nom, u.tel AS user_tel FROM marques m JOIN users u ON u.id = m.owner_id WHERE m.statut = 'en_attente' ORDER BY m.id"),
+    tout("SELECT a.id, a.nom, a.categorie, a.commune, a.adresse, a.tel, a.code, a.tel_verifie, a.lieu_existant, a.horaires, a.description, a.menu, a.created_at, m.nom AS marque_nom, m.statut AS marque_statut, m.plan_souhaite, m.plan, m.plan_fin, u.email, u.tel AS user_tel FROM adresses a JOIN marques m ON m.id = a.marque_id JOIN users u ON u.id = m.owner_id WHERE a.statut = 'en_attente' ORDER BY a.id LIMIT 60"),
     tout("SELECT d.id, d.plan, d.ref, d.motif, d.created_at, d.tentatives, m.nom AS marque_nom, u.email, u.tel AS user_tel FROM demandes_paiement d JOIN marques m ON m.id = d.marque_id JOIN users u ON u.id = d.user_id WHERE d.statut = 'a_verifier' ORDER BY d.id"),
     tout("SELECT d.id, d.plan, d.ref, d.motif, d.created_at, d.tentatives, m.nom AS marque_nom, u.email FROM demandes_paiement d JOIN marques m ON m.id = d.marque_id JOIN users u ON u.id = d.user_id WHERE d.statut = 'en_attente' ORDER BY d.id"),
     tout("SELECT * FROM imports ORDER BY id DESC LIMIT 5"),
     db.prepare("SELECT (SELECT COUNT(*) FROM users) AS comptes, (SELECT COUNT(*) FROM marques) AS marques, (SELECT COUNT(*) FROM adresses WHERE statut = 'validee') AS adresses_validees, (SELECT COUNT(*) FROM marques WHERE plan != 'gratuit' AND plan_fin > ?) AS abonnes").bind(new Date().toISOString()).first(),
   ]);
+  if (adresses.length) {
+    const ph = await tout("SELECT id, adresse_id FROM photos WHERE adresse_id IN (" + adresses.map(() => "?").join(",") + ") ORDER BY id", ...adresses.map(a => a.id));
+    for (const a of adresses) { a.photos = ph.filter(p => p.adresse_id === a.id).map(p => p.id); a.plan_effectif = C.planEffectif(a); }
+  }
   return json({ ok: true, marques, adresses, a_verifier: averifier, en_attente: attente, imports, stats, whatsapp: C.WHATSAPP });
 }
 async function adminMarque({ request, env }) {

@@ -73,3 +73,60 @@ table.t th, table.t td { text-align: left; padding: 7px 6px; border-bottom: 1px 
 #toast.bad { background: var(--bad); }
 .cache { display: none !important; }
 .compteur { display: inline-block; min-width: 22px; padding: 0 7px; border-radius: 999px; background: var(--bad); color: #fff; font-size: .8rem; text-align: center; margin-left: 6px; }
+
+/* ===== Habillage aux couleurs de l'application (bleu, jaune, rouge) ===== */
+:root { --bleu:#0a2a6b; --bleu2:#0b57b5; --jaune:#f7d618; --rouge:#ce1021; }
+header.nx { background: linear-gradient(135deg, #0a2a6b 0%, #0b57b5 80%); border-bottom: 3px solid var(--jaune); }
+.btn.gold { background: linear-gradient(180deg, #ffd93d, #f2a900); box-shadow: 0 2px 0 rgba(0,0,0,.12); }
+.btn.grand { width: 100%; padding: 14px 16px; font-size: 1.02rem; }
+.btn.fantome { background: transparent; color: var(--bleu); border: 1.5px solid var(--bleu); }
+.couronne { display: inline-block; vertical-align: -0.2em; }
+.couronne.standard { color: #8e9bb0; }
+.couronne.premium { color: #f2a900; filter: drop-shadow(0 1px 2px rgba(242,169,0,.5)); }
+.pastille-formule { display: inline-flex; align-items: center; gap: 5px; padding: 3px 11px 3px 8px; border-radius: 999px; font-weight: 800; font-size: .82rem; background: #eef1f6; color: #4a5568; }
+.pastille-formule.standard { background: #e8edf5; color: #4a5a78; }
+.pastille-formule.premium { background: #fff2cc; color: #8a5a00; }
+
+/* page de connexion / inscription */
+body.auth { background: linear-gradient(160deg, #0a2a6b 0%, #0b57b5 62%, #1a86e0 100%)  no-repeat; min-height: 100vh; }
+.auth-haut { position: relative; overflow: hidden; color: #fff; text-align: center; padding: 34px 20px 70px; }
+.auth-haut::after { content: ""; position: absolute; right: -30px; top: -50px; width: 54px; height: 230px; transform: rotate(36deg); background: linear-gradient(90deg, var(--jaune) 0 15%, var(--rouge) 15% 85%, var(--jaune) 85%); opacity: .9; }
+.auth-haut .logo { display: inline-flex; align-items: center; gap: 10px; font-weight: 800; font-size: 1.5rem; text-decoration: none; color: #fff; position: relative; z-index: 1; }
+.auth-haut .logo b { color: var(--jaune); }
+.auth-haut .logo .pin { width: 40px; height: 40px; border-radius: 12px; background: #fff; display: inline-flex; align-items: center; justify-content: center; box-shadow: 0 4px 14px rgba(0,0,0,.25); }
+.auth-haut h1 { position: relative; z-index: 1; font-size: 1.45rem; margin: 18px 0 4px; }
+.auth-haut p { position: relative; z-index: 1; margin: 0 auto; max-width: 340px; opacity: .92; font-size: .95rem; }
+.auth-carte { position: relative; z-index: 2; max-width: 440px; margin: -44px auto 0; padding: 0 14px 40px; }
+.auth-carte .boite { background: #fff; border-radius: 22px; padding: 18px 18px 20px; box-shadow: 0 14px 40px rgba(5,20,60,.35); }
+.auth-carte .onglets { margin-top: 0; }
+.avantages { list-style: none; margin: 12px 0 2px; padding: 0; display: grid; gap: 6px; font-size: .88rem; color: var(--muted); }
+.avantages li::before { content: "✓"; color: var(--teal); font-weight: 800; margin-right: 8px; }
+.auth-pied { text-align: center; margin-top: 16px; font-size: .85rem; }
+.auth-pied a { color: #fff; opacity: .9; }
+.oeil { position: relative; }
+.oeil input { padding-right: 78px; }
+.oeil button { position: absolute; right: 6px; top: 50%; transform: translateY(-50%); border: 0; background: none; color: var(--bleu2); font-weight: 700; padding: 8px; cursor: pointer; font-size: .85rem; }
+
+/* parcours commerce */
+.etapes { display: flex; gap: 6px; margin: 4px 0 14px; }
+.etapes span { flex: 1; text-align: center; font-size: .75rem; font-weight: 700; color: var(--muted); padding-top: 8px; border-top: 4px solid var(--line); }
+.etapes span.fait { color: var(--ok); border-color: var(--teal); }
+.etapes span.ici { color: var(--bleu); border-color: var(--jaune); }
+.plan { position: relative; transition: transform .12s; }
+.plan.vedette, .plan.premium { box-shadow: 0 6px 18px rgba(10,42,107,.12); }
+.plan.premium { border-color: #f2a900; background: linear-gradient(180deg, #fffaf0, #fff 40%); }
+.plan .ruban { position: absolute; top: -11px; right: 14px; background: var(--rouge); color: #fff; font-size: .72rem; font-weight: 800; padding: 3px 10px; border-radius: 999px; }
+.plan .prix.zero { color: var(--teal); }
+.choix { display: grid; gap: 12px; }
+.ajout-photos { display: flex; gap: 8px; flex-wrap: wrap; margin: 8px 0; }
+.ajout-photos .ph { position: relative; width: 84px; height: 84px; border-radius: 12px; overflow: hidden; background: #e7eaf0; }
+.ajout-photos .ph img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.ajout-photos .ph button { position: absolute; top: 3px; right: 3px; border: 0; background: rgba(0,0,0,.65); color: #fff; border-radius: 50%; width: 22px; height: 22px; line-height: 20px; cursor: pointer; padding: 0; }
+.ajout-photos .plus { width: 84px; height: 84px; border-radius: 12px; border: 2px dashed #b5bfd0; background: #f7f9fc; color: var(--bleu2); font-size: 1.7rem; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+.succes { text-align: center; padding: 18px 8px 6px; }
+.succes .rond { width: 74px; height: 74px; margin: 0 auto 10px; border-radius: 50%; background: var(--okbg); color: var(--ok); font-size: 2.4rem; display: flex; align-items: center; justify-content: center; }
+.liste-etapes { counter-reset: e; list-style: none; padding: 0; margin: 10px 0; display: grid; gap: 10px; }
+.liste-etapes > li { counter-increment: e; position: relative; padding: 12px 12px 12px 52px; background: #fff; border: 1px solid var(--line); border-radius: 14px; }
+.liste-etapes > li::before { content: counter(e); position: absolute; left: 14px; top: 12px; width: 26px; height: 26px; border-radius: 50%; background: var(--bleu); color: #fff; font-weight: 800; display: flex; align-items: center; justify-content: center; font-size: .85rem; }
+.liste-etapes > li.fait::before { content: "✓"; background: var(--teal); }
+.liste-etapes h3 { margin-bottom: 2px; }
