@@ -110,6 +110,15 @@
   }
 
 
+
+  function changerMdp() {
+    const a = h("input", { type: "password", autocomplete: "current-password", maxlength: 100 }), n = h("input", { type: "password", autocomplete: "new-password", maxlength: 100 }), k = h("input", { type: "password", autocomplete: "new-password", maxlength: 100 }), msg = h("div", {});
+    return h("details", { style: "margin:10px 0" }, h("summary", { style: "cursor:pointer;font-weight:600" }, "🔑 Changer mon mot de passe"),
+      h("form", { novalidate: true, onsubmit: async ev => { ev.preventDefault(); vider(msg); try { await api("POST", "auth/motdepasse", { ancien: a.value, nouveau: n.value, confirmation: k.value }); a.value = n.value = k.value = ""; msg.append(h("div", { class: "alerte ok" }, "Mot de passe changé. Vos autres appareils ont été déconnectés.")); } catch (e) { msg.append(h("div", { class: "alerte bad" }, e.message)); } } },
+        h("label", {}, "Mot de passe actuel (ou temporaire)"), a, h("label", {}, "Nouveau mot de passe (8 caractères, une lettre, un chiffre)"), n, h("label", {}, "Confirmez le nouveau mot de passe"), k, msg,
+        h("p", { style: "margin-top:10px" }, h("button", { class: "btn gold", type: "submit" }, "Changer le mot de passe"))));
+  }
+
   function ecranBan() {
     const msg = h("div", {}), zone = h("textarea", { rows: 5, maxlength: 1000, placeholder: "Expliquez calmement votre situation (10 caractères minimum)…" });
     const rec = ban.reclamation;
@@ -133,9 +142,11 @@
           h("div", { class: "row between" },
             h("b", {}, u.commerce || "Mon compte"),
             h("span", { class: "pastille-formule " + (plan || "gratuit") }, couronne(plan, 16), NOM[plan || "gratuit"])),
+          u.identifiant ? h("div", { class: "alerte info" }, "Votre identifiant Nexvia : ", h("b", { style: "letter-spacing:.06em" }, u.identifiant), h("br"), h("span", { class: "muted" }, "Donnez-le à l'équipe si vous avez un jour besoin d'aide pour retrouver votre compte.")) : null,
           h("p", { class: "muted" }, u.commerce ? "Votre espace commerce : fiche, photos, abonnement." : "Votre compte est prêt. Créez votre commerce pour apparaître sur la carte."),
           h("p", {}, h("a", { class: "btn gold grand", href: "/commerce/" }, u.commerce ? "Ouvrir mon espace commerce" : "Créer mon commerce")),
           u.admin ? h("p", {}, h("a", { class: "btn teal grand", href: "/admin/" }, "Administration")) : null,
+          changerMdp(),
           h("p", {}, h("a", { class: "btn fantome grand", href: "/" }, "Retour à l'accueil")),
           h("p", { style: "text-align:center" }, h("button", { class: "btn alt small", onclick: async () => { try { await api("POST", "auth/deconnexion"); } catch (e) {} u = null; rendre(); } }, "Me déconnecter")))));
     } else {

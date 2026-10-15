@@ -102,7 +102,7 @@
   const agirCompte = (ev, chemin, corps, ok) => { ev.target.disabled = true; return api("POST", chemin, corps).then(async () => { toast(ok); await charger(); return chargerComptes(); }).catch(er => { toast(er.message, true); ev.target.disabled = false; }); };
   function comptesBloc() {
     if (listeComptes === null) { listeComptes = []; chargerComptes(); }
-    const champ = h("input", { type: "search", placeholder: "Chercher par e-mail, nom ou commerce", maxlength: 80, value: rechercheComptes });
+    const champ = h("input", { type: "search", placeholder: "Chercher par identifiant, e-mail, nom ou commerce", maxlength: 80, value: rechercheComptes });
     const chercher = () => { rechercheComptes = champ.value; chargerComptes(); };
     champ.onkeydown = ev => { if (ev.key === "Enter") chercher(); };
     const filtre = (cle, lib) => h("button", { type: "button", class: "btn small " + (filtreComptes === cle ? "gold" : "fantome"), onclick: () => { filtreComptes = filtreComptes === cle ? "" : cle; rechercheComptes = champ.value; chargerComptes(); } }, lib);
@@ -119,7 +119,7 @@
         h("div", { class: "row", style: "margin-top:8px" }, h("button", { class: "btn gold small", onclick: ev => agirCompte(ev, "admin/reclamation", { id: c.rec_id, decision: "accepter", reponse: rep.value }, "Réclamation acceptée : compte rétabli.") }, "Accepter et rétablir"), h("button", { class: "btn danger small", onclick: ev => agirCompte(ev, "admin/reclamation", { id: c.rec_id, decision: "refuser", reponse: rep.value }, "Réclamation refusée.") }, "Refuser"))) : null;
       return h("div", { class: "dem" },
         h("div", { class: "row between" }, h("b", {}, c.nom || "(sans nom)"), c.banni ? h("span", { class: "pastille-formule", style: "background:#fde8e8;color:#b00020" }, c.banni_jusqua ? "Banni jusqu'au " + date(c.banni_jusqua) : "Banni définitivement") : c.admin ? h("span", { class: "pastille-formule premium" }, "Admin") : null),
-        h("p", { class: "muted" }, c.email + (c.tel ? " · " + c.tel : "") + " · " + (c.commerce ? "Commerce : " + c.commerce : c.type === "commerce" ? "Commerce (fiche pas encore créée)" : "Utilisateur") + " · inscrit le " + date(c.created_at)),
+        h("p", { class: "muted" }, (c.identifiant ? c.identifiant + " · " : "") + c.email + (c.tel ? " · " + c.tel : "") + " · " + (c.commerce ? "Commerce : " + c.commerce : c.type === "commerce" ? "Commerce (fiche pas encore créée)" : "Utilisateur") + " · inscrit le " + date(c.created_at)),
         c.banni && c.banni_motif ? h("p", { class: "muted" }, "Raison : " + c.banni_motif) : null,
         reclam,
         c.admin ? null : h("div", { class: "row" },
@@ -130,24 +130,43 @@
     const histo = journal.length ? h("details", { style: "margin-top:12px" }, h("summary", {}, "Journal des sanctions (" + journal.length + " dernières)"),
       journal.map(j => h("p", { class: "muted", style: "margin:6px 0" }, date(j.at) + " · " + (ACTIONS[j.action] || j.action) + " · " + (j.nom || "") + " <" + j.email + ">" + (j.jusqua ? " · jusqu'au " + date(j.jusqua) : j.action === "ban" ? " · définitif" : "") + (j.motif ? " · « " + j.motif + " »" : "")))) : null;
     return h("div", { class: "card" }, h("h3", {}, "🚫 Comptes, bannissements et suppressions"),
-      h("p", { class: "muted" }, "Bannir : la personne est déconnectée, ne peut plus se connecter, ses commerces disparaissent de l'application. Elle voit la raison et peut envoyer une réclamation. Supprimer : tout est effacé, sans réclamation possible. Tout est noté dans le journal."),
+      h("p", { class: "muted" }, "Les comptes des utilisateurs et des commerçants (pas le tien). Bannir : la personne est déconnectée, ne peut plus se connecter, ses commerces disparaissent de l'application. Elle voit la raison et peut envoyer une réclamation. Supprimer : tout est effacé, sans réclamation possible. Tout est noté dans le journal."),
       champ,
       h("div", { class: "row", style: "margin:8px 0" }, h("button", { class: "btn alt small", onclick: chercher }, "Chercher"), filtre("banni", "Bannis"), filtre("reclam", "Réclamations" + (d.stats.reclamations ? " (" + d.stats.reclamations + ")" : ""))),
       !listeComptes.length ? h("p", { class: "muted" }, "Aucun compte trouvé.") : listeComptes.map(ligne), histo);
   }
   // ---------- outils ----------
-  function mailBloc() {
-    const etat = d.mail_configure;
-    return h("div", { class: "card" }, h("h3", {}, "✉️ E-mails de vérification"),
-      h("p", { class: "muted" }, etat ? "L'envoi est configuré : chaque création de compte et chaque connexion demandent un code reçu par e-mail." : "L'envoi n'est pas configuré. Tant qu'il ne l'est pas, les inscriptions sont fermées et la connexion reste directe."),
-      h("div", { class: "alerte " + (etat ? "ok" : "warn") }, etat ? "✔ Configuré" : "Variables manquantes : MAIL_UTILISATEUR et MAIL_MOT_DE_PASSE"),
-      h("p", {}, h("button", { class: "btn alt small", disabled: !etat, onclick: async ev => { ev.target.disabled = true; try { const r = await api("POST", "admin/test-mail", {}); toast("E-mail de test envoyé à " + r.envoye_a + " (regardez aussi les spams)."); } catch (er) { toast(er.message, true); } ev.target.disabled = false; } }, "M'envoyer un e-mail de test")));
+  // ---------- récupération de compte : identifiant → code envoyé à l'e-mail du compte → la personne te le donne ----------
+  let recup = { etape: "saisie" };
+  function recupBloc() {
+    const nouveau = () => { recup = { etape: "saisie" }; rendre(); };
+    const carte = (...enfants) => h("div", { class: "card" }, h("h3", {}, "🔑 Récupérer un compte"), ...enfants);
+    const aide = h("p", { class: "muted" }, "Quelqu'un t'écrit : « j'ai perdu mon compte ». Demande-lui son identifiant (il commence par NX-, visible dans « Mon compte ») ou son pseudo. Un code part vers l'e-mail du compte : s'il te le donne, c'est bien lui.");
+    if (recup.etape === "saisie") {
+      const q = h("input", { type: "text", placeholder: "Identifiant (NX-…), pseudo ou e-mail", maxlength: 120, autocapitalize: "characters" }), msg = h("div", {});
+      const envoyer = async ev => { ev.preventDefault && ev.preventDefault(); vider(msg); try { const r = await api("POST", "admin/recuperation/envoyer", { q: q.value }); recup = { etape: "code", vid: r.vid, nom: r.nom, identifiant: r.identifiant, masque: r.email_masque }; rendre(); } catch (e) { msg.append(h("div", { class: "alerte bad" }, e.message)); } };
+      q.onkeydown = ev => { if (ev.key === "Enter") envoyer(ev); };
+      return carte(aide, q, msg, h("p", {}, h("button", { class: "btn gold small", onclick: envoyer }, "Envoyer le code à son e-mail")));
+    }
+    if (recup.etape === "code") {
+      const code = h("input", { type: "text", inputmode: "numeric", maxlength: 7, placeholder: "Code à 6 chiffres donné par la personne", class: "code-saisie" }), msg = h("div", {});
+      const verifier = async () => { vider(msg); try { const r = await api("POST", "admin/recuperation/confirmer", { vid: recup.vid, code: code.value }); recup = { etape: "ok", compte: r.compte, mdp: null }; rendre(); } catch (e) { msg.append(h("div", { class: "alerte bad" }, e.message)); } };
+      code.onkeydown = ev => { if (ev.key === "Enter") verifier(); };
+      return carte(h("div", { class: "alerte info" }, "Code envoyé à ", h("b", {}, recup.masque), " (compte de ", h("b", {}, recup.nom || "?"), " · ", recup.identifiant, "). Demande-lui de te le lire. Il est valable 10 minutes."), code, msg,
+        h("div", { class: "row", style: "margin-top:10px" }, h("button", { class: "btn gold small", onclick: verifier }, "Confirmer le code"), h("button", { class: "btn fantome small", onclick: nouveau }, "Annuler")));
+    }
+    const c = recup.compte;
+    return carte(h("div", { class: "alerte ok" }, "✔ Identité confirmée : la personne a bien accès à l'e-mail de ce compte."),
+      h("div", { class: "dem" }, h("b", {}, c.nom || "(sans nom)"), h("p", { class: "muted" }, c.identifiant + " · " + c.email + (c.tel ? " · " + c.tel : "")), h("p", { class: "muted" }, (c.commerce ? "Commerce : " + c.commerce + " (" + (c.commerce_statut || "") + (c.plan ? ", formule " + c.plan : "") + ")" : c.type === "commerce" ? "Commerce : fiche pas encore créée" : "Utilisateur") + (c.banni ? " · ⚠ compte banni" : ""))),
+      recup.mdp ? h("div", { class: "alerte ok" }, "Mot de passe temporaire : ", h("span", { class: "code" }, recup.mdp), h("br"), h("span", { class: "muted" }, "Transmets-le par WhatsApp. Ses anciennes sessions sont fermées. Il pourra le changer dans « Mon compte ». Ce mot de passe ne sera plus affichable après avoir quitté cette page.")) :
+        h("p", {}, h("button", { class: "btn gold small", onclick: async ev => { ev.target.disabled = true; try { const r = await api("POST", "admin/motdepasse", { email: c.email }); recup.mdp = r.mot_de_passe_temporaire; rendre(); } catch (e) { toast(e.message, true); ev.target.disabled = false; } } }, "Rétablir son accès (mot de passe temporaire)")),
+      h("p", {}, h("button", { class: "btn fantome small", onclick: nouveau }, "Terminer")));
   }
-  function mdpBloc() {
-    const e = h("input", { type: "email", placeholder: "e-mail du commerçant", maxlength: 120 });
-    return h("div", { class: "card" }, h("h3", {}, "🔑 Mot de passe oublié"), h("p", { class: "muted" }, "Génère un mot de passe temporaire à transmettre au commerçant (par WhatsApp). Ses sessions en cours sont fermées."), e,
-      h("p", {}, h("button", { class: "btn alt small", onclick: async ev => { ev.target.disabled = true; try { const r = await api("POST", "admin/motdepasse", { email: e.value }); mdpTemp = { email: e.value, mdp: r.mot_de_passe_temporaire }; rendre(); } catch (er) { toast(er.message, true); ev.target.disabled = false; } } }, "Générer un mot de passe temporaire")),
-      mdpTemp ? h("div", { class: "alerte ok" }, "Mot de passe temporaire pour " + mdpTemp.email + " : ", h("span", { class: "code" }, mdpTemp.mdp), h("br", {}), h("span", { class: "muted" }, "Il ne sera plus affichable après avoir quitté cette page.")) : null);
+  function mailEtat() {
+    const etat = d.mail_configure;
+    return h("div", { class: "card" }, h("h3", {}, "✉️ Envoi des e-mails"),
+      h("div", { class: "alerte " + (etat ? "ok" : "warn") }, etat ? "✔ Configuré : les codes de vérification partent depuis l'adresse Nexvia." : "Non configuré : variables MAIL_UTILISATEUR et MAIL_MOT_DE_PASSE manquantes. Les inscriptions restent fermées."),
+      h("p", {}, h("button", { class: "btn alt small", disabled: !etat, onclick: async ev => { ev.target.disabled = true; try { const r = await api("POST", "admin/test-mail", {}); toast("E-mail de test envoyé à " + r.envoye_a + " (regardez aussi les spams)."); } catch (er) { toast(er.message, true); } ev.target.disabled = false; } }, "M'envoyer un e-mail de test")));
   }
   const raccourcis = () => h("div", { class: "card" }, h("h3", {}, "🔗 Raccourcis"),
     h("div", { class: "row" }, h("a", { class: "btn alt small", href: NX.CFG.ZOLA_LIEN, target: "_blank", rel: "noopener" }, "Page de paiement Zola"), h("a", { class: "btn alt small", href: "/", target: "_blank" }, "L'application"), h("a", { class: "btn alt small", href: "/tarifs/", target: "_blank" }, "Les tarifs"), h("a", { class: "btn wa small", href: wa("Bonjour"), target: "_blank", rel: "noopener" }, "WhatsApp Nexvia")));
@@ -162,7 +181,7 @@
       h("div", { class: "kpis" }, kpi(s.comptes, s.comptes > 1 ? "comptes" : "compte"), kpi(s.marques, s.marques > 1 ? "commerces" : "commerce"), kpi(s.adresses_validees, s.adresses_validees > 1 ? "adresses validées" : "adresse validée"), kpi(s.abonnes, s.abonnes > 1 ? "abonnés actifs" : "abonné actif")))),
       h("div", { class: "bande-rdc" }));
     const tab = (cle, lib, n) => h("button", { class: onglet === cle ? "on" : "", onclick: () => { onglet = cle; rendre(); } }, lib, pastille(n));
-    app.append(h("div", { class: "onglets-admin" }, tab("validations", "✅ Validations", nVal), tab("paiements", "💳 Paiements", nPay), tab("outils", "🧰 Outils", s.reclamations)));
+    app.append(h("div", { class: "onglets-admin" }, tab("validations", "✅ Validations", nVal), tab("paiements", "💳 Paiements", nPay), tab("comptes", "👥 Comptes", s.reclamations), tab("recup", "🔑 Récupération"), tab("outils", "🧰 Outils")));
     const main = h("main", { class: "large" });
     if (onglet === "validations") {
       main.append(h("div", { class: "cols" },
@@ -174,7 +193,9 @@
         h("div", {}, sec("Paiements à vérifier", d.a_verifier.length), ...(d.a_verifier.length ? d.a_verifier.map(ligneVerif) : [vide("✓", "Rien à vérifier.")]),
           sec("En attente de l'import", d.en_attente.length), d.en_attente.length ? tableAttente() : vide("·", "Aucun paiement en attente."))));
     } else {
-      main.append(h("div", { class: "cols" }, h("div", {}, sec("Comptes"), comptesBloc(), mdpBloc(), mailBloc()), h("div", {}, sec("Outils"), raccourcis())));
+      main.append(onglet === "comptes" ? h("div", { class: "cols" }, h("div", {}, sec("Comptes des utilisateurs"), comptesBloc()))
+        : onglet === "recup" ? h("div", { class: "cols" }, h("div", {}, sec("Récupération de compte"), recupBloc()), h("div", {}, sec("E-mails"), mailEtat()))
+        : h("div", { class: "cols" }, h("div", {}, sec("Outils"), raccourcis())));
     }
     main.append(h("div", { class: "pied-rdc" }, drapeau(22), "Nexvia RDC · fait à Kinshasa"));
     app.append(main);

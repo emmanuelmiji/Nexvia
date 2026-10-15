@@ -16,7 +16,7 @@ export async function onRequest({ request, env }) {
 const exigerUser = async (request, env) => { const u = await C.utilisateur(request, env); if (!u) refuse("Connexion requise.", 401); return u; };
 const exigerAdmin = async (request, env) => { const u = await exigerUser(request, env); if (!u.admin) refuse("Accès réservé à l'administrateur.", 403); return u; };
 const ent = v => { const n = Number(v); if (!Number.isInteger(n) || n < 1) refuse("Identifiant invalide."); return n; };
-const pub = u => u && { id: u.id, email: u.email, nom: u.nom, type: u.type, admin: !!u.admin };
+const pub = u => u && { id: u.id, email: u.email, nom: u.nom, type: u.type, identifiant: u.identifiant || null, admin: !!u.admin };
 
 async function router(request, env) {
   const url = new URL(request.url), m = request.method;
@@ -41,11 +41,14 @@ const ROUTES = {
   "POST auth/connexion": connexion,
   "POST auth/connexion/confirmer": connexionConfirmer,
   "POST auth/code/renvoyer": codeRenvoyer,
+  "POST auth/motdepasse": changerMotDePasse,
   "POST admin/test-mail": adminTestMail,
   "GET admin/comptes": adminComptes,
   "POST admin/bannir": adminBannir,
   "POST admin/debannir": adminDebannir,
   "POST admin/supprimer": adminSupprimer,
+  "POST admin/recuperation/envoyer": recupEnvoyer,
+  "POST admin/recuperation/confirmer": recupConfirmer,
   "POST admin/reclamation": adminReclamation,
   "POST auth/reclamation": reclamationUtilisateur,
   "POST auth/deconnexion": async ({ request, env }) => { await C.finSession(request, env); return json({ ok: true }, 200, { "set-cookie": C.cookieVide() }); },
@@ -126,9 +129,14 @@ async function inscriptionConfirmer({ request, env, ip }) {
   if (!(await C.limiter(env, "cod:" + ip, 40, 900))) refuse("Trop de tentatives. Réessayez plus tard.", 429);
   const db = await C.base(env), v = await controlerCode(env, db, b, "inscription"), d = v.donnees;
   if (await db.prepare("SELECT id FROM users WHERE email = ?").bind(v.email).first()) refuse("Un compte existe déjà avec cette adresse e-mail. Connectez-vous.", 409);
-  const r = await db.prepare("INSERT INTO users (email, nom, tel, type, pass_hash, pass_salt, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)").bind(v.email, d.nom, d.tel, d.type, d.hash, d.sel, new Date().toISOString()).run();
+  let r, ident;
+  for (let i = 0; ; i++) {
+    ident = C.nouvelIdentifiant();
+    try { r = await db.prepare("INSERT INTO users (email, nom, tel, type, pass_hash, pass_salt, identifiant, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)").bind(v.email, d.nom, d.tel, d.type, d.hash, d.sel, ident, new Date().toISOString()).run(); break; }
+    catch (e) { if (i >= 3 || !/identifiant/i.test(String(e && e.message))) throw e; }
+  }
   const cookie = await C.ouvrirSession(env, r.meta.last_row_id);
-  return json({ ok: true, utilisateur: { id: r.meta.last_row_id, email: v.email, nom: d.nom, type: d.type, admin: C.adminsDe(env).includes(v.email) } }, 200, { "set-cookie": cookie });
+  return json({ ok: true, utilisateur: { id: r.meta.last_row_id, email: v.email, nom: d.nom, type: d.type, identifiant: ident, admin: C.adminsDe(env).includes(v.email) } }, 200, { "set-cookie": cookie });
 }
 async function connexion({ request, env, ip }) {
   const b = await lireJson(request);
@@ -159,6 +167,19 @@ async function connexionConfirmer({ request, env, ip }) {
   const cookie = await C.ouvrirSession(env, u.id);
   u.admin = C.adminsDe(env).includes(v.email);
   return json({ ok: true, utilisateur: pub(u) }, 200, { "set-cookie": cookie });
+}
+async function changerMotDePasse({ request, env, ip }) {
+  const u = await exigerUser(request, env), b = await lireJson(request), db = await C.base(env);
+  if (!(await C.limiter(env, "mdp:" + u.id, 8, 900))) refuse("Trop de tentatives. Réessayez dans 15 minutes.", 429);
+  const ligne = await db.prepare("SELECT * FROM users WHERE id = ?").bind(u.id).first();
+  if (!(await C.mdpValide(String(b.ancien || ""), ligne))) refuse("Le mot de passe actuel est incorrect.", 401);
+  const nouveau = String(b.nouveau || "");
+  if (b.confirmation !== undefined && String(b.confirmation) !== nouveau) refuse("Les deux mots de passe ne sont pas identiques.");
+  const pb = Mail.verifierMotDePasse(nouveau, { email: u.email, nom: u.nom }); if (pb) refuse(pb);
+  const sel = C.nouveauSel(), hash = await C.hacherMdp(nouveau, sel);
+  const jeton = (request.headers.get("cookie") || "").match(/(?:^|; )nx_s=([^;]+)/);
+  await db.batch([db.prepare("UPDATE users SET pass_hash = ?, pass_salt = ? WHERE id = ?").bind(hash, sel, u.id), db.prepare("DELETE FROM sessions WHERE user_id = ? AND token_hash != ?").bind(u.id, jeton ? await C.sha256hex(jeton[1]) : "")]);
+  return json({ ok: true });
 }
 async function codeRenvoyer({ request, env, ip }) {
   const b = await lireJson(request), vid = String(b.vid || "");
@@ -348,13 +369,14 @@ async function demanderPaiement({ request, env }) {
 async function fileAdmin({ request, env }) {
   await exigerAdmin(request, env);
   const db = await C.base(env), tout = async (sql, ...p) => (await db.prepare(sql).bind(...p).all()).results || [];
+  const adminsF = C.adminsDe(env);
   const [marques, adresses, averifier, attente, imports, stats] = await Promise.all([
     tout("SELECT m.id, m.nom, m.plan_souhaite, m.created_at, u.email, u.nom AS user_nom, u.tel AS user_tel FROM marques m JOIN users u ON u.id = m.owner_id WHERE m.statut = 'en_attente' ORDER BY m.id"),
     tout("SELECT a.id, a.nom, a.categorie, a.commune, a.adresse, a.tel, a.code, a.tel_verifie, a.lieu_existant, a.horaires, a.description, a.menu, a.created_at, m.nom AS marque_nom, m.statut AS marque_statut, m.plan_souhaite, m.plan, m.plan_fin, u.email, u.tel AS user_tel FROM adresses a JOIN marques m ON m.id = a.marque_id JOIN users u ON u.id = m.owner_id WHERE a.statut = 'en_attente' ORDER BY a.id LIMIT 60"),
     tout("SELECT d.id, d.plan, d.ref, d.motif, d.created_at, d.tentatives, m.nom AS marque_nom, u.email, u.tel AS user_tel FROM demandes_paiement d JOIN marques m ON m.id = d.marque_id JOIN users u ON u.id = d.user_id WHERE d.statut = 'a_verifier' ORDER BY d.id"),
     tout("SELECT d.id, d.plan, d.ref, d.motif, d.created_at, d.tentatives, m.nom AS marque_nom, u.email FROM demandes_paiement d JOIN marques m ON m.id = d.marque_id JOIN users u ON u.id = d.user_id WHERE d.statut = 'en_attente' ORDER BY d.id"),
     tout("SELECT * FROM imports ORDER BY id DESC LIMIT 5"),
-    db.prepare("SELECT (SELECT COUNT(*) FROM users) AS comptes, (SELECT COUNT(*) FROM reclamations WHERE statut = 'en_attente') AS reclamations, (SELECT COUNT(*) FROM marques) AS marques, (SELECT COUNT(*) FROM adresses WHERE statut = 'validee') AS adresses_validees, (SELECT COUNT(*) FROM marques WHERE plan != 'gratuit' AND plan_fin > ?) AS abonnes").bind(new Date().toISOString()).first(),
+    db.prepare("SELECT (SELECT COUNT(*) FROM users WHERE 1 = 1" + (adminsF.length ? " AND lower(email) NOT IN (" + adminsF.map(() => "?").join(",") + ")" : "") + ") AS comptes, (SELECT COUNT(*) FROM reclamations WHERE statut = 'en_attente') AS reclamations, (SELECT COUNT(*) FROM marques) AS marques, (SELECT COUNT(*) FROM adresses WHERE statut = 'validee') AS adresses_validees, (SELECT COUNT(*) FROM marques WHERE plan != 'gratuit' AND plan_fin > ?) AS abonnes").bind(...adminsF, new Date().toISOString()).first(),
   ]);
   if (adresses.length) {
     const ph = await tout("SELECT id, adresse_id, type FROM photos WHERE adresse_id IN (" + adresses.map(() => "?").join(",") + ") ORDER BY id", ...adresses.map(a => a.id));
@@ -427,11 +449,10 @@ async function adminComptes({ request, env, url }) {
   await exigerAdmin(request, env); const db = await C.base(env); await leverBans(db);
   const q = String(url.searchParams.get("q") || "").trim().toLowerCase().slice(0, 80).replace(/[%_\\]/g, "");
   const filtre = url.searchParams.get("banni") === "1" ? " AND u.banni = 1" : url.searchParams.get("reclam") === "1" ? " AND EXISTS (SELECT 1 FROM reclamations r WHERE r.user_id = u.id AND r.statut = 'en_attente')" : "";
-  const like = "%" + q + "%";
-  const lignes = (await db.prepare("SELECT u.id, u.email, u.nom, u.tel, u.type, u.banni, u.banni_motif, u.banni_at, u.banni_jusqua, u.created_at, m.nom AS commerce, (SELECT r.id FROM reclamations r WHERE r.user_id = u.id AND r.statut = 'en_attente' ORDER BY r.id DESC LIMIT 1) AS rec_id, (SELECT r.message FROM reclamations r WHERE r.user_id = u.id AND r.statut = 'en_attente' ORDER BY r.id DESC LIMIT 1) AS rec_message FROM users u LEFT JOIN marques m ON m.owner_id = u.id WHERE (lower(u.email) LIKE ? OR lower(u.nom) LIKE ? OR lower(IFNULL(m.nom, '')) LIKE ?)" + filtre + " ORDER BY (rec_id IS NOT NULL) DESC, u.banni DESC, u.id DESC LIMIT 30").bind(like, like, like).all()).results || [];
+  const like = "%" + q + "%", admins = C.adminsDe(env), sansAdmins = admins.length ? " AND lower(u.email) NOT IN (" + admins.map(() => "?").join(",") + ")" : "";
+  const lignes = (await db.prepare("SELECT u.id, u.email, u.nom, u.tel, u.type, u.identifiant, u.banni, u.banni_motif, u.banni_at, u.banni_jusqua, u.created_at, m.nom AS commerce, (SELECT r.id FROM reclamations r WHERE r.user_id = u.id AND r.statut = 'en_attente' ORDER BY r.id DESC LIMIT 1) AS rec_id, (SELECT r.message FROM reclamations r WHERE r.user_id = u.id AND r.statut = 'en_attente' ORDER BY r.id DESC LIMIT 1) AS rec_message FROM users u LEFT JOIN marques m ON m.owner_id = u.id WHERE (lower(u.email) LIKE ? OR lower(u.nom) LIKE ? OR lower(IFNULL(m.nom, '')) LIKE ? OR u.identifiant LIKE ?)" + sansAdmins + filtre + " ORDER BY (rec_id IS NOT NULL) DESC, u.banni DESC, u.id DESC LIMIT 30").bind(like, like, like, like.toUpperCase(), ...admins).all()).results || [];
   const journal = (await db.prepare("SELECT id, user_id, email, nom, action, motif, jusqua, par, at FROM sanctions ORDER BY id DESC LIMIT 25").all()).results || [];
-  const admins = C.adminsDe(env);
-  return json({ ok: true, comptes: lignes.map(c => ({ ...c, admin: admins.includes(String(c.email).toLowerCase()) })), journal });
+  return json({ ok: true, comptes: lignes, journal });
 }
 async function cibleModeration(env, db, moi, id) {
   const cible = await db.prepare("SELECT id, email, nom FROM users WHERE id = ?").bind(id).first();
@@ -481,6 +502,31 @@ async function adminSupprimer({ request, env }) {
     db.prepare("DELETE FROM verifs WHERE email = ?").bind(cible.email),
     db.prepare("DELETE FROM users WHERE id = ?").bind(id)]);
   return json({ ok: true });
+}
+// --- récupération de compte : l'admin saisit l'identifiant, un code part vers l'e-mail du compte, la personne le lui donne ---
+async function recupEnvoyer({ request, env }) {
+  const moi = await exigerAdmin(request, env), db = await C.base(env), b = await lireJson(request);
+  const q = texte(b.q, 120, true, "identifiant").trim();
+  let lignes;
+  if (/^nx-/i.test(q)) lignes = (await db.prepare("SELECT id, email, nom, identifiant FROM users WHERE identifiant = ?").bind(q.toUpperCase()).all()).results || [];
+  else if (q.includes("@")) lignes = (await db.prepare("SELECT id, email, nom, identifiant FROM users WHERE email = ?").bind(q.toLowerCase()).all()).results || [];
+  else lignes = (await db.prepare("SELECT id, email, nom, identifiant FROM users WHERE lower(nom) = ? LIMIT 5").bind(q.toLowerCase()).all()).results || [];
+  if (!lignes.length) refuse("Aucun compte trouvé avec « " + q + " ».", 404);
+  if (lignes.length > 1) refuse("Plusieurs comptes portent ce pseudo. Demandez à la personne son identifiant (NX-…), visible dans « Mon compte ».");
+  const u = lignes[0];
+  if (C.adminsDe(env).includes(String(u.email).toLowerCase())) refuse("Un compte administrateur ne se récupère pas ici.", 403);
+  if (!Mail.mailConfigure(env)) refuse("L'envoi d'e-mails n'est pas configuré.", 503);
+  if (!(await C.limiter(env, "recup:" + moi.id, 15, 3600)) || !(await C.limiter(env, "recupu:" + u.id, 4, 3600))) refuse("Trop de codes envoyés pour ce compte. Réessayez plus tard.", 429);
+  const r = await envoyerCode(env, db, { id: nouvelId(), email: u.email, but: "recuperation", donnees: { uid: u.id } });
+  return json({ ...r, nom: u.nom, identifiant: u.identifiant });
+}
+async function recupConfirmer({ request, env }) {
+  const moi = await exigerAdmin(request, env), db = await C.base(env), b = await lireJson(request);
+  const v = await controlerCode(env, db, b, "recuperation");
+  const u = await db.prepare("SELECT id, email, nom, tel, type, identifiant, banni FROM users WHERE id = ?").bind(v.donnees.uid).first(); if (!u) refuse("Compte introuvable.", 404);
+  const m = await marqueDe(db, u.id);
+  await JOURNAL(db, u, "recuperation", "Identité confirmée par code e-mail", null, moi.email).run();
+  return json({ ok: true, compte: { ...u, commerce: m ? m.nom : null, commerce_statut: m ? m.statut : null, plan: m ? C.planEffectif(m) : null } });
 }
 async function adminMotDePasse({ request, env }) {
   await exigerAdmin(request, env); const db = await C.base(env), b = await lireJson(request);

@@ -73,7 +73,7 @@ export async function envoyerCourriel(env, a, sujet, texte) {
 }
 export const texteCode = (code, but) => [
   "Bonjour,", "",
-  but === "connexion" ? "Voici votre code pour vous connecter à Nexvia RDC :" : "Voici votre code pour créer votre compte Nexvia RDC :", "",
+  but === "connexion" ? "Voici votre code pour vous connecter à Nexvia RDC :" : but === "recuperation" ? "L'équipe Nexvia RDC a lancé la récupération de votre compte. Voici le code à lui communiquer, uniquement si c'est bien vous qui avez demandé de l'aide :" : "Voici votre code pour créer votre compte Nexvia RDC :", "",
   "    " + code, "",
   "Il est valable 10 minutes. Ne le communiquez à personne : l'équipe Nexvia RDC ne vous le demandera jamais.", "",
   "Si vous n'êtes pas à l'origine de cette demande, ignorez simplement ce message.", "",
