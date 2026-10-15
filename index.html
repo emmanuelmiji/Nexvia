@@ -1254,8 +1254,14 @@ if (typeof L === "undefined") {
 
   // ---- données supplémentaires ----
   const dejaPresent = l => lieux.some(x => norm(x.nom) === norm(l.nom) || (norm(l.nom).length >= 7 && norm(x.nom).length >= 7 && (norm(x.nom).indexOf(norm(l.nom)) >= 0 || norm(l.nom).indexOf(norm(x.nom)) >= 0) && (!aPosition(l) || !aPosition(x) || distM(x.lat, x.lng, l.lat, l.lng) < 300)) || (aPosition(l) && aPosition(x) && x.cat === l.cat && distM(x.lat, x.lng, l.lat, l.lng) < 40));
+  // Garde uniquement les lieux de Kinshasa : exclut la rive nord du fleuve (Brazzaville, République du Congo).
+  function horsRDC(lat, lng, adresse, tel, nom) {
+    if (typeof lat === "number" && typeof lng === "number" && (lat > -4.285 || lat < -4.36 || lng < 15.24 || lng > 15.36)) return true;
+    if (/brazzaville|poto-?poto|bacongo|moungali|ouenz[eé]|talanga[iï]|mfilou|makél?él?é?kélé/i.test([nom, adresse].join(" "))) return true;
+    return /^\s*(\+|00)?\s*242/.test(String(tel || "").replace(/[^\d+]/g, "")) ;
+  }
   function ajouterRefs(liste) {
-    (liste || []).forEach(r => { if (!r.nom || dejaPresent(r)) return;
+    (liste || []).forEach(r => { if (!r.nom || dejaPresent(r) || horsRDC(r.lat, r.lng, r.adresse, r.tel, r.nom)) return;
       lieux.push({ nom: r.nom, cat: CATS[r.cat] ? r.cat : "autre", type: r.type || "", adresse: r.adresse || "", tel: r.tel || "", horaires: r.horaires || "", lat: r.lat, lng: r.lng, posSource: r.posSource || "", source: "reference" }); });
   }
   function ajouterOSM(data) {
@@ -1268,7 +1274,7 @@ if (typeof L === "undefined") {
       const cat = catOSM(t);
       const l = { nom, cat, type: CAT_LABEL[cat], lat, lng, source: "osm", religion: t.religion || "", emoji: t.amenity === "cafe" ? "☕" : t.amenity === "fast_food" ? "🍔" : t.amenity === "nightclub" ? "🎶" : "",
         adresse: [t["addr:housenumber"], t["addr:street"]].filter(Boolean).join(" "), tel: t.phone || t["contact:phone"] || "", horaires: t.opening_hours || "" };
-      if (!dejaPresent(l)) lieux.push(l);
+      if (!dejaPresent(l) && !horsRDC(l.lat, l.lng, l.adresse, l.tel, l.nom)) lieux.push(l);
     });
   }
   const lireJSON = u => fetch(u, { cache: "no-cache" }).then(r => { if (!r.ok) throw new Error("absent"); return r.json(); }).catch(() => null);

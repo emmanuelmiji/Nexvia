@@ -100,8 +100,8 @@ async function etatCommerce({ request, env }) {
   if (!marque) return json({ ok: true, utilisateur: pub(user), marque: null, adresses: [], demandes: [], plans: PLANS, total_avec_frais: C.TOTAL_AVEC_FRAIS, whatsapp: C.WHATSAPP });
   const plan = C.planEffectif(marque);
   const adresses = (await db.prepare("SELECT * FROM adresses WHERE marque_id = ? ORDER BY id").bind(marque.id).all()).results || [];
-  const phs = (await db.prepare("SELECT p.id, p.adresse_id FROM photos p JOIN adresses a ON a.id = p.adresse_id WHERE a.marque_id = ? ORDER BY p.id").bind(marque.id).all()).results || [];
-  for (const a of adresses) a.photos = phs.filter(p => p.adresse_id === a.id).map(p => p.id);
+  const phs = (await db.prepare("SELECT p.id, p.adresse_id, p.type FROM photos p JOIN adresses a ON a.id = p.adresse_id WHERE a.marque_id = ? ORDER BY p.id").bind(marque.id).all()).results || [];
+  for (const a of adresses) { a.photos = phs.filter(p => p.adresse_id === a.id && p.type !== "menu").map(p => p.id); a.menu_photos = phs.filter(p => p.adresse_id === a.id && p.type === "menu").map(p => p.id); }
   const demandes = (await db.prepare("SELECT id, plan, ref, statut, motif, created_at, traite_at FROM demandes_paiement WHERE marque_id = ? ORDER BY id DESC LIMIT 20").bind(marque.id).all()).results || [];
   return json({ ok: true, utilisateur: pub(user), marque: { ...marque, plan_effectif: plan, plan_edition: C.planEdition(marque) }, adresses, demandes, plans: PLANS, total_avec_frais: C.TOTAL_AVEC_FRAIS, whatsapp: C.WHATSAPP });
 }
@@ -137,7 +137,7 @@ async function sauverAdresse({ request, env }) {
     tel: texte(b.tel, 30, true, "téléphone"),
     horaires: texte(b.horaires, 300),
     description: texte(b.description, 600),
-    menu: texte(b.menu, 3000),
+    menu: "", // le menu se publie maintenant en photos (voir /api/commerce/photo, type « menu »)
     lat: nombreOuNull(b.lat, -90, 90), lng: nombreOuNull(b.lng, -180, 180),
     lieu_existant: texte(b.lieu_existant, 120),
   };
@@ -146,6 +146,9 @@ async function sauverAdresse({ request, env }) {
   if (b.id) {
     const a = await db.prepare("SELECT * FROM adresses WHERE id = ? AND marque_id = ?").bind(ent(b.id), marque.id).first();
     if (!a) refuse("Adresse introuvable.", 404);
+    champs.menu = a.menu || "";
+    if (champs.commune !== (a.commune || "") && !C.COMMUNES_OUVERTES.includes(champs.commune)) refuse("Cette commune n'est pas encore disponible. Pour le moment, seule la commune de Gombe est ouverte.");
+    if (champs.horaires !== (a.horaires || "") && champs.horaires && !C.horairesValides(champs.horaires)) refuse("Horaires non reconnus : utilisez le sélecteur d'horaires.");
     if (champs.horaires !== (a.horaires || "") && !plan.horaires) refuse("Modifier les horaires demande l'abonnement Standard ou Premium.", 403);
     let menuNb = a.menu_nb, menuMois = a.menu_mois;
     if (champs.menu !== (a.menu || "")) {
@@ -163,7 +166,8 @@ async function sauverAdresse({ request, env }) {
   }
   const n = (await db.prepare("SELECT COUNT(*) AS n FROM adresses WHERE marque_id = ? AND statut != 'refusee'").bind(marque.id).first()).n;
   if (n >= plan.adresses) refuse("La formule " + plan.nom + " permet " + plan.adresses + " adresse" + (plan.adresses > 1 ? "s" : "") + ". Passez à une formule supérieure pour en ajouter.", 403);
-  if (champs.menu && plan.menu === 0) refuse("Le menu / la liste de services demande l'abonnement Standard ou Premium.", 403);
+  if (!C.COMMUNES_OUVERTES.includes(champs.commune)) refuse("Cette commune n'est pas encore disponible. Pour le moment, seule la commune de Gombe est ouverte.");
+  if (champs.horaires && !C.horairesValides(champs.horaires)) refuse("Horaires non reconnus : utilisez le sélecteur d'horaires.");
   const r = await db.prepare("INSERT INTO adresses (marque_id, nom, categorie, commune, adresse, tel, horaires, description, menu, lat, lng, lieu_existant, code, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
     .bind(marque.id, champs.nom, champs.categorie, champs.commune, champs.adresse, champs.tel, champs.horaires, champs.description, champs.menu, champs.lat, champs.lng, champs.lieu_existant, C.codeVerif(), new Date().toISOString()).run();
   return json({ ok: true, id: r.meta.last_row_id, statut: "en_attente" });
@@ -188,17 +192,30 @@ async function ajouterPhoto({ request, env }) {
   const mime = String(b.mime || ""), data = String(b.data || "");
   if (!MIMES[mime] || !data.startsWith(MIMES[mime]) || !/^[A-Za-z0-9+/=]+$/.test(data)) refuse("Image non acceptée (JPEG, PNG ou WebP).");
   if (data.length > 260000) refuse("Image trop lourde. Elle est normalement réduite automatiquement : réessayez avec une autre photo.", 413);
-  const plan = PLANS[C.planEdition(marque)];
-  const n = (await db.prepare("SELECT COUNT(*) AS n FROM photos WHERE adresse_id = ?").bind(a.id).first()).n;
-  if (n >= plan.photos) refuse("La formule " + plan.nom + " permet " + plan.photos + " photo" + (plan.photos > 1 ? "s" : "") + " par adresse.", 403);
-  const r = await db.prepare("INSERT INTO photos (adresse_id, mime, data, created_at) VALUES (?, ?, ?, ?)").bind(a.id, mime, data, new Date().toISOString()).run();
+  const plan = PLANS[C.planEdition(marque)], type = b.type === "menu" ? "menu" : "lieu";
+  const n = (await db.prepare("SELECT COUNT(*) AS n FROM photos WHERE adresse_id = ? AND type = ?").bind(a.id, type).first()).n;
+  if (type === "menu") {
+    if (!plan.menu_photos) refuse("Le menu en photos demande l'abonnement Standard ou Premium.", 403);
+    if (n >= plan.menu_photos) refuse("La formule " + plan.nom + " permet " + plan.menu_photos + " photos de menu par adresse.", 403);
+  } else if (n >= plan.photos) refuse("La formule " + plan.nom + " permet " + plan.photos + " photo" + (plan.photos > 1 ? "s" : "") + " par adresse.", 403);
+  const r = await db.prepare("INSERT INTO photos (adresse_id, mime, data, type, created_at) VALUES (?, ?, ?, ?, ?)").bind(a.id, mime, data, type, new Date().toISOString()).run();
   return json({ ok: true, id: r.meta.last_row_id });
 }
 async function supprimerPhoto({ request, env }) {
   const user = await exigerUser(request, env), db = await C.base(env), marque = await marqueDe(db, user.id);
   const b = await lireJson(request);
-  const p = marque && await db.prepare("SELECT p.id FROM photos p JOIN adresses a ON a.id = p.adresse_id WHERE p.id = ? AND a.marque_id = ?").bind(ent(b.id), marque.id).first();
+  const p = marque && await db.prepare("SELECT p.id, p.type, a.id AS aid, a.menu_mois, a.menu_nb FROM photos p JOIN adresses a ON a.id = p.adresse_id WHERE p.id = ? AND a.marque_id = ?").bind(ent(b.id), marque.id).first();
   if (!p) refuse("Photo introuvable.", 404);
+  if (p.type === "menu") {
+    // Remplacer une photo du menu compte pour une modification (Standard : 2 par mois, Premium : illimité). Ajouter une photo est libre.
+    const plan = PLANS[C.planEdition(marque)], mois = new Date().toISOString().slice(0, 7);
+    let nb = p.menu_mois === mois ? (p.menu_nb || 0) : 0;
+    if (plan.menu < 9999) {
+      if (nb >= plan.menu) refuse("Limite atteinte : " + plan.menu + " modification(s) du menu par mois avec la formule " + plan.nom + ". Réessayez le mois prochain ou passez à Premium.", 403);
+      nb++;
+    }
+    await db.prepare("UPDATE adresses SET menu_mois = ?, menu_nb = ? WHERE id = ?").bind(mois, nb, p.aid).run();
+  }
   await db.prepare("DELETE FROM photos WHERE id = ?").bind(p.id).run();
   return json({ ok: true });
 }
@@ -248,8 +265,8 @@ async function fileAdmin({ request, env }) {
     db.prepare("SELECT (SELECT COUNT(*) FROM users) AS comptes, (SELECT COUNT(*) FROM marques) AS marques, (SELECT COUNT(*) FROM adresses WHERE statut = 'validee') AS adresses_validees, (SELECT COUNT(*) FROM marques WHERE plan != 'gratuit' AND plan_fin > ?) AS abonnes").bind(new Date().toISOString()).first(),
   ]);
   if (adresses.length) {
-    const ph = await tout("SELECT id, adresse_id FROM photos WHERE adresse_id IN (" + adresses.map(() => "?").join(",") + ") ORDER BY id", ...adresses.map(a => a.id));
-    for (const a of adresses) { a.photos = ph.filter(p => p.adresse_id === a.id).map(p => p.id); a.plan_effectif = C.planEffectif(a); }
+    const ph = await tout("SELECT id, adresse_id, type FROM photos WHERE adresse_id IN (" + adresses.map(() => "?").join(",") + ") ORDER BY id", ...adresses.map(a => a.id));
+    for (const a of adresses) { a.photos = ph.filter(p => p.adresse_id === a.id && p.type !== "menu").map(p => p.id); a.menu_photos = ph.filter(p => p.adresse_id === a.id && p.type === "menu").map(p => p.id); a.plan_effectif = C.planEffectif(a); }
   }
   return json({ ok: true, marques, adresses, a_verifier: averifier, en_attente: attente, imports, stats, whatsapp: C.WHATSAPP });
 }
@@ -308,14 +325,15 @@ async function adminMotDePasse({ request, env }) {
 async function publicCommerces({ env }) {
   const db = await C.base(env), now = new Date();
   const rows = (await db.prepare("SELECT a.*, m.plan, m.plan_fin, m.id AS mid FROM adresses a JOIN marques m ON m.id = a.marque_id WHERE a.statut = 'validee' AND m.statut = 'validee' ORDER BY a.marque_id, a.id LIMIT 1000").all()).results || [];
-  const phs = (await db.prepare("SELECT p.id, p.adresse_id FROM photos p JOIN adresses a ON a.id = p.adresse_id WHERE a.statut = 'validee' ORDER BY p.id").all()).results || [];
+  const phs = (await db.prepare("SELECT p.id, p.adresse_id, p.type FROM photos p JOIN adresses a ON a.id = p.adresse_id WHERE a.statut = 'validee' ORDER BY p.id").all()).results || [];
   const parMarque = {}, sortie = [];
   for (const a of rows) {
     const nom = C.planEffectif({ plan: a.plan, plan_fin: a.plan_fin }, now), p = PLANS[nom];
     parMarque[a.mid] = (parMarque[a.mid] || 0) + 1;
     if (parMarque[a.mid] > p.adresses) continue; // au-delà du quota de la formule actuelle
-    const photos = phs.filter(x => x.adresse_id === a.id).slice(0, p.photos).map(x => x.id);
-    sortie.push({ id: a.id, nom: a.nom, categorie: a.categorie, commune: a.commune, adresse: a.adresse, tel: a.tel, horaires: a.horaires, description: a.description, menu: p.menu ? a.menu : "", lat: a.lat, lng: a.lng, lieu_existant: a.lieu_existant, formule: nom, badge: p.badge, whatsapp: p.whatsapp, haut: p.haut, photos });
+    const photos = phs.filter(x => x.adresse_id === a.id && x.type !== "menu").slice(0, p.photos).map(x => x.id);
+    const menu_photos = phs.filter(x => x.adresse_id === a.id && x.type === "menu").slice(0, p.menu_photos).map(x => x.id);
+    sortie.push({ id: a.id, nom: a.nom, categorie: a.categorie, commune: a.commune, adresse: a.adresse, tel: a.tel, horaires: a.horaires, description: a.description, lat: a.lat, lng: a.lng, lieu_existant: a.lieu_existant, formule: nom, badge: p.badge, whatsapp: p.whatsapp, haut: p.haut, photos, menu_photos });
   }
   return new Response(JSON.stringify({ ok: true, commerces: sortie }), { headers: { "content-type": "application/json; charset=utf-8", "cache-control": "public, max-age=300" } });
 }

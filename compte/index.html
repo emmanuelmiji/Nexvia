@@ -13,7 +13,7 @@
 <script src="/assets/nx.js"></script>
 <script>
 (async function () {
-  const { h, api, entete, moi, vider, couronne } = NX, app = document.getElementById("app");
+  const { h, api, entete, moi, vider, couronne, drapeau } = NX, app = document.getElementById("app");
   const q = new URLSearchParams(location.search);
   const suiteBrute = q.get("suite") || "";
   const suite = /^\/[^\/\\]/.test(suiteBrute) ? suiteBrute : ""; // uniquement un chemin du site, jamais une adresse extérieure
@@ -24,9 +24,10 @@
 
   const pin = () => { const ns = "http://www.w3.org/2000/svg", s = document.createElementNS(ns, "svg"); s.setAttribute("viewBox", "0 0 24 24"); s.setAttribute("width", "24"); s.setAttribute("height", "24");
     const p = document.createElementNS(ns, "path"); p.setAttribute("d", "M12 2a7 7 0 0 0-7 7c0 5.2 7 13 7 13s7-7.8 7-13a7 7 0 0 0-7-7zm0 9.5A2.5 2.5 0 1 1 12 6.5a2.5 2.5 0 0 1 0 5z"); p.setAttribute("fill", "#ce1021"); s.append(p); return s; };
-  const haut = (titre, sous) => h("div", { class: "auth-haut" },
+  const haut = (titre, sous) => h("div", {}, h("div", { class: "auth-haut" },
     h("a", { class: "logo", href: "/" }, h("span", { class: "pin" }, pin()), h("span", {}, "Nexvia ", h("b", {}, "RDC"))),
-    h("h1", {}, titre), h("p", {}, sous));
+    h("div", { class: "mbote" }, drapeau(24), "Mbote !"),
+    h("h1", {}, titre), h("p", {}, sous)), h("div", { class: "auth-bande" }));
 
   function formulaire() {
     const f = {};

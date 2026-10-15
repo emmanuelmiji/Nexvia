@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex">
-<meta name="theme-color" content="#14213d">
+<meta name="theme-color" content="#0a2a6b">
 <title>Mon commerce – Nexvia RDC</title>
 <link rel="stylesheet" href="/assets/nx.css">
 </head>
@@ -13,11 +13,15 @@
 <script src="/assets/nx.js"></script>
 <script>
 (async function () {
-  const { h, api, toast, entete, vider, wa, date, dollars, reduirePhoto, couronne, CFG } = NX, app = document.getElementById("app");
+  const { h, api, toast, entete, vider, wa, date, dollars, reduirePhoto, couronne, drapeau, etoile, horaires, horairesJolis, CFG } = NX, app = document.getElementById("app");
   const CAT = { restaurant: "Restaurant", pharmacie: "Pharmacie", banque: "Banque", hotel: "Hôtel", bar: "Bar / loisirs", ecole: "École", distributeur: "Distributeur", "station-service": "Station-service", autre: "Autre" };
+  const EMO = { restaurant: "🍽️", pharmacie: "💊", banque: "🏦", hotel: "🏨", bar: "🍹", ecole: "🎓", distributeur: "🏧", "station-service": "⛽", autre: "🏪" };
+  // Seule la commune de Gombe est ouverte ; les autres arrivent bientôt.
+  const OUVERTES = ["Gombe"];
+  const COMMUNES = ["Gombe", "Bandalungwa", "Barumbu", "Bumbu", "Kalamu", "Kasa-Vubu", "Kimbanseke", "Kinshasa", "Kintambo", "Kisenso", "Lemba", "Limete", "Lingwala", "Makala", "Maluku", "Masina", "Matete", "Mont-Ngafula", "Ndjili", "Ngaba", "Ngaliema", "Ngiri-Ngiri", "Nsele", "Selembao"];
   const LIB_DEM = { en_attente: ["En vérification", "warn"], a_verifier: ["À vérifier", "bad"], active: ["Activé", "ok"], rejetee: ["Rejeté", "gris"] };
-  let etat = null, edition = null, lieux = null, formule = "standard", vue = null, choix = "gratuit", fini = null;
   const RANG = { gratuit: 0, standard: 1, premium: 2 };
+  let etat = null, edition = null, lieux = null, formule = "standard", vue = null, choix = "gratuit", fini = null, onglet = "adresses";
 
   async function charger() {
     try { etat = await api("GET", "commerce/etat"); }
@@ -32,11 +36,23 @@
     if (btn) btn.disabled = true;
     try { await fn(); if (ok) toast(ok); await charger(); } catch (e) { toast(e.message, true); if (btn) btn.disabled = false; }
   }
+  const ajoute = (el, ...xs) => el.append(...xs.filter(x => x != null && x !== false));
+  const prenom = () => String((etat.utilisateur && etat.utilisateur.nom) || "").trim().split(/\s+/)[0] || "";
+  const mois = () => new Date().toISOString().slice(0, 7);
+
+  // ---------- habillage ----------
+  function hero(titre, sous, plus) {
+    return h("div", {}, h("div", { class: "hero-com" }, h("div", { class: "in" },
+      h("div", { class: "mbote" }, drapeau(26), h("span", {}, "Mbote" + (prenom() ? ", " + prenom() : "") + " !")),
+      h("h1", {}, titre), sous ? h("p", { style: "margin:0;opacity:.92" }, sous) : null, plus || null)), h("div", { class: "bande-rdc" }));
+  }
+  const titreSec = (txt, ...plus) => h("h2", { class: "sec" }, etoile(16), txt, ...plus);
+  const piedRdc = () => h("div", { class: "pied-rdc" }, drapeau(22), "Un projet congolais, fait à Kinshasa");
+  const sections = n => h("div", { class: "etapes" }, ["1. Formule", "2. Ma fiche", "3. Envoi"].map((t, i) => h("span", { class: i + 1 < n ? "fait" : i + 1 === n ? "ici" : "" }, t)));
 
   // ---------- alertes liées aux paiements ----------
   function bannieres() {
-    const out = [];
-    const m = etat.marque, pl = etat.plans;
+    const out = [], m = etat.marque, pl = etat.plans;
     for (const d of etat.demandes) {
       const nomPlan = pl[d.plan].nom;
       if (d.statut === "en_attente") out.push(h("div", { class: "alerte info" }, h("b", {}, "Merci !"), " Votre paiement (référence ", h("span", { class: "code" }, d.ref), ") est enregistré. Votre abonnement ", nomPlan, " sera vérifié et activé sous 24 heures."));
@@ -48,45 +64,68 @@
     return out;
   }
 
-  // ---------- adresses ----------
-  function photosBloc(a) {
-    const p = planSaisie(), bloc = h("div", {});
-    const liste = h("div", { class: "photos" }, a.photos.map(id => h("div", { class: "ph" },
-      h("img", { src: "/api/photo/" + id, alt: "Photo de " + a.nom, loading: "lazy" }),
-      h("button", { type: "button", "aria-label": "Supprimer la photo", onclick: ev => { if (confirm("Supprimer cette photo ?")) action(ev.target, () => api("POST", "commerce/photo/supprimer", { id })); } }, "×"))));
-    const fichier = h("input", { type: "file", accept: "image/*", class: "cache", onchange: async () => {
-      const f = fichier.files[0]; if (!f) return;
-      try { toast("Envoi de la photo…"); const r = await reduirePhoto(f); await api("POST", "commerce/photo", { adresse_id: a.id, ...r }); toast("Photo ajoutée."); await charger(); } catch (e) { toast(e.message, true); }
-    } });
-    const reste = p.photos - a.photos.length;
-    bloc.append(liste, fichier, h("button", { type: "button", class: "btn alt small", disabled: reste <= 0, onclick: () => fichier.click() }, "Ajouter une photo (" + a.photos.length + "/" + p.photos + ")"));
-    if (reste <= 0 && etat.marque.plan_edition !== "premium") bloc.append(h("p", { class: "muted" }, "Limite atteinte avec la formule " + p.nom + ". Une formule supérieure permet plus de photos."));
-    return bloc;
+  // ---------- photos (lieu ou menu) : ajout et retrait immédiats, sans recharger la page ----------
+  function gestionPhotos(a, type) {
+    const p = planSaisie(), menu = type === "menu", cle = menu ? "menu_photos" : "photos", max = menu ? p.menu_photos : p.photos, bloc = h("div", {});
+    a[cle] = a[cle] || [];
+    function dessiner() {
+      vider(bloc);
+      if (menu && !max) { bloc.append(h("div", { class: "verrou" }, "Le menu en photos est disponible avec la formule Standard (3 photos) ou Premium (10 photos).")); return; }
+      const utilise = a.menu_mois === mois() ? (a.menu_nb || 0) : 0;
+      const liste = h("div", { class: "photos" }, a[cle].map(id => h("div", { class: "ph" },
+        h("img", { src: "/api/photo/" + id, alt: (menu ? "Menu de " : "Photo de ") + a.nom, loading: "lazy" }),
+        h("button", { type: "button", "aria-label": "Supprimer la photo", onclick: async ev => {
+          if (!confirm(menu && p.menu < 9999 ? "Retirer cette photo du menu ? Cela compte pour une modification du mois." : "Supprimer cette photo ?")) return;
+          ev.target.disabled = true;
+          try { await api("POST", "commerce/photo/supprimer", { id }); a[cle] = a[cle].filter(x => x !== id); if (menu && p.menu < 9999) { a.menu_mois = mois(); a.menu_nb = utilise + 1; } dessiner(); }
+          catch (e) { toast(e.message, true); ev.target.disabled = false; }
+        } }, "×"))));
+      const fichier = h("input", { type: "file", accept: "image/*", multiple: true, class: "cache", onchange: async () => {
+        const fs = [...fichier.files]; fichier.value = "";
+        for (const f of fs) {
+          if (a[cle].length >= max) { toast("Maximum " + max + " photo" + (max > 1 ? "s" : "") + " avec la formule " + p.nom + ".", true); break; }
+          try { toast("Envoi de la photo…"); const r = await reduirePhoto(f); const d = await api("POST", "commerce/photo", { adresse_id: a.id, type: menu ? "menu" : "lieu", ...r }); a[cle].push(d.id); dessiner(); toast("Photo ajoutée."); } catch (e) { toast(e.message, true); break; }
+        }
+      } });
+      bloc.append(liste, fichier, h("button", { type: "button", class: "btn alt small", disabled: a[cle].length >= max && true, onclick: () => fichier.click() }, (menu ? "Ajouter une photo du menu" : "Ajouter une photo") + " (" + a[cle].length + "/" + max + ")"));
+      if (menu && p.menu < 9999) bloc.append(h("p", { class: "muted" }, "Changements ce mois-ci : " + utilise + "/" + p.menu + " (retirer une photo compte pour un changement)."));
+      if (!menu && a[cle].length >= max && p.nom !== "Premium") bloc.append(h("p", { class: "muted" }, "Limite atteinte avec la formule " + p.nom + ". Une formule supérieure permet plus de photos."));
+    }
+    dessiner(); return bloc;
   }
+
+  // ---------- adresses ----------
   function carteAdresse(a) {
     const st = { en_attente: ["En attente de validation", "warn"], validee: ["Validée", "ok"], refusee: ["Refusée", "bad"] }[a.statut] || ["", "gris"];
-    const c = h("div", { class: "card" },
-      h("div", { class: "row between" }, h("h3", {}, a.nom), h("span", { class: "badge " + st[1] }, st[0])),
-      h("p", { class: "muted" }, a.adresse + (a.commune ? ", " + a.commune : "") + " · " + a.tel),
-      a.horaires ? h("p", { class: "muted" }, "Horaires : " + a.horaires) : null);
+    const couv = h("div", { class: "couv" }, a.photos && a.photos.length ? h("img", { src: "/api/photo/" + a.photos[0], alt: "Photo de " + a.nom, loading: "lazy" }) : h("span", {}, EMO[a.categorie] || "🏪"), h("span", { class: "badge st " + st[1] }, st[0]));
+    const corps = h("div", { class: "corps" },
+      h("h3", {}, a.nom),
+      h("div", { class: "meta" }, h("span", { class: "badge gris" }, CAT[a.categorie] || "Autre"), h("span", { class: "badge gris" }, "📍 " + (a.commune || "Gombe"))),
+      h("div", { class: "ligne" }, h("i", {}, "🏠"), h("span", {}, a.adresse)),
+      h("div", { class: "ligne" }, h("i", {}, "📞"), h("span", {}, a.tel)),
+      a.horaires ? h("div", { class: "ligne" }, h("i", {}, "🕘"), h("span", {}, horairesJolis(a.horaires).map((x, i) => [i ? h("br", {}) : null, x]))) : null,
+      a.description ? h("div", { class: "ligne" }, h("i", {}, "📝"), h("span", {}, a.description)) : null);
     if (a.statut === "en_attente") {
       const msg = "Bonjour Nexvia RDC, je veux vérifier mon adresse « " + a.nom + " » (" + etat.marque.nom + "). Mon code : " + a.code;
-      c.append(a.tel_verifie
+      corps.append(a.tel_verifie
         ? h("div", { class: "alerte ok" }, "Votre numéro est vérifié. Votre fiche est en cours de validation.")
         : h("div", { class: "alerte info" }, "Pour vérifier votre numéro, envoyez ce code par WhatsApp à Nexvia RDC ", h("b", {}, "depuis le numéro de votre commerce (" + a.tel + ")"), " : ", h("span", { class: "code" }, a.code), h("br", {}), h("a", { class: "btn wa small", href: wa(msg), target: "_blank", rel: "noopener" }, "Envoyer mon code par WhatsApp")));
     }
-    if (a.statut === "refusee") c.append(h("div", { class: "alerte bad" }, a.note || "Cette adresse n'a pas pu être validée. Contactez-nous pour en savoir plus."));
-    c.append(photosBloc(a), h("div", { class: "row", style: "margin-top:8px" },
-      h("button", { class: "btn alt small", onclick: () => { edition = a; rendre(); window.scrollTo(0, 0); } }, "Modifier"),
-      h("button", { class: "btn danger small", onclick: ev => { if (confirm("Supprimer cette adresse et ses photos ?")) action(ev.target, () => api("POST", "commerce/adresse/supprimer", { id: a.id }), "Adresse supprimée."); } }, "Supprimer")));
-    return c;
+    if (a.statut === "refusee") corps.append(h("div", { class: "alerte bad" }, a.note || "Cette adresse n'a pas pu être validée. Contactez-nous pour en savoir plus."));
+    corps.append(
+      h("details", {}, h("summary", {}, "📷 Photos du lieu"), gestionPhotos(a, "photo")),
+      h("details", {}, h("summary", {}, "📋 Menu / services (photos)"), gestionPhotos(a, "menu")),
+      h("div", { class: "actions-adr" },
+        h("button", { class: "btn alt small", onclick: () => { edition = a; rendre(); window.scrollTo(0, 0); } }, "✏️ Modifier la fiche"),
+        h("button", { class: "btn danger small", onclick: ev => { if (confirm("Supprimer cette adresse et ses photos ?")) action(ev.target, () => api("POST", "commerce/adresse/supprimer", { id: a.id }), "Adresse supprimée."); } }, "Supprimer")));
+    return h("div", { class: "adr" }, couv, corps);
   }
 
   async function chargerLieux() { if (lieux) return lieux; try { lieux = await (await fetch("/lieux-index.json")).json(); } catch (e) { lieux = []; } return lieux; }
   const nrm = s => String(s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
 
-  // Choix des photos avant l'envoi : réduites dans le navigateur, envoyées avec la demande.
-  function photosDem(fichiers, max) {
+  // Choix des photos avant l'envoi : réduites dans le navigateur, envoyées avec la fiche.
+  function photosAvantEnvoi(fichiers, max) {
     const zone = h("div", { class: "ajout-photos" }), sel = h("input", { type: "file", accept: "image/*", multiple: true, class: "cache" });
     const dessiner = () => {
       vider(zone);
@@ -102,16 +141,19 @@
     });
     dessiner(); return h("div", {}, zone, sel);
   }
+
   function formulaire() {
-    const dem = !!(edition && edition.demande), a = edition && edition.id ? edition : null, p = dem ? etat.plans[choix] : planSaisie(), f = {}, fichiers = [];
-    let marqueCree = !!etat.marque;
-    let lat = a ? a.lat : null, lng = a ? a.lng : null, lieu = a ? a.lieu_existant || "" : "";
+    const dem = !!(edition && edition.demande), a = edition && edition.id ? edition : null, creation = !a;
+    const p = dem ? etat.plans[choix] : planSaisie(), f = {}, ficLieu = [], ficMenu = [];
+    let lat = a ? a.lat : null, lng = a ? a.lng : null, lieu = a ? a.lieu_existant || "" : "", marqueCree = !!etat.marque, n = 0;
+    const horLock = !!a && !p.horaires, hor = horLock ? null : horaires(a ? a.horaires : "");
     const champ = (cle, lib, el, aide) => [h("label", { for: "f_" + cle }, lib), el, aide ? h("p", { class: "muted" }, aide) : null];
     const inp = (cle, attrs) => f[cle] = h("input", { id: "f_" + cle, value: a ? a[cle] || "" : "", ...attrs });
-    const ta = (cle, attrs) => { const t = f[cle] = h("textarea", { id: "f_" + cle, ...attrs }); t.value = a ? a[cle] || "" : ""; return t; };
-    f.categorie = h("select", { id: "f_categorie" }, Object.keys(CAT).map(k => h("option", { value: k, selected: (a ? a.categorie : "restaurant") === k }, CAT[k])));
-    const horairesBloque = !!a && !p.horaires, menuBloque = p.menu === 0;
-    const sugg = h("div", {}), msg = h("div", {}), posInfo = h("p", { class: "muted" }, lat != null ? "Position enregistrée ✓" : "");
+    const rub = (titre, aide, ...contenu) => h("section", { class: "rubrique" }, h("h3", {}, h("span", { class: "num" }, ++n), titre), aide ? h("p", { class: "aide" }, aide) : null, ...contenu);
+    f.categorie = h("select", { id: "f_categorie" }, Object.keys(CAT).map(k => h("option", { value: k, selected: (a ? a.categorie : "restaurant") === k }, EMO[k] + " " + CAT[k])));
+    f.commune = h("select", { id: "f_commune" }, COMMUNES.map(c => OUVERTES.includes(c) ? h("option", { value: c, selected: (a && a.commune ? a.commune : "Gombe") === c }, c) : h("option", { value: c, disabled: true }, c + " — bientôt")));
+    f.description = h("textarea", { id: "f_description", maxlength: 600, placeholder: "Ce qui vous distingue : spécialités, ambiance, services…" }); f.description.value = a ? a.description || "" : "";
+    const sugg = h("div", {}), posInfo = h("p", { class: "muted" }, lat != null ? "Position enregistrée ✓" : "");
     const chercher = h("input", { id: "f_lieu", placeholder: "Tapez le nom pour la retrouver…", value: lieu, autocomplete: "off" });
     chercher.addEventListener("input", async () => {
       vider(sugg); lieu = chercher.value.trim(); const t = nrm(lieu); if (t.length < 2) return;
@@ -121,45 +163,58 @@
         if (!f.nom.value) f.nom.value = x.n; if (!f.adresse.value && x.a) f.adresse.value = x.a; if (x.c && CAT[x.c]) f.categorie.value = x.c;
       } }, x.n, h("small", {}, (CAT[x.c] || "") + (x.a ? " · " + x.a : ""))))));
     });
-    const form = h("form", { class: "card gold", novalidate: true, onsubmit: ev => {
-      ev.preventDefault(); vider(msg); const btn = form.querySelector("button[type=submit]");
+
+    const corps = () => ({ nom: f.nom.value, categorie: f.categorie.value, commune: f.commune.value, adresse: f.adresse.value, tel: f.tel.value, horaires: hor ? hor.valeur() : (a && a.horaires) || "", description: f.description.value, lat, lng, lieu_existant: lieu });
+    async function envoyerPhotos(id, btn) {
+      const tout = [...ficLieu.map(x => [x, "lieu"]), ...ficMenu.map(x => [x, "menu"])]; let echecs = 0;
+      for (let i = 0; i < tout.length; i++) { btn.textContent = "Envoi des photos (" + (i + 1) + "/" + tout.length + ")…"; try { await api("POST", "commerce/photo", { adresse_id: id, type: tout[i][1], ...tout[i][0].r }); } catch (e) { echecs++; } }
+      return echecs;
+    }
+    const form = h("form", { novalidate: true, onsubmit: ev => {
+      ev.preventDefault(); const btn = form.querySelector("button[type=submit]"), er = hor && hor.erreur();
+      if (er) return toast(er, true);
       if (dem) return action(btn, async () => {
         if (!marqueCree) { await api("POST", "commerce/marque", { nom: f.marque.value, plan: choix }); marqueCree = true; }
         else if (RANG[choix] > RANG[(etat.marque && etat.marque.plan_edition) || "gratuit"]) await api("POST", "commerce/formule", { plan: choix });
-        const r = await api("POST", "commerce/adresse", { nom: f.nom.value, categorie: f.categorie.value, commune: f.commune.value, adresse: f.adresse.value, tel: f.tel.value, horaires: f.horaires.value, description: f.description.value, menu: f.menu.value, lat, lng, lieu_existant: lieu });
-        let echecs = 0;
-        for (let i = 0; i < fichiers.length; i++) { btn.textContent = "Envoi des photos (" + (i + 1) + "/" + fichiers.length + ")…"; try { await api("POST", "commerce/photo", { adresse_id: r.id, ...fichiers[i].r }); } catch (e) { echecs++; } }
+        const r = await api("POST", "commerce/adresse", corps());
+        const echecs = await envoyerPhotos(r.id, btn);
         fini = { id: r.id, plan: choix, echecs }; edition = null; vue = "fini";
       }).then(() => {}, () => {});
-      action(btn, async () => {
-        await api("POST", "commerce/adresse", { id: a ? a.id : undefined, nom: f.nom.value, categorie: f.categorie.value, commune: f.commune.value, adresse: f.adresse.value, tel: f.tel.value, horaires: f.horaires.value, description: f.description.value, menu: f.menu.value, lat, lng, lieu_existant: lieu });
-        edition = null;
-      }, "Adresse enregistrée.").then(() => {}, () => {});
+      if (creation) return action(btn, async () => {
+        const r = await api("POST", "commerce/adresse", corps()), echecs = await envoyerPhotos(r.id, btn); edition = null;
+        if (echecs) toast(echecs + " photo(s) n'ont pas pu être envoyées : ajoutez-les depuis la fiche.", true);
+      }, "Adresse envoyée pour vérification.").then(() => {}, () => {});
+      action(btn, async () => { await api("POST", "commerce/adresse", { id: a.id, ...corps() }); edition = null; }, "Modifications enregistrées.").then(() => {}, () => {});
     } },
-      h("h3", {}, dem ? "Ma fiche · formule " + p.nom + " (" + dollars(p.prix) + ")" : a ? "Modifier l'adresse" : "Nouvelle adresse"),
-      dem && !etat.marque ? champ("marque", "Nom de votre commerce ou de votre marque", f.marque = h("input", { id: "f_marque", required: true, maxlength: 100, placeholder: "Ex. Pizza Inn" }), "Si vous avez plusieurs adresses (restaurants, agences…), elles seront regroupées sous ce nom.") : null,
-      h("label", {}, "Votre commerce existe déjà sur Nexvia RDC ? ", h("small", {}, "(facultatif : réclamez votre fiche)")), chercher, sugg,
-      champ("nom", "Nom de cette adresse", inp("nom", { required: true, maxlength: 100, placeholder: "Ex. Pizza Inn Gombe" })),
-      champ("categorie", "Catégorie", f.categorie),
-      champ("commune", "Commune", inp("commune", { maxlength: 60, placeholder: "Ex. Gombe" })),
-      champ("adresse", "Adresse", inp("adresse", { required: true, maxlength: 200, placeholder: "Avenue, numéro, repère" })),
-      champ("tel", "Téléphone du commerce", inp("tel", { type: "tel", required: true, maxlength: 30, placeholder: "+243 …" }), "C'est ce numéro qui sera vérifié par WhatsApp."),
-      champ("horaires", "Horaires", Object.assign(inp("horaires", { maxlength: 300, placeholder: "Lun–Sam 9h–22h", disabled: horairesBloque })), horairesBloque ? "Modifier les horaires demande l'abonnement Standard ou Premium." : "Avec la formule Gratuit, les horaires se saisissent à la création."),
-      champ("description", "Description", ta("description", { maxlength: 600, placeholder: "Ce qui vous distingue" })),
-      champ("menu", "Menu / liste de services", ta("menu", { maxlength: 3000, disabled: menuBloque, placeholder: "Plats, prix, services…" }), menuBloque ? "Disponible avec l'abonnement Standard (2 modifications par mois) ou Premium." : (p.menu < 9999 ? "Formule " + p.nom + " : " + p.menu + " modifications par mois." : "")),
-      dem ? [h("label", {}, "Photos ", h("small", {}, "(" + p.photos + " maximum avec cette formule)")), photosDem(fichiers, p.photos)] : null,
-      h("label", {}, "Position sur la carte"),
-      h("div", { class: "row" }, h("button", { type: "button", class: "btn alt small", onclick: () => {
-        if (!navigator.geolocation) return toast("La position n'est pas disponible sur cet appareil.", true);
-        navigator.geolocation.getCurrentPosition(pos => { lat = +pos.coords.latitude.toFixed(6); lng = +pos.coords.longitude.toFixed(6); posInfo.textContent = "Position enregistrée ✓"; }, () => toast("Position refusée ou indisponible.", true), { enableHighAccuracy: true, timeout: 15000 });
-      } }, "Utiliser ma position actuelle"), posInfo),
-      h("p", { class: "muted" }, "Faites-le depuis votre commerce pour une position exacte."),
+      dem ? h("div", { class: "alerte info" }, "Formule choisie : ", h("b", {}, couronne(choix, 15), " ", p.nom, " (" + dollars(p.prix) + (p.prix ? " / mois" : "") + ")"), " · les limites de saisie ci-dessous suivent cette formule.") : null,
+      dem && !etat.marque ? rub("Votre commerce", "Le nom de votre commerce ou de votre marque. Plusieurs adresses (restaurants, agences…) seront regroupées sous ce nom.",
+        champ("marque", "Nom du commerce ou de la marque", f.marque = h("input", { id: "f_marque", required: true, maxlength: 100, placeholder: "Ex. Pizza Inn" }))) : null,
+      rub("Identité", creation ? "Votre commerce existe déjà sur Nexvia RDC ? Retrouvez-le pour réclamer votre fiche (facultatif)." : null,
+        creation ? [h("label", { for: "f_lieu" }, "Fiche existante ", h("small", {}, "(facultatif)")), chercher, sugg] : null,
+        champ("nom", "Nom de cette adresse", inp("nom", { required: true, maxlength: 100, placeholder: "Ex. Pizza Inn Gombe" })),
+        champ("categorie", "Catégorie", f.categorie),
+        champ("description", "Description", f.description)),
+      rub("Où vous trouver", "Nexvia RDC ouvre commune par commune. Pour l'instant, seule la commune de Gombe est disponible.",
+        champ("commune", "Commune", f.commune, "Les autres communes arrivent bientôt."),
+        champ("adresse", "Adresse", inp("adresse", { required: true, maxlength: 200, placeholder: "Avenue, numéro, repère" })),
+        h("label", {}, "Position sur la carte"),
+        h("div", { class: "row" }, h("button", { type: "button", class: "btn alt small", onclick: () => {
+          if (!navigator.geolocation) return toast("La position n'est pas disponible sur cet appareil.", true);
+          navigator.geolocation.getCurrentPosition(pos => { lat = +pos.coords.latitude.toFixed(6); lng = +pos.coords.longitude.toFixed(6); posInfo.textContent = "Position enregistrée ✓"; }, () => toast("Position refusée ou indisponible.", true), { enableHighAccuracy: true, timeout: 15000 });
+        } }, "📍 Utiliser ma position actuelle"), posInfo),
+        h("p", { class: "muted" }, "Faites-le depuis votre commerce pour une position exacte.")),
+      rub("Contact", null, champ("tel", "Téléphone du commerce", inp("tel", { type: "tel", required: true, maxlength: 30, placeholder: "+243 …" }), "C'est ce numéro qui sera vérifié par WhatsApp.")),
+      rub("Horaires", horLock ? null : "Choisissez vos jours et vos heures d'ouverture.",
+        horLock ? h("div", { class: "verrou" }, h("p", {}, "🕘 " + (horairesJolis(a.horaires).join(" · ") || "Non renseignés")), h("p", { class: "muted" }, "Modifier les horaires demande l'abonnement Standard ou Premium.")) : hor.el),
+      rub("Photos du lieu", "Façade, salle, produits… (" + p.photos + " photo" + (p.photos > 1 ? "s" : "") + " maximum avec la formule " + p.nom + ").",
+        creation ? photosAvantEnvoi(ficLieu, p.photos) : gestionPhotos(a, "photo")),
+      rub("Menu / liste de services", "Photographiez votre menu, votre carte ou votre liste de prix. Pas de texte à écrire.",
+        !p.menu_photos ? h("div", { class: "verrou" }, "Disponible avec la formule Standard (3 photos, 2 changements par mois) ou Premium (10 photos, changements illimités).") : creation ? photosAvantEnvoi(ficMenu, p.menu_photos) : gestionPhotos(a, "menu")),
       a && a.statut === "validee" ? h("div", { class: "alerte warn" }, "Si vous changez le nom, l'adresse ou le téléphone, la fiche repassera en validation.") : null,
-      msg,
-      dem ? [
-        h("p", { class: "muted" }, "En envoyant, vous demandez l'ajout de votre commerce dans Nexvia RDC. Nous vérifions les informations et les photos avant de publier."),
-        h("div", { class: "row" }, h("button", { type: "submit", class: "btn gold grand" }, "Envoyer ma demande"), h("button", { type: "button", class: "btn alt", onclick: () => { edition = null; vue = "choix"; rendre(); } }, "← Changer de formule"))]
-      : h("div", { class: "row" }, h("button", { type: "submit", class: "btn gold" }, "Enregistrer"), h("button", { type: "button", class: "btn alt", onclick: () => { edition = null; rendre(); } }, "Annuler")));
+      dem ? h("p", { class: "muted" }, "En envoyant, vous demandez l'ajout de votre commerce dans Nexvia RDC. Nous vérifions les informations et les photos avant de publier.") : null,
+      h("div", { class: "row" },
+        h("button", { type: "submit", class: "btn gold grand" }, dem ? "Envoyer ma demande" : creation ? "Envoyer pour vérification" : "Enregistrer les modifications"),
+        h("button", { type: "button", class: "btn alt", onclick: () => { edition = null; if (dem) vue = "choix"; rendre(); } }, dem ? "← Changer de formule" : "Annuler")));
     return form;
   }
 
@@ -168,7 +223,7 @@
     h("li", {}, p.adresses + " adresse" + (p.adresses > 1 ? "s" : "")),
     h("li", {}, p.photos + " photo" + (p.photos > 1 ? "s" : "") + " par adresse"),
     h("li", {}, p.horaires ? "Horaires modifiables" : "Horaires saisis à la création"),
-    h("li", { class: p.menu ? "" : "non" }, p.menu >= 9999 ? "Menu modifiable à volonté" : p.menu ? p.menu + " modifications du menu par mois" : "Menu / services"),
+    h("li", { class: p.menu_photos ? "" : "non" }, p.menu_photos ? "Menu en photos : " + p.menu_photos + " (" + (p.menu >= 9999 ? "changements illimités" : p.menu + " changements par mois") + ")" : "Menu / services en photos"),
     h("li", { class: p.badge ? "" : "non" }, "Badge « Vérifié » et bouton WhatsApp"),
     p.haut ? h("li", {}, "En haut de votre catégorie") : null, p.stats ? h("li", {}, "Statistiques de vues et d'appels") : null];
   // mode "choix" : première demande. mode "tableau" : espace d'un commerce qui a déjà des adresses.
@@ -178,7 +233,7 @@
     if (mode === "choix") bouton = h("button", { class: "btn gold grand", onclick: () => { choix = cle; edition = { demande: true }; vue = "fiche"; rendre(); window.scrollTo(0, 0); } }, cle === "gratuit" ? "Commencer gratuitement" : "Choisir " + p.nom);
     else if (cle === "gratuit") {
       const n = etat.adresses.filter(a => a.statut !== "refusee").length, libre = etat.marque.plan_effectif === "gratuit" && n < planSaisie().adresses;
-      bouton = h("button", { class: "btn " + (libre ? "gold" : "alt") + " grand", disabled: !libre && true, onclick: () => { edition = {}; rendre(); window.scrollTo(0, 0); } }, libre ? "Ajouter une adresse" : actif ? "Formule actuelle" : "Incluse");
+      bouton = h("button", { class: "btn " + (libre ? "gold" : "alt") + " grand", disabled: !libre && true, onclick: () => { edition = {}; onglet = "adresses"; rendre(); window.scrollTo(0, 0); } }, libre ? "Ajouter une adresse" : actif ? "Formule actuelle" : "Incluse");
     } else bouton = h("button", { class: "btn gold grand", onclick: () => { formule = cle; api("POST", "commerce/formule", { plan: cle }).then(charger, () => {}); window.open(CFG.ZOLA_LIEN, "_blank", "noopener"); toast("Saisissez " + dollars(p.prix).replace(",", ".") + " (USD) sur la page de paiement."); } }, actif ? "Renouveler" : "Payer " + dollars(p.prix));
     return h("div", { class: "plan " + cle + (cle === "standard" ? " vedette" : "") },
       cle === "standard" ? h("span", { class: "ruban" }, "Le plus choisi") : null,
@@ -190,11 +245,11 @@
   function formPaiement(fixe) {
     const s = fixe ? null : h("select", { id: "p_formule" }, ["standard", "premium"].map(k => h("option", { value: k, selected: formule === k }, etat.plans[k].nom + " – " + dollars(etat.plans[k].prix))));
     const r = h("input", { id: "p_ref", placeholder: "ZOLA-QR-123456", autocomplete: "off", autocapitalize: "characters", maxlength: 60 });
-    const form = h("form", { class: fixe ? "" : "card", novalidate: true, onsubmit: ev => { ev.preventDefault();
+    const form = h("form", { class: fixe ? "" : "rubrique", novalidate: true, onsubmit: ev => { ev.preventDefault();
       action(form.querySelector("button"), async () => { const d = await api("POST", "commerce/paiement", { plan: fixe || s.value, ref: r.value }); toast(d.statut === "active" ? "Votre abonnement est activé !" : "Merci ! Votre abonnement sera vérifié et activé sous 24 heures."); r.value = ""; }).then(() => {}, () => {});
     } },
       fixe ? null : [h("h3", {}, "J'ai payé : saisir ma référence"),
-        h("p", { class: "muted" }, "Sur la page de paiement, saisissez le prix de la formule en dollars ; les frais s'ajoutent automatiquement. Votre référence s'affiche à la fin du paiement et dans l'e-mail envoyé par Zola (pensez à vérifier vos spams)."),
+        h("p", { class: "aide" }, "Sur la page de paiement, saisissez le prix de la formule en dollars ; les frais s'ajoutent automatiquement. Votre référence s'affiche à la fin du paiement et dans l'e-mail envoyé par Zola (pensez à vérifier vos spams)."),
         h("label", { for: "p_formule" }, "Formule payée"), s],
       h("label", { for: "p_ref" }, "Numéro de référence"), r,
       h("p", {}, h("button", { class: "btn teal", type: "submit" }, "Valider mon paiement")));
@@ -202,28 +257,23 @@
   }
   function historique() {
     if (!etat.demandes.length) return null;
-    return h("div", { class: "card" }, h("h3", {}, "Mes paiements"), h("table", { class: "t" }, h("tr", {}, h("th", {}, "Date"), h("th", {}, "Formule"), h("th", {}, "Référence"), h("th", {}, "État")),
+    return h("div", { class: "rubrique" }, h("h3", {}, "Mes paiements"), h("table", { class: "t" }, h("tr", {}, h("th", {}, "Date"), h("th", {}, "Formule"), h("th", {}, "Référence"), h("th", {}, "État")),
       etat.demandes.map(d => h("tr", {}, h("td", {}, date(d.created_at)), h("td", {}, etat.plans[d.plan].nom), h("td", {}, h("span", { class: "code", style: "font-size:.8rem" }, d.ref)), h("td", {}, h("span", { class: "badge " + LIB_DEM[d.statut][1] }, LIB_DEM[d.statut][0]))))));
   }
 
-  // ---------- page ----------
-  const ajoute = (el, ...xs) => el.append(...xs.filter(x => x != null && x !== false));
-  const etapes = n => h("div", { class: "etapes" }, ["1. Formule", "2. Ma fiche", "3. Envoi"].map((t, i) => h("span", { class: i + 1 < n ? "fait" : i + 1 === n ? "ici" : "" }, t)));
+  // ---------- écrans ----------
   function ecranChoix(main) {
-    ajoute(main, etapes(1), h("h1", {}, "Choisissez votre formule"),
+    ajoute(main, sections(1), titreSec("Choisissez votre formule"),
       h("p", { class: "muted" }, "Vous pouvez commencer gratuitement et passer à Standard ou Premium quand vous voulez. Dans tous les cas, nous vérifions votre fiche avant de la publier."),
       h("div", { class: "choix" }, planCarte("gratuit", "choix"), planCarte("standard", "choix"), planCarte("premium", "choix")),
       h("p", { class: "muted" }, "Le paiement des formules payantes se fait après l'envoi de votre fiche. Plus de 6 adresses ? Écrivez-nous pour une offre sur mesure."),
       etat.marque ? h("p", {}, h("a", { href: "#", onclick: ev => { ev.preventDefault(); vue = "accueil"; rendre(); } }, "← Retour à mon espace")) : null);
   }
-  function ecranFiche(main) {
-    main.append(etapes(2), h("h1", {}, "Votre fiche"), h("p", { class: "muted" }, "Remplissez les informations de votre commerce. Vous pourrez les modifier ensuite."), formulaire());
-  }
+  function ecranFiche(main) { ajoute(main, sections(2), formulaire()); }
   function ecranFini(main) {
-    const main0 = main; main = { append: (...xs) => ajoute(main0, ...xs) };
     const a = etat.adresses.find(x => x.id === fini.id) || {}, p = etat.plans[fini.plan], payant = fini.plan !== "gratuit" && etat.marque.plan_effectif !== fini.plan;
     const msg = "Bonjour Nexvia RDC, je veux vérifier mon adresse « " + a.nom + " » (" + etat.marque.nom + "). Mon code : " + a.code;
-    main.append(etapes(4), h("div", { class: "succes" }, h("div", { class: "rond" }, "✓"), h("h1", {}, "Demande envoyée !"),
+    ajoute(main, sections(4), h("div", { class: "succes" }, h("div", { class: "rond" }, "✓"), h("h1", {}, "Demande envoyée !"),
       h("p", {}, "Votre fiche « " + (a.nom || "") + " » est en cours de vérification. Elle apparaîtra dans l'application dès qu'elle sera validée.")),
       fini.echecs ? h("div", { class: "alerte warn" }, fini.echecs + " photo(s) n'ont pas pu être envoyées. Vous pourrez les ajouter depuis votre espace commerce.") : null,
       h("ol", { class: "liste-etapes" },
@@ -235,34 +285,44 @@
         h("li", {}, h("h3", {}, "Validation sous 24 heures"), h("p", { class: "muted" }, payant ? "Dès que votre paiement et votre fiche sont vérifiés, votre formule " + p.nom + " est activée." : "Nous vérifions votre fiche, puis nous la publions."))),
       h("div", { class: "row" }, h("a", { class: "btn gold", href: "/" }, "Retour à l'accueil"), h("button", { class: "btn alt", onclick: () => { vue = "accueil"; fini = null; rendre(); window.scrollTo(0, 0); } }, "Voir mon espace commerce")));
   }
+  function panneauAdresses(main) {
+    const ps = planSaisie(), n = etat.adresses.filter(a => a.statut !== "refusee").length;
+    ajoute(main, ...bannieres());
+    main.append(titreSec("Mes adresses", h("span", { class: "badge gris", style: "margin-left:auto" }, n + " / " + ps.adresses)));
+    if (edition) main.append(h("h3", { style: "margin:0 0 4px" }, edition.id ? "Modifier « " + edition.nom + " »" : "Nouvelle adresse"), formulaire());
+    else if (n < ps.adresses) main.append(h("p", {}, h("button", { class: "btn gold", onclick: () => { edition = {}; rendre(); window.scrollTo(0, 0); } }, "+ Ajouter une adresse")));
+    else main.append(h("p", { class: "muted" }, "Vous avez atteint la limite de la formule " + ps.nom + ". Passez à une formule supérieure pour ajouter des adresses. Plus de 6 adresses : écrivez-nous pour une offre sur mesure."));
+    if (!edition) { main.append(...etat.adresses.map(carteAdresse)); if (!etat.adresses.length) main.append(h("p", { class: "muted" }, "Aucune adresse pour l'instant.")); }
+  }
+  function panneauAbonnement(main) {
+    const m = etat.marque;
+    if (m.plan !== "gratuit" && m.plan_effectif === "gratuit") main.append(h("div", { class: "alerte warn" }, "Votre abonnement " + etat.plans[m.plan].nom + " a expiré : vous êtes revenu à la formule Gratuit. Renouvelez-le ci-dessous."));
+    if (m.plan_souhaite && m.plan_souhaite !== "gratuit" && m.plan_effectif === "gratuit" && !etat.demandes.some(d => d.statut === "en_attente" || d.statut === "a_verifier"))
+      main.append(h("div", { class: "alerte info" }, "Vous avez choisi la formule ", h("b", {}, etat.plans[m.plan_souhaite].nom), ". Elle sera active après votre paiement."));
+    ajoute(main, ...bannieres());
+    main.append(titreSec("Mon abonnement"), h("div", { class: "choix" }, planCarte("gratuit", "tableau"), planCarte("standard", "tableau"), planCarte("premium", "tableau")), formPaiement());
+    const hist = historique(); if (hist) main.append(hist);
+  }
   function rendre() {
     vider(app); app.append(entete(etat.utilisateur));
     const main = h("main", {});
-    if (vue === "fini" && fini && etat.marque) { ecranFini(main); app.append(main); return; }
-    if (vue === "fiche") { ecranFiche(main); app.append(main); return; }
-    if (vue === "choix" || !etat.marque) { ecranChoix(main); app.append(main); return; }
-    const m = etat.marque, p = planActuel();
+    if (vue === "fini" && fini && etat.marque) { app.append(hero("Votre demande est partie", "Nous revenons vers vous très vite."), main); ecranFini(main); main.append(piedRdc()); return; }
+    if (vue === "fiche") { app.append(hero("Votre fiche", "Remplissez les informations de votre commerce. Vous pourrez les modifier ensuite."), main); ecranFiche(main); main.append(piedRdc()); return; }
+    if (vue === "choix" || !etat.marque) { app.append(hero("Faites-vous trouver à Gombe", "Choisissez la formule qui vous convient."), main); ecranChoix(main); main.append(piedRdc()); return; }
+    const m = etat.marque, p = planActuel(), ps = planSaisie(), n = etat.adresses.filter(a => a.statut !== "refusee").length;
     const sm = { en_attente: ["En vérification", "warn"], validee: ["Commerce validé", "ok"], refusee: ["Refusé", "bad"] }[m.statut];
-    main.append(h("div", { class: "row between" }, h("h1", {}, m.nom), h("span", { class: "badge " + sm[1] }, sm[0])),
-      h("p", { class: "muted" }, h("span", { class: "pastille-formule " + m.plan_effectif }, couronne(m.plan_effectif, 15), p.nom), m.plan_effectif !== "gratuit" ? " active jusqu'au " + date(m.plan_fin) : ""));
+    const jours = m.plan_fin ? Math.max(0, Math.ceil((new Date(m.plan_fin) - new Date()) / 86400000)) : 0;
+    app.append(hero(m.nom, null, h("div", {},
+      h("div", { class: "pastilles" }, h("span", { class: "badge " + sm[1] }, sm[0]), h("span", { class: "pastille-formule " + m.plan_effectif }, couronne(m.plan_effectif, 15), p.nom)),
+      h("div", { class: "tuiles" },
+        h("div", { class: "tuile" }, h("b", {}, n + " / " + ps.adresses), h("span", {}, "Adresses")),
+        h("div", { class: "tuile" }, h("b", {}, p.nom), h("span", {}, "Formule")),
+        h("div", { class: "tuile" }, h("b", {}, m.plan_effectif === "gratuit" ? "Sans limite" : jours + " j"), h("span", {}, m.plan_effectif === "gratuit" ? "Durée" : "Jours restants"))))));
+    app.append(h("div", { class: "sections" }, h("button", { class: onglet === "adresses" ? "on" : "", onclick: () => { onglet = "adresses"; rendre(); } }, "📍 Mes adresses"), h("button", { class: onglet === "abo" ? "on" : "", onclick: () => { onglet = "abo"; rendre(); } }, "👑 Abonnement")));
     if (m.statut === "en_attente") main.append(h("div", { class: "alerte info" }, "Nous vérifions votre commerce. Vous pouvez déjà préparer vos adresses."));
     if (m.statut === "refusee") main.append(h("div", { class: "alerte bad" }, m.note || "Votre commerce n'a pas pu être validé. Contactez-nous."));
-    if (m.plan !== "gratuit" && m.plan_effectif === "gratuit") main.append(h("div", { class: "alerte warn" }, "Votre abonnement " + etat.plans[m.plan].nom + " a expiré : vous êtes revenu à la formule Gratuit. Renouvelez-le ci-dessous."));
-    if (m.plan_souhaite && m.plan_souhaite !== "gratuit" && m.plan_effectif === "gratuit" && !etat.demandes.some(d => d.statut === "en_attente" || d.statut === "a_verifier"))
-      main.append(h("div", { class: "alerte info" }, "Vous avez choisi la formule ", h("b", {}, etat.plans[m.plan_souhaite].nom), ". Elle sera active après votre paiement : voir « Abonnement » plus bas."));
-    main.append(...bannieres());
-
-    const n = etat.adresses.filter(a => a.statut !== "refusee").length, ps = planSaisie();
-    main.append(h("h2", {}, "Mes adresses (" + n + "/" + ps.adresses + ")"));
-    if (edition) main.append(formulaire());
-    else if (n < ps.adresses) main.append(h("p", {}, h("button", { class: "btn gold", onclick: () => { edition = {}; rendre(); window.scrollTo(0, 0); } }, "+ Ajouter une adresse")));
-    else main.append(h("p", { class: "muted" }, "Vous avez atteint la limite de la formule " + ps.nom + ". Passez à une formule supérieure pour ajouter des adresses. Plus de 6 adresses : écrivez-nous pour une offre sur mesure."));
-    main.append(...etat.adresses.map(carteAdresse));
-    if (!etat.adresses.length && !edition) main.append(h("p", { class: "muted" }, "Aucune adresse pour l'instant."));
-
-    main.append(h("h2", {}, "Abonnement"), h("div", { class: "choix" }, planCarte("gratuit", "tableau"), planCarte("standard", "tableau"), planCarte("premium", "tableau")), formPaiement());
-    const hist = historique(); if (hist) main.append(hist);
-    main.append(h("p", { class: "muted" }, "Une question ? ", h("a", { href: wa("Bonjour Nexvia RDC, j'ai une question sur mon compte commerce « " + m.nom + " »."), target: "_blank", rel: "noopener" }, "Service client sur WhatsApp"), " · ", h("a", { href: "#", onclick: async ev => { ev.preventDefault(); try { await api("POST", "auth/deconnexion"); } catch (e) {} location.href = "/compte/"; } }, "Me déconnecter")));
+    if (onglet === "abo") panneauAbonnement(main); else panneauAdresses(main);
+    main.append(h("p", { class: "muted" }, "Une question ? ", h("a", { href: wa("Bonjour Nexvia RDC, j'ai une question sur mon compte commerce « " + m.nom + " »."), target: "_blank", rel: "noopener" }, "Service client sur WhatsApp"), " · ", h("a", { href: "#", onclick: async ev => { ev.preventDefault(); try { await api("POST", "auth/deconnexion"); } catch (e) {} location.href = "/compte/"; } }, "Me déconnecter")), piedRdc());
     app.append(main);
   }
   charger();

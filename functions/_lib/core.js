@@ -2,14 +2,20 @@
 // Aucune donnée secrète ici. Les adresses de l'administrateur viennent de la variable ADMIN_EMAILS (Cloudflare).
 
 export const PLANS = {
-  gratuit:  { nom: "Gratuit",  prix: 0,    adresses: 1, photos: 1,  menu: 0,    horaires: false, badge: false, whatsapp: false, haut: false, stats: false },
-  standard: { nom: "Standard", prix: 3.30, adresses: 2, photos: 5,  menu: 2,    horaires: true,  badge: true,  whatsapp: true,  haut: false, stats: false },
-  premium:  { nom: "Premium",  prix: 5.30, adresses: 6, photos: 15, menu: 9999, horaires: true,  badge: true,  whatsapp: true,  haut: true,  stats: true },
+  gratuit:  { nom: "Gratuit",  prix: 0,    adresses: 1, photos: 1,  menu: 0,    menu_photos: 0,  horaires: false, badge: false, whatsapp: false, haut: false, stats: false },
+  standard: { nom: "Standard", prix: 3.30, adresses: 2, photos: 5,  menu: 2,    menu_photos: 3,  horaires: true,  badge: true,  whatsapp: true,  haut: false, stats: false },
+  premium:  { nom: "Premium",  prix: 5.30, adresses: 6, photos: 15, menu: 9999, menu_photos: 10, horaires: true,  badge: true,  whatsapp: true,  haut: true,  stats: true },
 };
 // Totaux relevés sur la page de paiement Zola (frais ajoutés au client, environ 9,5 %). À confirmer avec Zola.
 export const TOTAL_AVEC_FRAIS = { standard: 3.61, premium: 5.80 };
 export const WHATSAPP = "243862675126";
 export const DUREE_JOURS = 30;
+// Communes ouvertes aux commerces (les autres sont affichées « bientôt »).
+export const COMMUNES_OUVERTES = ["Gombe"];
+// Horaires : uniquement le format produit par le sélecteur (« Lun–Sam 08:00–20:00 · Dim fermé » ou « 24h/24 »), jamais du texte libre.
+const J = "(?:Lun|Mar|Mer|Jeu|Ven|Sam|Dim)", T = "(?:(?:[01]\\d|2[0-3]):[0-5]\\d|24:00)", SEG = J + "(?:–" + J + ")? (?:" + T + "–" + T + "|fermé)";
+const RE_HORAIRES = new RegExp("^(?:24h/24|" + SEG + "(?: · " + SEG + "){0,6})$");
+export const horairesValides = h => typeof h === "string" && h.length <= 140 && RE_HORAIRES.test(h);
 export const CATEGORIES = ["restaurant", "pharmacie", "banque", "hotel", "bar", "ecole", "distributeur", "station-service", "autre"];
 
 // ---------- réponses ----------
@@ -51,8 +57,10 @@ const SCHEMA = [
 let schemaPret = null;
 // Ajouts de colonnes sur une base déjà créée (sans effet si la colonne existe déjà).
 const migrer = env => async () => {
-  try { await env.DB.prepare("ALTER TABLE marques ADD COLUMN plan_souhaite TEXT").run(); }
-  catch (e) { if (!/duplicate column/i.test(String(e && (e.message || e)))) throw e; }
+  for (const sql of ["ALTER TABLE marques ADD COLUMN plan_souhaite TEXT", "ALTER TABLE photos ADD COLUMN type TEXT NOT NULL DEFAULT 'lieu'"]) {
+    try { await env.DB.prepare(sql).run(); }
+    catch (e) { if (!/duplicate column/i.test(String(e && (e.message || e)))) throw e; }
+  }
 };
 export function base(env) {
   if (!env.DB) refuse("La base de données n'est pas encore configurée.", 503);
