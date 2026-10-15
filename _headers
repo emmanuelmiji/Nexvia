@@ -1,0 +1,15 @@
+/admin/*
+  X-Frame-Options: DENY
+  X-Robots-Tag: noindex, nofollow
+  Referrer-Policy: same-origin
+  Cache-Control: no-store
+/compte/*
+  X-Frame-Options: DENY
+  X-Robots-Tag: noindex
+  Referrer-Policy: same-origin
+  Cache-Control: no-store
+/commerce/*
+  X-Frame-Options: DENY
+  X-Robots-Tag: noindex
+  Referrer-Policy: same-origin
+  Cache-Control: no-store

@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#14213d">
+<title>Mon compte – Nexvia RDC</title>
+<link rel="stylesheet" href="/assets/nx.css">
+</head>
+<body>
+<div id="app"></div>
+<script src="/assets/nx.js"></script>
+<script>
+(async function () {
+  const { h, api, toast, entete, moi, vider } = NX, app = document.getElementById("app");
+  const q = new URLSearchParams(location.search);
+  const suiteBrute = q.get("suite") || "";
+  const suite = /^\/[^\/\\]/.test(suiteBrute) ? suiteBrute : ""; // uniquement un chemin du site, jamais une adresse extérieure
+  let u = await moi(), mode = q.get("mode") === "inscription" ? "inscription" : "connexion", type = q.get("type") === "utilisateur" ? "utilisateur" : "commerce";
+
+  function aller(user) { location.href = suite || (user.type === "commerce" ? "/commerce/" : "/"); }
+
+  function formulaire() {
+    const f = {};
+    const champ = (id, lib, attrs) => [h("label", { for: id }, lib), f[id] = h("input", { id, ...attrs })];
+    const msg = h("div", {});
+    const insc = mode === "inscription";
+    const form = h("form", { novalidate: true, onsubmit: async ev => {
+      ev.preventDefault(); vider(msg); const btn = form.querySelector("button[type=submit]"); btn.disabled = true;
+      try {
+        const corps = { email: f.email.value, mot_de_passe: f.mdp.value };
+        if (insc) Object.assign(corps, { nom: f.nom.value, tel: f.tel.value, type });
+        const r = await api("POST", insc ? "auth/inscription" : "auth/connexion", corps);
+        aller(r.utilisateur);
+      } catch (e) { msg.append(h("div", { class: "alerte bad" }, e.message)); btn.disabled = false; }
+    } },
+      insc ? [
+        h("label", {}, "Vous êtes"),
+        h("div", { class: "onglets" },
+          h("button", { type: "button", class: type === "commerce" ? "actif" : "", onclick: () => { type = "commerce"; rendre(); } }, "Un commerce"),
+          h("button", { type: "button", class: type === "utilisateur" ? "actif" : "", onclick: () => { type = "utilisateur"; rendre(); } }, "Un utilisateur")),
+        champ("nom", type === "commerce" ? "Votre nom" : "Votre nom ou pseudo", { autocomplete: "name", required: true, maxlength: 80 }),
+        champ("tel", "Téléphone (WhatsApp de préférence)", { type: "tel", autocomplete: "tel", maxlength: 30 }),
+      ] : null,
+      champ("email", "Adresse e-mail", { type: "email", autocomplete: "email", required: true, maxlength: 120, inputmode: "email" }),
+      champ("mdp", insc ? "Mot de passe (8 caractères minimum)" : "Mot de passe", { type: "password", autocomplete: insc ? "new-password" : "current-password", required: true, maxlength: 100 }),
+      msg,
+      h("p", {}, h("button", { class: "btn gold", type: "submit", style: "width:100%" }, insc ? "Créer mon compte" : "Me connecter")),
+      insc ? h("p", { class: "muted" }, "Le compte est gratuit. Les utilisateurs n'ont jamais besoin d'en créer un pour chercher un lieu sur la carte.") : h("p", { class: "muted" }, "Mot de passe oublié ? Écrivez-nous sur WhatsApp : nous le réinitialisons.")
+    );
+    return form;
+  }
+
+  function rendre() {
+    vider(app); app.append(entete(u));
+    const main = h("main", {});
+    if (u) {
+      main.append(h("h1", {}, "Bonjour " + (u.nom || "")), h("p", { class: "muted" }, u.email),
+        h("div", { class: "card" },
+          h("div", { class: "row" },
+            h("a", { class: "btn gold", href: "/commerce/" }, "Mon espace commerce"),
+            u.admin ? h("a", { class: "btn teal", href: "/admin/" }, "Administration") : null,
+            h("button", { class: "btn alt", onclick: async () => { try { await api("POST", "auth/deconnexion"); } catch (e) {} u = null; rendre(); } }, "Me déconnecter"))));
+    } else {
+      main.append(h("h1", {}, mode === "inscription" ? "Créer un compte" : "Connexion"),
+        h("div", { class: "onglets" },
+          h("button", { class: mode === "connexion" ? "actif" : "", onclick: () => { mode = "connexion"; rendre(); } }, "Connexion"),
+          h("button", { class: mode === "inscription" ? "actif" : "", onclick: () => { mode = "inscription"; rendre(); } }, "Créer un compte")),
+        h("div", { class: "card" }, formulaire()));
+    }
+    app.append(main);
+  }
+  rendre();
+})();
+</script>
+</body>
+</html>

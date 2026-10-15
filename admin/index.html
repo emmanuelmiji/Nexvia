@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#14213d">
+<title>Administration – Nexvia RDC</title>
+<link rel="stylesheet" href="/assets/nx.css">
+</head>
+<body>
+<div id="app"><main><p class="muted">Chargement…</p></main></div>
+<script src="/assets/nx.js"></script>
+<script>
+(async function () {
+  const { h, api, toast, entete, vider, wa, date, dollars, chiffres } = NX, app = document.getElementById("app");
+  const NOM = { gratuit: "Gratuit", standard: "Standard", premium: "Premium" }, PRIX = { standard: 3.3, premium: 5.3 };
+  let d = null, bilan = null, mdpTemp = null;
+
+  async function charger() {
+    try { d = await api("GET", "admin/file"); }
+    catch (e) {
+      if (e.status === 401) { location.href = "/compte/?suite=/admin/"; return; }
+      vider(app); app.append(h("main", {}, h("h1", {}, "Accès refusé"), h("div", { class: "alerte bad" }, e.message), h("p", {}, h("a", { href: "/" }, "Retour à la carte")))); return;
+    }
+    rendre();
+  }
+  async function agir(btn, fn, ok) { btn.disabled = true; try { await fn(); if (ok) toast(ok); await charger(); } catch (e) { toast(e.message, true); btn.disabled = false; } }
+  const pastille = n => n ? h("span", { class: "compteur" }, n) : null;
+
+  function ligneVerif(x) {
+    const nomPlan = NOM[x.plan] || x.plan;
+    const msg = "Bonjour, concernant votre abonnement " + nomPlan + " sur Nexvia RDC (référence " + x.ref + ") : nous n'avons pas pu valider votre paiement. " + (x.motif || "") + " Pouvez-vous vérifier votre numéro de référence ou nous envoyer la capture du paiement ?";
+    const num = chiffres(x.user_tel);
+    return h("div", { class: "card" },
+      h("div", { class: "row between" }, h("h3", {}, x.marque_nom), h("span", { class: "badge gris" }, nomPlan + " · " + dollars(PRIX[x.plan]))),
+      h("p", { class: "muted" }, x.email + (x.user_tel ? " · " + x.user_tel : "") + " · " + date(x.created_at)),
+      h("p", {}, "Référence : ", h("span", { class: "code" }, x.ref)),
+      x.motif ? h("p", { class: "muted" }, "Motif : " + x.motif) : null,
+      h("div", { class: "row" },
+        h("button", { class: "btn teal small", onclick: ev => { if (confirm("Activer l'abonnement " + nomPlan + " pour « " + x.marque_nom + " » ? Vérifiez d'abord le paiement dans Zola.")) agir(ev.target, () => api("POST", "admin/activer", { demande_id: x.id }), "Abonnement activé."); } }, "Activer à la main"),
+        h("a", { class: "btn wa small", href: wa(msg, num.length >= 9 ? num : undefined), target: "_blank", rel: "noopener" }, "Écrire au commerce"),
+        h("button", { class: "btn danger small", onclick: ev => { const n = prompt("Motif du rejet (visible dans le dossier) :", "Paiement introuvable chez Zola"); if (n !== null) agir(ev.target, () => api("POST", "admin/rejeter", { demande_id: x.id, note: n }), "Demande rejetée."); } }, "Rejeter")));
+  }
+
+  function importBloc() {
+    const f = h("input", { type: "file", accept: ".csv,text/csv,text/plain" }), res = h("div", {});
+    return h("div", { class: "card gold" },
+      h("h3", {}, "Importer l'historique Zola"),
+      h("p", { class: "muted" }, "Dans Zola : Historique → Export CSV. Déposez le fichier ici : les paiements confirmés sont rapprochés des références saisies par les commerces et les abonnements s'activent tout seuls."),
+      f, h("p", {}, h("button", { class: "btn gold", onclick: async ev => {
+        const fi = f.files[0]; if (!fi) return toast("Choisissez d'abord le fichier CSV.", true);
+        const btn = ev.target; btn.disabled = true; vider(res);
+        try { const r = await api("POST", "admin/import", { csv: await fi.text() }); bilan = r; toast(r.activees + " abonnement(s) activé(s)."); await charger(); }
+        catch (e) { res.append(h("div", { class: "alerte bad" }, e.message)); btn.disabled = false; }
+      } }, "Importer et rapprocher")), res,
+      bilan ? h("div", { class: "alerte ok" }, "Dernier import : " + bilan.lignes + " lignes lues, " + bilan.paiements + " paiements, " + bilan.reversements + " reversements. ", h("b", {}, bilan.activees + " abonnement(s) activé(s)"), ", " + bilan.a_verifier + " à vérifier.") : null,
+      d.imports.length ? h("p", { class: "muted" }, "Imports précédents : " + d.imports.map(i => date(i.ts) + " (" + i.activees + " activé(s))").join(" · ")) : h("p", { class: "muted" }, "Aucun import pour l'instant."));
+  }
+
+  function carteMarque(m) {
+    return h("div", { class: "card" },
+      h("h3", {}, m.nom), h("p", { class: "muted" }, m.user_nom + " · " + m.email + (m.user_tel ? " · " + m.user_tel : "") + " · " + date(m.created_at)),
+      h("p", { class: "muted" }, "Vérifiez que cette personne représente bien la marque (document de l'entreprise, ou appel au numéro officiel)."),
+      h("div", { class: "row" },
+        h("button", { class: "btn teal small", onclick: ev => agir(ev.target, () => api("POST", "admin/marque", { id: m.id, action: "valider" }), "Marque validée.") }, "Valider la marque"),
+        h("button", { class: "btn danger small", onclick: ev => { const n = prompt("Motif du refus (visible par le commerce) :", ""); if (n !== null) agir(ev.target, () => api("POST", "admin/marque", { id: m.id, action: "refuser", note: n }), "Marque refusée."); } }, "Refuser")));
+  }
+  function carteAdresse(a) {
+    return h("div", { class: "card" },
+      h("div", { class: "row between" }, h("h3", {}, a.nom), h("span", { class: "badge " + (a.tel_verifie ? "ok" : "warn") }, a.tel_verifie ? "Numéro vérifié" : "Numéro non vérifié")),
+      h("p", { class: "muted" }, "Marque : " + a.marque_nom + (a.marque_statut !== "validee" ? " (non validée)" : "") + " · " + a.email),
+      h("p", { class: "muted" }, a.adresse + (a.commune ? ", " + a.commune : "") + " · " + a.tel),
+      a.lieu_existant ? h("p", {}, h("span", { class: "badge gris" }, "Réclame la fiche existante : " + a.lieu_existant)) : null,
+      h("p", {}, "Code attendu par WhatsApp : ", h("span", { class: "code" }, a.code), " (doit venir du numéro ", h("b", {}, a.tel), ")"),
+      h("div", { class: "row" },
+        a.tel_verifie ? null : h("button", { class: "btn alt small", onclick: ev => agir(ev.target, () => api("POST", "admin/adresse", { id: a.id, action: "tel_ok" }), "Numéro marqué vérifié.") }, "Code reçu : numéro vérifié"),
+        h("button", { class: "btn teal small", onclick: ev => { if (a.tel_verifie || confirm("Le numéro n'est pas marqué comme vérifié. Valider quand même ?")) agir(ev.target, () => api("POST", "admin/adresse", { id: a.id, action: "valider" }), "Adresse validée."); } }, "Valider l'adresse"),
+        h("button", { class: "btn danger small", onclick: ev => { const n = prompt("Motif du refus (visible par le commerce) :", ""); if (n !== null) agir(ev.target, () => api("POST", "admin/adresse", { id: a.id, action: "refuser", note: n }), "Adresse refusée."); } }, "Refuser")));
+  }
+  function mdpBloc() {
+    const e = h("input", { type: "email", placeholder: "e-mail du commerçant", maxlength: 120 });
+    return h("div", { class: "card" }, h("h3", {}, "Mot de passe oublié"), h("p", { class: "muted" }, "Génère un mot de passe temporaire à transmettre au commerçant (par WhatsApp). Ses sessions en cours sont fermées."), e,
+      h("p", {}, h("button", { class: "btn alt small", onclick: async ev => { ev.target.disabled = true; try { const r = await api("POST", "admin/motdepasse", { email: e.value }); mdpTemp = { email: e.value, mdp: r.mot_de_passe_temporaire }; rendre(); } catch (er) { toast(er.message, true); ev.target.disabled = false; } } }, "Générer un mot de passe temporaire")),
+      mdpTemp ? h("div", { class: "alerte ok" }, "Mot de passe temporaire pour " + mdpTemp.email + " : ", h("span", { class: "code" }, mdpTemp.mdp), h("br", {}), h("span", { class: "muted" }, "Il ne sera plus affichable après avoir quitté cette page.")) : null);
+  }
+
+  function rendre() {
+    vider(app); app.append(entete({ admin: true, type: "commerce" }));
+    const main = h("main", {}), s = d.stats;
+    main.append(h("h1", {}, "Administration"),
+      h("p", { class: "muted" }, s.comptes + (s.comptes > 1 ? " comptes" : " compte") + " · " + s.marques + (s.marques > 1 ? " commerces" : " commerce") + " · " + s.adresses_validees + (s.adresses_validees > 1 ? " adresses validées" : " adresse validée") + " · " + s.abonnes + (s.abonnes > 1 ? " abonnés actifs" : " abonné actif")),
+      importBloc(),
+      h("h2", {}, "Paiements à vérifier", pastille(d.a_verifier.length)),
+      ...(d.a_verifier.length ? d.a_verifier.map(ligneVerif) : [h("p", { class: "muted" }, "Rien à vérifier.")]),
+      h("h2", {}, "Paiements en attente de l'import", pastille(d.en_attente.length)),
+      ...(d.en_attente.length ? [h("div", { class: "card" }, h("table", { class: "t" }, h("tr", {}, h("th", {}, "Commerce"), h("th", {}, "Formule"), h("th", {}, "Référence"), h("th", {}, "Imports")),
+        d.en_attente.map(x => h("tr", {}, h("td", {}, x.marque_nom), h("td", {}, NOM[x.plan]), h("td", {}, h("span", { class: "code", style: "font-size:.8rem" }, x.ref)), h("td", {}, x.tentatives + "/2")))))] : [h("p", { class: "muted" }, "Aucun paiement en attente.")]),
+      h("h2", {}, "Commerces à valider", pastille(d.marques.length)),
+      ...(d.marques.length ? d.marques.map(carteMarque) : [h("p", { class: "muted" }, "Aucun commerce à valider.")]),
+      h("h2", {}, "Adresses à valider", pastille(d.adresses.length)),
+      ...(d.adresses.length ? d.adresses.map(carteAdresse) : [h("p", { class: "muted" }, "Aucune adresse à valider.")]),
+      h("h2", {}, "Comptes"), mdpBloc());
+    app.append(main);
+  }
+  charger();
+})();
+</script>
+</body>
+</html>
