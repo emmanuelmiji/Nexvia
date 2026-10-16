@@ -192,10 +192,20 @@ async function conversation(db, de, nom) {
 }
 const noter = (db, convId, role, texte, wamid) => db.prepare("INSERT INTO wa_messages (conv_id, role, texte, wamid, created_at) VALUES (?, ?, ?, ?, ?)").bind(convId, role, String(texte).slice(0, 4000), wamid || null, maintenant()).run();
 
+// Journal des événements techniques (visible dans l'admin, onglet Messages).
+export async function journaliser(env, genre, detail) {
+  try {
+    const db = await C.base(env);
+    await db.prepare("INSERT INTO wa_journal (at, genre, detail) VALUES (?, ?, ?)").bind(maintenant(), genre, String(detail || "").slice(0, 200)).run();
+    if (Math.random() < 0.05) await db.prepare("DELETE FROM wa_journal WHERE id NOT IN (SELECT id FROM wa_journal ORDER BY id DESC LIMIT 60)").run();
+  } catch (e) { console.error("nexvia-wa-journal", e && e.message || e); }
+}
 async function repondre(env, db, conv, texte, role = "ia") {
   const t = String(texte).slice(0, REPONSE_MAX);
-  await envoyerWhatsApp(env, conv.phone, t);
-  await noter(db, conv.id, role, t);
+  let envoye = true;
+  try { await envoyerWhatsApp(env, conv.phone, t); }
+  catch (e) { envoye = false; await journaliser(env, "envoi_echec", String(e && e.message || e)); }   // la réponse reste visible pour l'agent, marquée non envoyée
+  await noter(db, conv.id, role, (envoye ? "" : "[NON ENVOYÉ] ") + t);
   await db.prepare("UPDATE wa_conversations SET dernier_msg_at = ? WHERE id = ?").bind(maintenant(), conv.id).run();
 }
 
@@ -281,6 +291,7 @@ export async function traiterMessage(env, msg) {
   try { r = await appelerIA(env, preparerHistorique(lignes)); }
   catch (e) {
     console.error("nexvia-wa-ia", e && e.message || e);
+    await journaliser(env, "ia_erreur", String(e && e.message || e));
     await passerAgent(env, db, conv, { categorie: "autre", resume: "Erreur technique de l'assistant. Dernier message : " + msg.texte.slice(0, 300) });
     await repondre(env, db, conv, accuse("defaut")); return "ia_erreur";
   }
@@ -297,7 +308,7 @@ export async function traiterPayload(env, payload) {
   const sortie = [];
   for (const m of extraireMessages(payload)) {
     try { sortie.push(await traiterMessage(env, m)); }
-    catch (e) { console.error("nexvia-wa", e && e.stack || e); sortie.push("erreur"); }
+    catch (e) { console.error("nexvia-wa", e && e.stack || e); await journaliser(env, "erreur_traitement", String(e && e.message || e)); sortie.push("erreur"); }
   }
   return sortie;
 }

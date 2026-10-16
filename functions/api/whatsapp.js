@@ -1,16 +1,8 @@
 // Nexvia RDC – point d'entrée du robot WhatsApp (webhook de l'API WhatsApp Business de Meta).
 // GET : vérification demandée par Meta au moment de la configuration. POST : messages reçus (signés par Meta).
 import * as W from "../_lib/whatsapp.js";
-import * as C from "../_lib/core.js";
 
-// Journal des visites de Meta (visible dans l'admin) : permet de voir si Meta atteint le site et ce qui se passe.
-async function noter(env, genre, detail) {
-  try {
-    const db = await C.base(env);
-    await db.prepare("INSERT INTO wa_journal (at, genre, detail) VALUES (?, ?, ?)").bind(new Date().toISOString(), genre, String(detail || "").slice(0, 200)).run();
-    if (Math.random() < 0.05) await db.prepare("DELETE FROM wa_journal WHERE id NOT IN (SELECT id FROM wa_journal ORDER BY id DESC LIMIT 60)").run();
-  } catch (e) { console.error("nexvia-wa-journal", e && e.message || e); }
-}
+const noter = (env, genre, detail) => W.journaliser(env, genre, detail);
 const resume = p => { try { let m = 0, st = 0; for (const e of p.entry || []) for (const c of e.changes || []) { m += (c.value && c.value.messages || []).length; st += (c.value && c.value.statuses || []).length; } return m + " message(s), " + st + " statut(s)"; } catch (e) { return "?"; } };
 
 const rep = (corps, status = 200) => new Response(corps, { status, headers: { "content-type": "text/plain; charset=utf-8", "cache-control": "no-store" } });

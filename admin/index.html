@@ -251,7 +251,7 @@
       vider(zone);
       let r; try { r = await api("GET", "admin/wa" + (waFiltre ? "?statut=" + waFiltre : "")); } catch (e) { zone.append(h("div", { class: "alerte bad" }, e.message)); return; }
       const c = r.compte || {};
-      const GENRES = { verif_ok: ["ok", "Meta a vérifié le webhook"], verif_refusee: ["bad", "Meta a essayé de vérifier : refusé"], post_ok: ["ok", "Meta a envoyé des données"], post_signature_invalide: ["bad", "Meta a écrit mais la signature est invalide (clé secrète fausse)"], post_sans_secret: ["bad", "Meta a écrit mais la clé secrète manque dans Cloudflare"], erreur_traitement: ["bad", "Erreur pendant le traitement"], post_trop_gros: ["bad", "Message trop volumineux"] };
+      const GENRES = { verif_ok: ["ok", "Meta a vérifié le webhook"], verif_refusee: ["bad", "Meta a essayé de vérifier : refusé"], post_ok: ["ok", "Meta a envoyé des données"], post_signature_invalide: ["bad", "Meta a écrit mais la signature est invalide (clé secrète fausse)"], post_sans_secret: ["bad", "Meta a écrit mais la clé secrète manque dans Cloudflare"], erreur_traitement: ["bad", "Erreur pendant le traitement"], envoi_echec: ["bad", "Réponse non envoyée par WhatsApp"], ia_erreur: ["bad", "L'assistant (IA) a renvoyé une erreur"], post_trop_gros: ["bad", "Message trop volumineux"] };
       const jr = (r.journal || []).length ? h("details", { class: "jr", open: !(r.conversations || []).length }, h("summary", {}, "Dernières visites de Meta (" + r.journal.length + ")"), h("div", { class: "lg" }, r.journal.map(j => { const g = GENRES[j.genre] || ["gris", j.genre]; return h("p", {}, heureWa(j.at) + " · " + g[1] + (j.detail ? " · " + j.detail : "")); }))) : h("p", { class: "muted", style: "margin:0 0 12px" }, "Aucune visite de Meta enregistrée pour l'instant : aucun message n'est arrivé jusqu'au site.");
       const onglets = h("div", { class: "wa-tabs" }, [["a_traiter", "À traiter"], ["traite", "Traités"], ["ia", "Robot"], ["", "Tous"]].map(([k, l]) => h("button", { class: waFiltre === k ? "on" : "", onclick: () => { waFiltre = k; waOuverte = null; liste(); } }, l, k && c[k] ? h("span", { class: "cnt" + (k === "a_traiter" ? " r" : "") }, c[k]) : null)));
       const gauche = h("div", { class: "wa-list" }, r.conversations.length ? r.conversations.map(x => h("button", { class: "wa-it" + (waOuverte === x.id ? " on" : ""), onclick: () => ouvrir(x.id) },
@@ -274,7 +274,7 @@
       const envoyer = h("button", { class: "btn gold small", onclick: async ev => { const b = ev.currentTarget; if (!champ.value.trim()) return; b.disabled = true; try { await api("POST", "admin/wa/repondre", { id, texte: champ.value }); toast("Message envoyé."); await charger(); await ouvrir(id); } catch (e) { toast(e.message, true); b.disabled = false; } } }, ic("envoi", "sm"), "Envoyer");
       envoyer.disabled = !r.fenetre_ouverte;
       const changer = (statut, msg) => ev => { const b = ev.currentTarget; b.disabled = true; api("POST", "admin/wa/statut", { id, statut }).then(async () => { toast(msg); await charger(); }).catch(e => { toast(e.message, true); b.disabled = false; }); };
-      th.append(
+      th.append(...[
         h("div", { class: "wa-top" }, h("button", { class: "btn fantome small retour", onclick: () => { waOuverte = null; th.parentNode.classList.remove("ouvert"); } }, "← Liste"),
           h("div", { class: "who" }, h("b", {}, c.nom || "Sans nom"), h("small", {}, "+" + c.phone)),
           h("span", { class: "badge " + STATUT_WA[c.statut][1] }, STATUT_WA[c.statut][0])),
@@ -283,12 +283,12 @@
         h("div", { class: "wa-rep" }, champ, h("div", { class: "row" }, envoyer,
           c.statut !== "traite" ? h("button", { class: "btn alt small", onclick: changer("traite", "Marqué comme traité.") }, ic("ok", "sm"), "Marquer traité") : null,
           c.statut !== "ia" ? h("button", { class: "btn fantome small", onclick: changer("ia", "Rendu au robot.") }, "Rendre au robot") : null,
-          h("a", { class: "btn fantome small", href: "https://wa.me/" + c.phone, target: "_blank", rel: "noopener" }, ic("ext", "sm"), "Ouvrir dans WhatsApp"))));
+          h("a", { class: "btn fantome small", href: "https://wa.me/" + c.phone, target: "_blank", rel: "noopener" }, ic("ext", "sm"), "Ouvrir dans WhatsApp")))].filter(Boolean));
       const m = th.querySelector(".wa-msgs"); m.scrollTop = m.scrollHeight;
       if (!silencieux) zone.querySelectorAll(".wa-it").forEach(b => { if (b.querySelector("b") && (b.querySelector("b").textContent === (c.nom || "+" + c.phone))) b.classList.add("on"); });
     }
     liste();
-    return h("div", {}, ...alertes, zone);
+    return h("div", {}, ...alertes.filter(Boolean), zone);
   }
 
   // ---------- page ----------
