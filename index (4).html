@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#0a2a6b">
+<title>Mon compte – Nexvia RDC</title>
+<meta name="description" content="Créez votre compte Nexvia RDC ou connectez-vous : inscrivez votre commerce à Gombe, Kinshasa, et gérez votre fiche, vos photos et votre formule.">
+<link rel="stylesheet" href="/assets/nx.css">
+</head>
+<body class="auth">
+<h1 style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap">Mon compte Nexvia RDC – inscrire mon commerce à Gombe</h1>
+<div id="app"></div>
+<script src="/assets/nx.js"></script>
+<script>
+(async function () {
+  const { h, api, entete, moi, vider, couronne, drapeau } = NX, app = document.getElementById("app");
+  const q = new URLSearchParams(location.search);
+  const suiteBrute = q.get("suite") || "";
+  const suite = /^\/[^\/\\]/.test(suiteBrute) ? suiteBrute : ""; // uniquement un chemin du site, jamais une adresse extérieure
+  let u = await moi(), mode = q.get("mode") === "inscription" ? "inscription" : "connexion", type = q.get("type") === "utilisateur" ? "utilisateur" : "commerce";
+  const NOM = { gratuit: "Gratuit", standard: "Standard", premium: "Premium" };
+
+  function aller(user) { location.href = suite || (user.type === "commerce" ? "/commerce/" : "/"); }
+
+  const pin = () => { const ns = "http://www.w3.org/2000/svg", s = document.createElementNS(ns, "svg"); s.setAttribute("viewBox", "0 0 24 24"); s.setAttribute("width", "24"); s.setAttribute("height", "24");
+    const p = document.createElementNS(ns, "path"); p.setAttribute("d", "M12 2a7 7 0 0 0-7 7c0 5.2 7 13 7 13s7-7.8 7-13a7 7 0 0 0-7-7zm0 9.5A2.5 2.5 0 1 1 12 6.5a2.5 2.5 0 0 1 0 5z"); p.setAttribute("fill", "#ce1021"); s.append(p); return s; };
+  const haut = (titre, sous) => h("div", {}, h("div", { class: "auth-haut" },
+    h("a", { class: "logo", href: "/" }, h("span", { class: "pin" }, pin()), h("span", {}, "Nexvia ", h("b", {}, "RDC"))),
+    h("div", { class: "mbote" }, drapeau(24), "Mbote !"),
+    h("h1", {}, titre), h("p", {}, sous)), h("div", { class: "auth-bande" }));
+
+  let ban = null;     // compte suspendu : infos + identifiants gardés en mémoire pour la réclamation
+  let etape = null;   // { vid, but, masque, minutes, depuis } quand on attend le code reçu par e-mail
+
+  function formulaire() {
+    const f = {};
+    const champ = (id, lib, attrs) => [h("label", { for: id }, lib), f[id] = h("input", { id, ...attrs })];
+    const msg = h("div", {});
+    const insc = mode === "inscription";
+    const voir = h("button", { type: "button", onclick: () => { const v = f.mdp.type === "password"; f.mdp.type = f.conf ? (f.conf.type = v ? "text" : "password") : v ? "text" : "password"; voir.textContent = v ? "Masquer" : "Afficher"; } }, "Afficher");
+    const regles = insc ? [["Au moins 8 caractères", m => m.length >= 8], ["Au moins une lettre", m => /[A-Za-zÀ-ÿ]/.test(m)], ["Au moins un chiffre", m => /\d/.test(m)]] : [];
+    const liste = insc ? h("ul", { class: "regles" }, regles.map(([t]) => h("li", {}, t))) : null;
+    const majRegles = () => { regles.forEach(([, t], i) => liste.children[i].className = t(f.mdp.value) ? "ok" : ""); };
+    const form = h("form", { novalidate: true, onsubmit: async ev => {
+      ev.preventDefault(); vider(msg); const btn = form.querySelector("button[type=submit]");
+      if (insc) {
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(f.email.value.trim())) return msg.append(h("div", { class: "alerte bad" }, "Cette adresse e-mail n'est pas valide. Exemple : prenom@gmail.com"));
+        if (regles.some(([, t]) => !t(f.mdp.value))) return msg.append(h("div", { class: "alerte bad" }, "Le mot de passe ne respecte pas encore toutes les conditions de la liste."));
+        if (f.mdp.value !== f.conf.value) return msg.append(h("div", { class: "alerte bad" }, "Les deux mots de passe ne sont pas identiques."));
+      }
+      btn.disabled = true; btn.textContent = "Envoi du code…";
+      try {
+        const corps = { email: f.email.value, mot_de_passe: f.mdp.value };
+        if (insc) Object.assign(corps, { nom: f.nom.value, tel: f.tel.value, type, confirmation: f.conf.value });
+        const r = await api("POST", insc ? "auth/inscription/demande" : "auth/connexion", corps);
+        if (r.etape === "banni") { ban = { ...r, email: f.email.value, mdp: f.mdp.value }; rendre(); return; }
+        if (r.etape === "code") { etape = { vid: r.vid, but: insc ? "inscription" : "connexion", masque: r.email_masque, minutes: r.valide_minutes, depuis: Date.now(), attente: r.renvoi_secondes }; rendre(); }
+        else aller(r.utilisateur);
+      } catch (e) { msg.append(h("div", { class: "alerte bad" }, e.message)); btn.disabled = false; btn.textContent = insc ? "Recevoir mon code" : "Me connecter"; }
+    } },
+      insc ? [
+        h("label", {}, "Vous êtes"),
+        h("div", { class: "onglets" },
+          h("button", { type: "button", class: type === "commerce" ? "actif" : "", onclick: () => { type = "commerce"; rendre(); } }, "Commerçant"),
+          h("button", { type: "button", class: type === "utilisateur" ? "actif" : "", onclick: () => { type = "utilisateur"; rendre(); } }, "Visiteur")),
+        champ("nom", type === "commerce" ? "Votre nom" : "Votre nom ou pseudo", { autocomplete: "name", required: true, maxlength: 80 }),
+        champ("tel", "Téléphone (WhatsApp de préférence)", { type: "tel", autocomplete: "tel", maxlength: 30 }),
+      ] : null,
+      champ("email", "Adresse e-mail", { type: "email", autocomplete: "email", required: true, maxlength: 120, inputmode: "email" }),
+      insc ? h("p", { class: "muted petit" }, "Une vraie adresse (Gmail, Yahoo, Outlook…) : nous y envoyons un code pour confirmer votre compte.") : null,
+      h("label", { for: "mdp" }, "Mot de passe"),
+      h("div", { class: "oeil" }, f.mdp = h("input", { id: "mdp", type: "password", autocomplete: insc ? "new-password" : "current-password", required: true, maxlength: 100, oninput: insc ? majRegles : null }), voir),
+      liste,
+      insc ? [h("label", { for: "conf" }, "Confirmez le mot de passe"), f.conf = h("input", { id: "conf", type: "password", autocomplete: "new-password", required: true, maxlength: 100 })] : null,
+      msg,
+      h("p", { style: "margin-top:16px" }, h("button", { class: "btn gold grand", type: "submit" }, insc ? "Recevoir mon code" : "Me connecter")),
+      insc ? h("p", { class: "muted" }, "Le compte est gratuit. Les utilisateurs n'ont jamais besoin d'en créer un pour chercher un lieu sur la carte.") : h("p", { class: "muted" }, "Un code de confirmation vous sera envoyé par e-mail. Mot de passe oublié ? Écrivez-nous sur WhatsApp : nous le réinitialisons.")
+    );
+    return form;
+  }
+
+  function ecranCode() {
+    const msg = h("div", {}), champCode = h("input", { id: "code", inputmode: "numeric", autocomplete: "one-time-code", maxlength: 7, placeholder: "000000", class: "code-saisie", "aria-label": "Code à 6 chiffres" });
+    const renvoi = h("button", { type: "button", class: "btn alt small" }, "Renvoyer le code");
+    const insc = etape.but === "inscription";
+    let t0 = Date.now() + etape.attente * 1000;
+    const tic = () => { const s = Math.ceil((t0 - Date.now()) / 1000); renvoi.disabled = s > 0; renvoi.textContent = s > 0 ? "Renvoyer le code (" + s + " s)" : "Renvoyer le code"; };
+    tic(); const minuteur = setInterval(() => { if (!document.body.contains(renvoi)) return clearInterval(minuteur); tic(); }, 1000);
+    const valider = async ev => {
+      ev && ev.preventDefault(); vider(msg); const btn = form.querySelector("button[type=submit]"); btn.disabled = true;
+      try { const r = await api("POST", insc ? "auth/inscription/confirmer" : "auth/connexion/confirmer", { vid: etape.vid, code: champCode.value }); aller(r.utilisateur); }
+      catch (e) { msg.append(h("div", { class: "alerte bad" }, e.message)); btn.disabled = false; champCode.select(); }
+    };
+    renvoi.onclick = async () => {
+      vider(msg); renvoi.disabled = true;
+      try { const r = await api("POST", "auth/code/renvoyer", { vid: etape.vid }); t0 = Date.now() + r.renvoi_secondes * 1000; msg.append(h("div", { class: "alerte ok" }, "Un nouveau code vient d'être envoyé.")); }
+      catch (e) { msg.append(h("div", { class: "alerte bad" }, e.message)); }
+      tic();
+    };
+    champCode.oninput = () => { champCode.value = champCode.value.replace(/[^\d ]/g, ""); if (champCode.value.replace(/\s/g, "").length === 6) valider(); };
+    const form = h("form", { novalidate: true, onsubmit: valider },
+      h("div", { class: "code-icone" }, "✉️"),
+      h("p", {}, "Nous avons envoyé un code à 6 chiffres à ", h("b", {}, etape.masque), ". Il est valable ", etape.minutes, " minutes."),
+      h("label", { for: "code" }, "Code reçu par e-mail"), champCode, msg,
+      h("p", { style: "margin-top:16px" }, h("button", { class: "btn gold grand", type: "submit" }, insc ? "Confirmer et créer mon compte" : "Confirmer et me connecter")),
+      h("div", { class: "alerte info" }, "Le message est envoyé automatiquement par un robot : ", h("b", {}, "ne répondez pas"), " à cet e-mail, tapez seulement le code ici. Vous ne le trouvez pas ? Regardez dans vos courriers indésirables (spam)."),
+      h("div", { class: "row between", style: "margin-top:12px" }, renvoi, h("button", { type: "button", class: "btn fantome small", onclick: () => { etape = null; rendre(); } }, "Changer d'adresse")));
+    setTimeout(() => champCode.focus(), 50);
+    return form;
+  }
+
+
+
+  function changerMdp() {
+    const a = h("input", { type: "password", autocomplete: "current-password", maxlength: 100 }), n = h("input", { type: "password", autocomplete: "new-password", maxlength: 100 }), k = h("input", { type: "password", autocomplete: "new-password", maxlength: 100 }), msg = h("div", {});
+    return h("details", { style: "margin:10px 0" }, h("summary", { style: "cursor:pointer;font-weight:600" }, "🔑 Changer mon mot de passe"),
+      h("form", { novalidate: true, onsubmit: async ev => { ev.preventDefault(); vider(msg); try { await api("POST", "auth/motdepasse", { ancien: a.value, nouveau: n.value, confirmation: k.value }); a.value = n.value = k.value = ""; msg.append(h("div", { class: "alerte ok" }, "Mot de passe changé. Vos autres appareils ont été déconnectés.")); } catch (e) { msg.append(h("div", { class: "alerte bad" }, e.message)); } } },
+        h("label", {}, "Mot de passe actuel (ou temporaire)"), a, h("label", {}, "Nouveau mot de passe (8 caractères, une lettre, un chiffre)"), n, h("label", {}, "Confirmez le nouveau mot de passe"), k, msg,
+        h("p", { style: "margin-top:10px" }, h("button", { class: "btn gold", type: "submit" }, "Changer le mot de passe"))));
+  }
+
+  function ecranBan() {
+    const msg = h("div", {}), zone = h("textarea", { rows: 5, maxlength: 1000, placeholder: "Expliquez calmement votre situation (10 caractères minimum)…" });
+    const rec = ban.reclamation;
+    const bloc = rec
+      ? h("div", { class: "alerte " + (rec.statut === "refusee" ? "bad" : "info") }, rec.statut === "refusee" ? [h("b", {}, "Votre réclamation a été refusée."), rec.reponse ? h("p", {}, "Réponse de l'équipe : « " + rec.reponse + " »") : null] : "Votre réclamation a bien été envoyée. L'équipe Nexvia va l'examiner. Revenez vous connecter plus tard pour voir la réponse.")
+      : h("form", { novalidate: true, onsubmit: async ev => {
+          ev.preventDefault(); vider(msg); const btn = ev.target.querySelector("button"); btn.disabled = true;
+          try { await api("POST", "auth/reclamation", { email: ban.email, mot_de_passe: ban.mdp, message: zone.value }); ban.reclamation = { statut: "en_attente", reponse: "" }; rendre(); }
+          catch (e) { msg.append(h("div", { class: "alerte bad" }, e.message)); btn.disabled = false; }
+        } }, h("label", { for: "rec" }, "Vous pensez que c'est une erreur ? Envoyez une réclamation"), Object.assign(zone, { id: "rec" }), msg, h("p", { style: "margin-top:12px" }, h("button", { class: "btn gold grand", type: "submit" }, "Envoyer ma réclamation")));
+    return h("div", {}, h("div", { class: "alerte bad" }, h("b", {}, ban.definitif ? "Votre compte est suspendu définitivement." : "Votre compte est suspendu jusqu'au " + NX.date(ban.jusqua) + "."), ban.motif ? h("p", {}, "Raison : « " + ban.motif + " »") : null),
+      bloc, h("p", { style: "margin-top:12px" }, h("button", { class: "btn fantome", onclick: () => { ban = null; rendre(); } }, "Retour")));
+  }
+
+  function rendre() {
+    vider(app);
+    if (u) {
+      const plan = u.plan;
+      app.append(haut("Bonjour " + (u.nom || ""), u.email),
+        h("div", { class: "auth-carte" }, h("div", { class: "boite" },
+          h("div", { class: "row between" },
+            h("b", {}, u.commerce || "Mon compte"),
+            h("span", { class: "pastille-formule " + (plan || "gratuit") }, couronne(plan, 16), NOM[plan || "gratuit"])),
+          u.identifiant ? h("div", { class: "alerte info" }, "Votre identifiant Nexvia : ", h("b", { style: "letter-spacing:.06em" }, u.identifiant), h("br"), h("span", { class: "muted" }, "Donnez-le à l'équipe si vous avez un jour besoin d'aide pour retrouver votre compte.")) : null,
+          h("p", { class: "muted" }, u.commerce ? "Votre espace : adresses, photos, abonnement." : "Votre compte est prêt. Ajoutez votre adresse pour apparaître sur la carte."),
+          h("p", {}, h("a", { class: "btn gold grand", href: "/commerce/" }, u.commerce ? "Ouvrir mon espace" : "Ajouter mon adresse")),
+          u.admin ? h("p", {}, h("a", { class: "btn teal grand", href: "/admin/" }, "Administration")) : null,
+          changerMdp(),
+          h("p", {}, h("a", { class: "btn fantome grand", href: "/" }, "Retour à l'accueil")),
+          h("p", { style: "text-align:center" }, h("button", { class: "btn alt small", onclick: async () => { try { await api("POST", "auth/deconnexion"); } catch (e) {} u = null; rendre(); } }, "Me déconnecter")))));
+    } else {
+      const insc = mode === "inscription";
+      if (ban) { app.append(haut("Compte suspendu", "Votre accès à Nexvia RDC est bloqué pour le moment."), h("div", { class: "auth-carte" }, h("div", { class: "boite" }, ecranBan())), h("p", { class: "auth-pied" }, h("a", { href: "/" }, "Retour à la carte"))); return; }
+      if (etape) { app.append(haut("Vérifiez votre e-mail", etape.but === "inscription" ? "Dernière étape avant de créer votre compte." : "Pour votre sécurité, confirmez que c'est bien vous."), h("div", { class: "auth-carte" }, h("div", { class: "boite" }, ecranCode())), h("p", { class: "auth-pied" }, h("a", { href: "/" }, "Retour à la carte"))); return; }
+      app.append(haut(insc ? "Faites-vous trouver à Gombe" : "Bon retour !", insc ? "Créez votre compte gratuit et présentez votre adresse aux habitants de Kinshasa." : "Connectez-vous pour gérer vos adresses."),
+        h("div", { class: "auth-carte" }, h("div", { class: "boite" },
+          h("div", { class: "onglets" },
+            h("button", { class: mode === "connexion" ? "actif" : "", onclick: () => { mode = "connexion"; etape = null; rendre(); } }, "Connexion"),
+            h("button", { class: mode === "inscription" ? "actif" : "", onclick: () => { mode = "inscription"; etape = null; rendre(); } }, "Créer un compte")),
+          formulaire(),
+          insc && type === "commerce" ? h("ul", { class: "avantages" }, h("li", {}, "Formule Gratuit : 1 adresse, sans carte bancaire"), h("li", {}, "Vous choisissez ensuite Gratuit, Standard ou Premium"), h("li", {}, "Nous vérifions votre fiche avant de la publier")) : null),
+          h("p", { class: "auth-pied" }, h("a", { href: "/tarifs/" }, "Voir les tarifs"), " · ", h("a", { href: "/" }, "Retour à la carte"))));
+    }
+  }
+  rendre();
+})();
+</script>
+</body>
+</html>

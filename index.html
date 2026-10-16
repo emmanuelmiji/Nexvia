@@ -311,7 +311,7 @@
 
   <!-- ===== COMPTE ===== -->
   <section class="screen" id="s-compte" aria-label="Compte">
-    <div class="tete"><div class="tt">👤 Mon compte</div><div class="sub" id="compteSub">Pour les commerces : présentez votre établissement</div></div>
+    <div class="tete"><div class="tt">👤 Mon compte</div><div class="sub" id="compteSub">Vous avez une adresse à présenter ?</div></div>
     <div id="compteCorps"></div>
   </section>
 
@@ -993,9 +993,9 @@ function rendreCompte() {
   const corps = $("compteCorps"), sub = $("compteSub");
   if (compteInfo === undefined) { corps.innerHTML = '<div class="vide">Chargement…</div>'; chargerCompte().then(() => { if (tab === "compte") rendreCompte(); }); return; }
   if (compteInfo === null) {
-    sub.textContent = "Pour les commerces : présentez votre établissement";
-    corps.innerHTML = '<div class="cptc"><h3>Votre commerce sur Nexvia RDC</h3><p>Restaurant, pharmacie, hôtel, boutique… Faites-vous trouver par les habitants de Kinshasa.</p><ul><li>Formule <b>Gratuit</b> : 1 adresse, sans paiement</li><li><b>Standard</b> 3,30 $ et <b>Premium</b> 5,30 $ par mois</li><li>Chaque fiche est vérifiée avant publication</li></ul>' +
-      '<div class="actions"><a class="btn or" href="/compte/?mode=inscription&amp;type=commerce">Créer mon compte commerce</a><a class="btn alt" href="/compte/">J\'ai déjà un compte</a><a class="btn alt" href="/tarifs/">Voir les tarifs</a></div></div>' +
+    sub.textContent = "Vous avez une adresse à présenter ?";
+    corps.innerHTML = '<div class="cptc"><h3>Ajoutez votre adresse sur Nexvia RDC</h3><p>Restaurant, pharmacie, hôtel, boutique… Faites-vous trouver par les habitants de Kinshasa.</p><ul><li>Formule <b>Gratuit</b> : 1 adresse, sans paiement</li><li><b>Standard</b> 3,30 $ et <b>Premium</b> 5,30 $ par mois</li><li>Chaque fiche est vérifiée avant publication</li></ul>' +
+      '<div class="actions"><a class="btn or" href="/compte/?mode=inscription&amp;type=commerce">Créer mon compte</a><a class="btn alt" href="/compte/">J\'ai déjà un compte</a><a class="btn alt" href="/tarifs/">Voir les tarifs</a></div></div>' +
       '<p class="note" style="text-align:center">Chercher un lieu reste gratuit et sans compte.</p>';
     return;
   }
@@ -1003,8 +1003,8 @@ function rendreCompte() {
   sub.textContent = u.email;
   corps.innerHTML = '<div class="cptc"><h3>Bonjour ' + esc(u.nom || "") + '</h3>' +
     (u.commerce ? '<p><b>' + esc(u.commerce) + '</b></p><p><span class="pill ' + plan + '">' + ((plan === "standard" || plan === "premium") ? COURONNE : "") + 'Formule ' + NOMS_PLAN[plan] + '</span></p>'
-      : '<p>Votre compte est prêt. Créez votre commerce pour apparaître sur la carte.</p>') +
-    '<div class="actions"><a class="btn or" href="/commerce/">' + (u.commerce ? "Mon espace commerce" : "Créer mon commerce") + '</a>' +
+      : '<p>Votre compte est prêt. Ajoutez votre adresse pour apparaître sur la carte.</p>') +
+    '<div class="actions"><a class="btn or" href="/commerce/">' + (u.commerce ? "Mon espace" : "Ajouter mon adresse") + '</a>' +
     (u.admin ? '<a class="btn" href="/admin/">Administration</a>' : "") +
     '<a class="btn alt" href="/tarifs/">Voir les tarifs</a><button type="button" class="btn alt" id="cptSortir">Me déconnecter</button></div></div>';
   $("cptSortir").onclick = async () => {
