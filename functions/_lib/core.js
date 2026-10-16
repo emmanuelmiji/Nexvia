@@ -65,6 +65,21 @@ const SCHEMA = [
 ];
 let schemaPret = null;
 // Ajouts de colonnes sur une base déjà créée (sans effet si la colonne existe déjà).
+// Remise à zéro unique (16 oct. 2026) : on efface l'historique de test (messages WhatsApp, journal des sanctions,
+// réclamations closes ou orphelines, codes en attente). Les comptes, commerces, adresses et sessions ne sont pas touchés.
+// Un repère est enregistré : le nettoyage ne se rejoue jamais.
+export async function remiseAZero(env, nom = "remise_a_zero_2026_10_16") {
+  await env.DB.prepare("CREATE TABLE IF NOT EXISTS nettoyages (nom TEXT PRIMARY KEY, at TEXT NOT NULL)").run();
+  if (await env.DB.prepare("SELECT nom FROM nettoyages WHERE nom = ?").bind(nom).first()) return false;
+  await env.DB.batch([
+    env.DB.prepare("DELETE FROM wa_messages"), env.DB.prepare("DELETE FROM wa_conversations"), env.DB.prepare("DELETE FROM wa_journal"),
+    env.DB.prepare("DELETE FROM sanctions"),
+    env.DB.prepare("DELETE FROM reclamations WHERE statut != 'en_attente' OR user_id NOT IN (SELECT id FROM users)"),
+    env.DB.prepare("DELETE FROM verifs"), env.DB.prepare("DELETE FROM essais"),
+    env.DB.prepare("INSERT INTO nettoyages (nom, at) VALUES (?, ?)").bind(nom, new Date().toISOString()),
+  ]);
+  return true;
+}
 const migrer = env => async () => {
   for (const sql of ["ALTER TABLE marques ADD COLUMN plan_souhaite TEXT", "ALTER TABLE photos ADD COLUMN type TEXT NOT NULL DEFAULT 'lieu'", "ALTER TABLE users ADD COLUMN banni INTEGER NOT NULL DEFAULT 0", "ALTER TABLE users ADD COLUMN banni_motif TEXT", "ALTER TABLE users ADD COLUMN banni_at TEXT", "ALTER TABLE users ADD COLUMN banni_jusqua TEXT", "ALTER TABLE users ADD COLUMN identifiant TEXT"]) {
     try { await env.DB.prepare(sql).run(); }
@@ -76,6 +91,7 @@ const migrer = env => async () => {
     if (!sans.length) break;
     await env.DB.batch(sans.map(u => env.DB.prepare("UPDATE users SET identifiant = ? WHERE id = ?").bind(nouvelIdentifiant(), u.id)));
   }
+  await remiseAZero(env);
 };
 // Identifiant public d'un compte (ex. NX-4F7K2M) : sans lettres ambiguës, à donner à l'équipe pour être aidé.
 export function nouvelIdentifiant() {

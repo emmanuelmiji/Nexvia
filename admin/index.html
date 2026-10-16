@@ -222,8 +222,10 @@
     const ligne = (ico, titre, sous, n, cible, chaud) => h("li", {}, h("div", { class: "pt" + (chaud && n ? " hot" : "") }, ic(ico)), h("div", { class: "tx" }, h("b", {}, titre), h("span", {}, sous)), h("div", { class: "num" }, String(n)), h("button", { class: "btn small " + (n ? "gold" : "alt"), onclick: () => { onglet = cible; rendre(); window.scrollTo(0, 0); } }, n ? "Traiter" : "Ouvrir"));
     const tout = nVal + nPay + (s.reclamations || 0) + (d.wa_a_traiter || 0);
     const kpi = (n, t) => h("div", { class: "kpi" }, h("span", {}, t), h("b", {}, String(n)));
+    const dollarsAdm = n => n.toFixed(2).replace(".", ",") + " $";
+    const kpiTexte = (n, t, sous) => h("div", { class: "kpi" }, h("span", {}, t), h("b", {}, n), sous ? h("small", {}, sous) : null);
     return [
-      h("div", { class: "kpis" }, kpi(s.comptes, s.comptes > 1 ? "Comptes" : "Compte"), kpi(s.marques, s.marques > 1 ? "Commerces" : "Commerce"), kpi(s.adresses_validees, s.adresses_validees > 1 ? "Adresses validées" : "Adresse validée"), kpi(s.abonnes, s.abonnes > 1 ? "Abonnés actifs" : "Abonné actif")),
+      h("div", { class: "kpis" }, kpi(s.comptes, s.comptes > 1 ? "Comptes" : "Compte"), kpi(s.marques, s.marques > 1 ? "Commerces" : "Commerce"), kpi(s.adresses_validees, s.adresses_validees > 1 ? "Adresses validées" : "Adresse validée"), kpi(s.abonnes, s.abonnes > 1 ? "Abonnés actifs" : "Abonné actif"), kpiTexte(dollarsAdm((d.abonnements || {}).revenu || 0), "Revenu mensuel estimé", ((d.abonnements || {}).standard || 0) + " Standard · " + ((d.abonnements || {}).premium || 0) + " Premium")),
       h("div", { class: "grid2 wide" },
         h("section", { class: "panel" }, h("div", { class: "ph" }, h("h2", {}, "À traiter", tout ? h("span", { class: "cnt" }, tout) : null)),
           tout === 0 ? h("div", { class: "calme" }, h("div", { class: "pt" }, ic("ok")), h("div", {}, h("b", {}, "Tout est à jour"), h("span", {}, "Aucune validation, aucun paiement ni aucune réclamation en attente."))) : null,
@@ -233,10 +235,21 @@
             ligne("paiement", "Paiements à vérifier", "Références introuvables dans Zola", nPay, "paiements", true),
             ligne("msg", "Messages WhatsApp", "Conversations passées à un agent", d.wa_a_traiter || 0, "messages", true),
             ligne("comptes", "Réclamations de comptes", "Personnes bannies qui contestent", s.reclamations || 0, "comptes", true))),
-        h("div", {}, mailEtat(), raccourcis()))
+        h("div", {}, robotEtat(), mailEtat(), raccourcis()))
     ];
   }
 
+
+  // Santé de l'assistant WhatsApp, d'un coup d'œil
+  function robotEtat() {
+    const j = d.wa_jour || { ia: 0, clients: 0, plafond: 300 }, pct = Math.min(100, Math.round(j.ia * 100 / (j.plafond || 300)));
+    const [cls, txt] = !d.wa_configure ? ["warn", "Non relié : réglages Meta manquants"] : !d.wa_ia ? ["warn", "Robot éteint : les messages vous arrivent directement"] : ["ok", "Robot actif : il répond tout seul"];
+    return h("section", { class: "panel" }, h("div", { class: "ph" }, h("h2", {}, "Assistant WhatsApp")),
+      h("div", { class: "pb" }, h("div", { class: "alerte " + cls, style: "margin-top:0" }, txt),
+        h("div", { class: "robot-stats" }, h("div", {}, h("b", {}, String(j.clients)), h("span", {}, "messages reçus aujourd'hui")), h("div", {}, h("b", {}, String(j.ia)), h("span", {}, "réponses du robot")), h("div", {}, h("b", {}, String(d.wa_a_traiter || 0)), h("span", {}, "à traiter par vous"))),
+        h("div", { class: "jauge" }, h("i", { style: "width:" + pct + "%" })), h("p", { class: "muted", style: "margin:6px 0 10px" }, j.ia + " / " + j.plafond + " réponses autorisées aujourd'hui."),
+        h("button", { class: "btn small alt", onclick: () => { onglet = "messages"; rendre(); window.scrollTo(0, 0); } }, "Ouvrir les messages")));
+  }
 
   // ---------- messages WhatsApp ----------
   let waFiltre = "a_traiter", waOuverte = null;
@@ -333,6 +346,17 @@
     window.scrollTo(0, keep);
   }
   charger();
+  // Rafraîchissement discret toutes les 60 s : titre de l'onglet + accueil ; prévient quand un nouveau cas arrive.
+  let dernierN = null;
+  setInterval(async () => {
+    if (document.hidden || !d) return;
+    try {
+      const r = await api("GET", "admin/file"), n = r.marques.length + r.adresses.length + r.a_verifier.length + (r.wa_a_traiter || 0), avant = dernierN === null ? (d.marques.length + d.adresses.length + d.a_verifier.length + (d.wa_a_traiter || 0)) : dernierN;
+      d = r; dernierN = n; document.title = (n ? "(" + n + ") " : "") + "Administration – Nexvia RDC";
+      if (n > avant) toast("Nouveau : " + (n - avant) + " élément" + (n - avant > 1 ? "s" : "") + " à traiter.");
+      if (onglet === "accueil") rendre();
+    } catch (e) {}
+  }, 60000);
 })();
 </script>
 </body>

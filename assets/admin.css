@@ -224,3 +224,16 @@ body:has(.adm){background:var(--surf)}
   .adm .wa-cols.ouvert .wa-list{display:block}
   .adm .wa-thread .retour{display:none}
 }
+
+/* ===== Admin : assistant WhatsApp et revenu ===== */
+.robot-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 12px 0 10px; }
+.robot-stats div { background: #f6f8fc; border: 1px solid var(--line); border-radius: 12px; padding: 9px 8px; text-align: center; }
+.robot-stats b { display: block; font-size: 1.25rem; color: var(--bleu); }
+.robot-stats span { font-size: .72rem; color: var(--muted); line-height: 1.2; display: block; }
+.jauge { height: 8px; border-radius: 999px; background: #e7eaf0; overflow: hidden; }
+.jauge i { display: block; height: 100%; background: linear-gradient(90deg, var(--teal), #35c6a6); border-radius: 999px; }
+.kpi small { display: block; color: var(--muted); font-size: .72rem; margin-top: 2px; }
+@media (min-width: 900px) { .adm .kpis { grid-template-columns: repeat(5, 1fr); } }
+.adm .kpi:last-child:nth-child(odd) { grid-column: 1 / -1; }
+@media (min-width: 900px) { .adm .kpi:last-child:nth-child(odd) { grid-column: auto; } }
+.adm .kpi small { color: var(--mut); }

@@ -94,17 +94,60 @@
     dessiner(); return bloc;
   }
 
+  // ---------- petites icônes (SVG intégrés) ----------
+  const ICONES = {
+    pin: '<path d="M12 21s7-6.2 7-11.5A7 7 0 0 0 5 9.5C5 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.6"/>',
+    tel: '<path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2z"/>',
+    horloge: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+    note: '<path d="M5 4h14v16H5z"/><path d="M8 9h8M8 13h8M8 17h5"/>',
+    photo: '<rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="11" r="2"/><path d="m21 16-5-5-8 8"/>',
+    menu: '<path d="M6 3v7a2 2 0 0 0 2 2v9M10 3v7M8 3v9M17 3c-2 1.5-3 4-3 7h3v11"/>',
+    crayon: '<path d="M4 20h4L19 9a2.8 2.8 0 0 0-4-4L4 16z"/><path d="m13.5 6.5 4 4"/>',
+    corbeille: '<path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/>',
+    plus: '<path d="M12 5v14M5 12h14"/>',
+    ok: '<path d="m5 12.5 4.5 4.5L19 7.5"/>',
+    cible: '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/>',
+    couronne: '<path d="m3 8 4.5 4L12 5l4.5 7L21 8l-2 11H5z"/>',
+    aide: '<circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.6 2.6 0 1 1 3.6 2.4c-.7.4-1.1.9-1.1 1.8M12 17h.01"/>',
+    lien: '<path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1M14 10a4 4 0 0 0-5.7 0l-3 3A4 4 0 0 0 11 18.7l1-1"/>',
+    bouclier: '<path d="M12 3 5 6v6c0 4.5 3 7.5 7 9 4-1.5 7-4.5 7-9V6z"/><path d="m9 12 2.2 2.2L15 10"/>',
+  };
+  function ico(nom, px) {
+    const e = document.createElement("span"); e.className = "ico"; e.setAttribute("aria-hidden", "true");
+    e.innerHTML = '<svg viewBox="0 0 24 24" width="' + (px || 18) + '" height="' + (px || 18) + '" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">' + (ICONES[nom] || "") + "</svg>";
+    return e;
+  }
+  // Fiche complète : ce qui aide un commerce à être trouvé et choisi.
+  function completude(a) {
+    const ps = planSaisie(), ok = [], manque = [];
+    const test = (cond, lib) => (cond ? ok : manque).push(lib);
+    test(a.tel_verifie, "Numéro vérifié");
+    test(a.description && a.description.trim().length >= 20, "Description");
+    test(a.horaires, "Horaires");
+    test(a.lat != null && a.lng != null, "Position sur la carte");
+    test(a.photos && a.photos.length, "Photo du lieu");
+    if (ps.menu_photos) test(a.menu_photos && a.menu_photos.length, "Menu en photos");
+    const total = ok.length + manque.length;
+    return { pct: Math.round(ok.length * 100 / total), ok, manque };
+  }
+  const ligneInfo = (nom, ...contenu) => h("div", { class: "ligne" }, ico(nom, 17), h("span", {}, ...contenu));
+
   // ---------- adresses ----------
   function carteAdresse(a) {
     const st = { en_attente: ["En attente de validation", "warn"], validee: ["Validée", "ok"], refusee: ["Refusée", "bad"] }[a.statut] || ["", "gris"];
-    const couv = h("div", { class: "couv" }, a.photos && a.photos.length ? h("img", { src: "/api/photo/" + a.photos[0], alt: "Photo de " + a.nom, loading: "lazy" }) : h("span", {}, EMO[a.categorie] || "🏪"), h("span", { class: "badge st " + st[1] }, st[0]));
+    const nbPh = a.photos ? a.photos.length : 0, c = completude(a);
+    const couv = h("div", { class: "couv" }, nbPh ? h("img", { src: "/api/photo/" + a.photos[0], alt: "Photo de " + a.nom, loading: "lazy" }) : h("span", { class: "vide" }, ico("photo", 34), h("small", {}, "Pas encore de photo")), h("span", { class: "badge st " + st[1] }, st[0]),
+      nbPh > 1 ? h("span", { class: "nbph" }, ico("photo", 14), nbPh) : null);
     const corps = h("div", { class: "corps" },
-      h("h3", {}, a.nom),
-      h("div", { class: "meta" }, h("span", { class: "badge gris" }, CAT[a.categorie] || "Autre"), h("span", { class: "badge gris" }, "📍 " + (a.commune || "Gombe"))),
-      h("div", { class: "ligne" }, h("i", {}, "🏠"), h("span", {}, a.adresse)),
-      h("div", { class: "ligne" }, h("i", {}, "📞"), h("span", {}, a.tel)),
-      a.horaires ? h("div", { class: "ligne" }, h("i", {}, "🕘"), h("span", {}, horairesJolis(a.horaires).map((x, i) => [i ? h("br", {}) : null, x]))) : null,
-      a.description ? h("div", { class: "ligne" }, h("i", {}, "📝"), h("span", {}, a.description)) : null);
+      h("div", { class: "entete-adr" }, h("h3", {}, a.nom), h("div", { class: "meta" }, h("span", { class: "badge gris" }, (EMO[a.categorie] || "🏪") + " " + (CAT[a.categorie] || "Autre")), h("span", { class: "badge gris" }, a.commune || "Gombe"))),
+      h("div", { class: "infos" },
+        ligneInfo("pin", a.adresse), ligneInfo("tel", a.tel),
+        a.horaires ? ligneInfo("horloge", horairesJolis(a.horaires).map((x, i) => [i ? h("br", {}) : null, x])) : null,
+        a.description ? ligneInfo("note", a.description) : null));
+    if (a.statut !== "refusee") corps.append(h("div", { class: "complet" },
+      h("div", { class: "haut" }, h("b", {}, c.pct === 100 ? "Fiche complète" : "Fiche complète à " + c.pct + " %"), c.pct === 100 ? h("span", { class: "badge ok" }, "Parfait") : null),
+      h("div", { class: "barre" }, h("i", { style: "width:" + c.pct + "%" })),
+      c.manque.length ? h("p", { class: "muted" }, "Pour mieux vous faire trouver, ajoutez : " + c.manque.join(", ").toLowerCase() + ".") : null));
     if (a.statut === "en_attente") {
       const msg = "Bonjour Nexvia RDC, je veux vérifier mon adresse « " + a.nom + " » (" + etat.marque.nom + "). Mon code : " + a.code;
       corps.append(a.tel_verifie
@@ -113,11 +156,11 @@
     }
     if (a.statut === "refusee") corps.append(h("div", { class: "alerte bad" }, a.note || "Cette adresse n'a pas pu être validée. Contactez-nous pour en savoir plus."));
     corps.append(
-      h("details", {}, h("summary", {}, "📷 Photos du lieu"), gestionPhotos(a, "photo")),
-      h("details", {}, h("summary", {}, "📋 Menu / services (photos)"), gestionPhotos(a, "menu")),
+      h("details", {}, h("summary", {}, h("span", { class: "tt" }, ico("photo", 18), "Photos du lieu"), h("span", { class: "cpt" }, nbPh + " / " + planSaisie().photos)), gestionPhotos(a, "photo")),
+      h("details", {}, h("summary", {}, h("span", { class: "tt" }, ico("menu", 18), "Menu / services (photos)")), gestionPhotos(a, "menu")),
       h("div", { class: "actions-adr" },
-        h("button", { class: "btn alt small", onclick: () => { edition = a; rendre(); window.scrollTo(0, 0); } }, "✏️ Modifier la fiche"),
-        h("button", { class: "btn danger small", onclick: ev => { if (confirm("Supprimer cette adresse et ses photos ?")) action(ev.target, () => api("POST", "commerce/adresse/supprimer", { id: a.id }), "Adresse supprimée."); } }, "Supprimer")));
+        h("button", { class: "btn bleu small", onclick: () => { edition = a; rendre(); window.scrollTo(0, 0); } }, ico("crayon", 16), "Modifier la fiche"),
+        h("button", { class: "btn supprimer small", onclick: ev => { if (confirm("Supprimer cette adresse et ses photos ?")) action(ev.currentTarget, () => api("POST", "commerce/adresse/supprimer", { id: a.id }), "Adresse supprimée."); } }, ico("corbeille", 16), "Supprimer")));
     return h("div", { class: "adr" }, couv, corps);
   }
 
@@ -300,11 +343,35 @@
   function panneauAdresses(main) {
     const ps = planSaisie(), n = etat.adresses.filter(a => a.statut !== "refusee").length;
     ajoute(main, ...bannieres());
-    main.append(titreSec("Mes adresses", h("span", { class: "badge gris", style: "margin-left:auto" }, n + " / " + ps.adresses)));
-    if (edition) main.append(h("h3", { style: "margin:0 0 4px" }, edition.id ? "Modifier « " + edition.nom + " »" : "Nouvelle adresse"), formulaire());
-    else if (n < ps.adresses) main.append(h("p", {}, h("button", { class: "btn gold", onclick: () => { edition = {}; rendre(); window.scrollTo(0, 0); } }, "+ Ajouter une adresse")));
-    else main.append(h("p", { class: "muted" }, "Vous avez atteint la limite de la formule " + ps.nom + ". Passez à une formule supérieure pour ajouter des adresses. Plus de 6 adresses : écrivez-nous pour une offre sur mesure."));
-    if (!edition) { main.append(...etat.adresses.map(carteAdresse)); if (!etat.adresses.length) main.append(h("p", { class: "muted" }, "Aucune adresse pour l'instant.")); }
+    main.append(h("div", { class: "tete-sec" }, h("div", {}, h("h2", { class: "sec" }, etoile(16), "Mes adresses"), h("p", { class: "muted" }, n + " sur " + ps.adresses + " adresse" + (ps.adresses > 1 ? "s" : "") + " utilisée" + (n > 1 ? "s" : "") + " avec la formule " + ps.nom + ".")),
+      !edition && n < ps.adresses ? h("button", { class: "btn gold", onclick: () => { edition = {}; rendre(); window.scrollTo(0, 0); } }, ico("plus", 18), "Ajouter une adresse") : null));
+    if (edition) main.append(h("h3", { class: "titre-edition" }, edition.id ? "Modifier « " + edition.nom + " »" : "Nouvelle adresse"), formulaire());
+    else if (n >= ps.adresses) main.append(h("div", { class: "alerte info" }, "Vous avez atteint la limite de la formule " + ps.nom + ". Passez à une formule supérieure pour ajouter des adresses. Plus de 6 adresses : écrivez-nous pour une offre sur mesure."));
+    if (!edition) {
+      main.append(...etat.adresses.map(carteAdresse));
+      if (!etat.adresses.length) main.append(h("div", { class: "vide-adr" }, ico("pin", 40), h("h3", {}, "Aucune adresse pour l'instant"), h("p", { class: "muted" }, "Ajoutez votre première adresse pour apparaître sur la carte de Gombe.")));
+    }
+  }
+  // Colonne de droite (sous la liste sur téléphone) : abonnement, conseils, aide.
+  function panneauLateral() {
+    const m = etat.marque, p = planActuel(), gratuit = m.plan_effectif === "gratuit";
+    const jours = m.plan_fin ? Math.max(0, Math.ceil((new Date(m.plan_fin) - new Date()) / 86400000)) : 0, pct = gratuit ? 0 : Math.min(100, Math.round(jours * 100 / 30));
+    const abo = h("section", { class: "lat abo " + m.plan_effectif },
+      h("div", { class: "lat-t" }, ico("couronne", 18), "Mon abonnement"),
+      h("div", { class: "grosse" }, couronne(m.plan_effectif, 20), " ", p.nom),
+      gratuit ? h("p", { class: "muted" }, "Formule gratuite : 1 adresse et 1 photo. Passez à Standard ou Premium pour plus de visibilité.")
+        : [h("div", { class: "barre" }, h("i", { style: "width:" + pct + "%" })), h("p", { class: "muted" }, jours + " jour" + (jours > 1 ? "s" : "") + " restant" + (jours > 1 ? "s" : "") + (m.plan_fin ? " · jusqu'au " + date(m.plan_fin) : ""))],
+      h("button", { class: "btn " + (gratuit ? "gold" : "alt") + " grand", onclick: () => { onglet = "abo"; rendre(); window.scrollTo(0, 0); } }, gratuit ? "Voir les formules" : "Gérer mon abonnement"));
+    const valides = etat.adresses.filter(a => a.statut !== "refusee"), conseils = [];
+    for (const a of valides) { const c = completude(a); if (c.manque.length) conseils.push([a, c]); }
+    const cons = h("section", { class: "lat" }, h("div", { class: "lat-t" }, ico("cible", 18), "Pour mieux vous faire trouver"),
+      !valides.length ? h("p", { class: "muted" }, "Ajoutez une adresse pour recevoir des conseils.")
+        : !conseils.length ? h("p", { class: "ok-t" }, ico("ok", 16), " Toutes vos fiches sont complètes. Bravo !")
+        : h("ul", { class: "conseils" }, conseils.slice(0, 3).map(([a, c]) => h("li", {}, h("b", {}, a.nom), h("span", {}, c.manque.slice(0, 3).join(" · ").toLowerCase() + (c.manque.length > 3 ? "…" : ""))))));
+    const aide = h("section", { class: "lat" }, h("div", { class: "lat-t" }, ico("aide", 18), "Besoin d'aide ?"),
+      h("p", { class: "muted" }, "Notre équipe répond sur WhatsApp : question sur votre fiche, un paiement, ou une modification."),
+      h("a", { class: "btn wa grand", href: wa("Bonjour Nexvia RDC, j'ai une question sur mon compte commerce « " + m.nom + " »."), target: "_blank", rel: "noopener" }, "Écrire sur WhatsApp"));
+    return h("aside", { class: "lateral" }, abo, cons, aide);
   }
   function panneauAbonnement(main) {
     const m = etat.marque;
@@ -316,7 +383,7 @@
     const hist = historique(); if (hist) main.append(hist);
   }
   function rendre() {
-    vider(app); app.append(entete(etat.utilisateur));
+    vider(app); app.append(entete(etat.utilisateur)); document.body.classList.remove("espace-large");
     const main = h("main", {});
     if (vue === "fini" && fini && etat.marque) { app.append(hero("Votre demande est partie", "Nous vérifions votre commerce et son adresse sous 48 à 72 heures."), main); ecranFini(main); main.append(piedRdc()); return; }
     if (vue === "fiche") { app.append(hero("Votre fiche", "Remplissez les informations de votre commerce. Vous pourrez les modifier ensuite."), main); ecranFiche(main); main.append(piedRdc()); return; }
@@ -330,11 +397,15 @@
         h("div", { class: "tuile" }, h("b", {}, n + " / " + ps.adresses), h("span", {}, "Adresses")),
         h("div", { class: "tuile" }, h("b", {}, p.nom), h("span", {}, "Formule")),
         h("div", { class: "tuile" }, h("b", {}, m.plan_effectif === "gratuit" ? "Sans limite" : jours + " j"), h("span", {}, m.plan_effectif === "gratuit" ? "Durée" : "Jours restants"))))));
-    app.append(h("div", { class: "sections" }, h("button", { class: onglet === "adresses" ? "on" : "", onclick: () => { onglet = "adresses"; rendre(); } }, "📍 Mes adresses"), h("button", { class: onglet === "abo" ? "on" : "", onclick: () => { onglet = "abo"; rendre(); } }, "👑 Abonnement")));
+    app.append(h("div", { class: "sections" }, h("div", { class: "in" }, h("button", { class: onglet === "adresses" ? "on" : "", onclick: () => { onglet = "adresses"; rendre(); } }, ico("pin", 18), "Mes adresses"), h("button", { class: onglet === "abo" ? "on" : "", onclick: () => { onglet = "abo"; rendre(); } }, ico("couronne", 18), "Abonnement"))));
     if (m.statut === "en_attente") main.append(h("div", { class: "alerte info" }, "Nous vérifions votre commerce. Vous pouvez déjà préparer vos adresses."));
     if (m.statut === "refusee") main.append(h("div", { class: "alerte bad" }, m.note || "Votre commerce n'a pas pu être validé. Contactez-nous."));
-    if (onglet === "abo") panneauAbonnement(main); else panneauAdresses(main);
-    main.append(h("p", { class: "muted" }, "Une question ? ", h("a", { href: wa("Bonjour Nexvia RDC, j'ai une question sur mon compte commerce « " + m.nom + " »."), target: "_blank", rel: "noopener" }, "Service client sur WhatsApp"), " · ", h("a", { href: "#", onclick: async ev => { ev.preventDefault(); try { await api("POST", "auth/deconnexion"); } catch (e) {} location.href = "/compte/"; } }, "Me déconnecter")), piedRdc());
+    main.classList.add("large"); document.body.classList.add("espace-large");
+    const pied = h("p", { class: "pied-lien" }, h("a", { href: "#", onclick: async ev => { ev.preventDefault(); try { await api("POST", "auth/deconnexion"); } catch (e) {} location.href = "/compte/"; } }, "Me déconnecter"));
+    if (onglet === "abo") { panneauAbonnement(main); main.append(pied, piedRdc()); app.append(main); return; }
+    const centre = h("div", { class: "centre" });
+    panneauAdresses(centre);
+    main.append(h("div", { class: "espace" + (edition ? " seul" : "") }, centre, edition ? null : panneauLateral()), pied, piedRdc());
     app.append(main);
   }
   charger();

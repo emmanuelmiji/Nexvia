@@ -388,7 +388,13 @@ async function fileAdmin({ request, env }) {
     for (const a of adresses) { a.photos = ph.filter(p => p.adresse_id === a.id && p.type !== "menu").map(p => p.id); a.menu_photos = ph.filter(p => p.adresse_id === a.id && p.type === "menu").map(p => p.id); a.plan_effectif = C.planEffectif(a); }
   }
   const waN = (await db.prepare("SELECT COUNT(*) AS n FROM wa_conversations WHERE statut = 'a_traiter'").first()).n;
-  return json({ ok: true, marques, adresses, a_verifier: averifier, en_attente: attente, imports, stats, whatsapp: C.WHATSAPP, mail_configure: Mail.mailConfigure(env), wa_a_traiter: waN, wa_configure: !!(env.WA_TOKEN && env.WA_PHONE_ID && env.WA_APP_SECRET && env.WA_VERIFY_TOKEN), wa_ia: !!env.ANTHROPIC_API_KEY && String(env.WA_IA_ACTIVE) !== "0" });
+  // Abonnements actifs et revenu mensuel estimé (prix des formules × abonnés actifs, hors frais de transaction)
+  const abos = { standard: 0, premium: 0 };
+  for (const m of await tout("SELECT plan, plan_fin FROM marques WHERE plan != 'gratuit'")) { const pe = C.planEffectif(m); if (abos[pe] !== undefined) abos[pe]++; }
+  const revenu = Math.round((abos.standard * PLANS.standard.prix + abos.premium * PLANS.premium.prix) * 100) / 100;
+  const debutJour = new Date(); debutJour.setUTCHours(0, 0, 0, 0);
+  const waJour = { ia: (await db.prepare("SELECT COUNT(*) AS n FROM wa_messages WHERE role = 'ia' AND created_at >= ?").bind(debutJour.toISOString()).first()).n, clients: (await db.prepare("SELECT COUNT(*) AS n FROM wa_messages WHERE role = 'client' AND created_at >= ?").bind(debutJour.toISOString()).first()).n, plafond: Number(env.WA_MAX_IA_JOUR) || 300 };
+  return json({ ok: true, abonnements: { ...abos, revenu }, wa_jour: waJour, marques, adresses, a_verifier: averifier, en_attente: attente, imports, stats, whatsapp: C.WHATSAPP, mail_configure: Mail.mailConfigure(env), wa_a_traiter: waN, wa_configure: !!(env.WA_TOKEN && env.WA_PHONE_ID && env.WA_APP_SECRET && env.WA_VERIFY_TOKEN), wa_ia: !!env.ANTHROPIC_API_KEY && String(env.WA_IA_ACTIVE) !== "0" });
 }
 async function adminMarque({ request, env }) {
   await exigerAdmin(request, env); const db = await C.base(env), b = await lireJson(request);
