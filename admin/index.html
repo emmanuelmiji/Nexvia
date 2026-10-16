@@ -242,7 +242,12 @@
   let waFiltre = "a_traiter", waOuverte = null;
   const heureWa = iso => { if (!iso) return ""; const t = new Date(iso), auj = new Date(); return t.toDateString() === auj.toDateString() ? t.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" }) : t.toLocaleDateString("fr-FR", { day: "numeric", month: "short" }) + " " + t.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" }); };
   const STATUT_WA = { a_traiter: ["À traiter", "bad"], ia: ["Géré par le robot", "gris"], traite: ["Traité", "ok"] };
-  function messagesBloc() {
+  function refWa(c) { return "WA-" + String(c.id || 0).padStart(4, "0"); }
+    function lienAgentWa(c) {
+      const t = "Bonjour, je suis agent Nexvia RDC. Je vous contacte au sujet de votre demande (référence " + refWa(c) + ")" + (c.libelle ? " : " + c.libelle.toLowerCase() : "") + ".\n\n";
+      return "https://wa.me/" + c.phone + "?text=" + encodeURIComponent(t);
+    }
+    function messagesBloc() {
     const zone = h("div", { class: "wa-zone" });
     const alertes = [];
     if (!d.wa_configure) alertes.push(h("div", { class: "alerte warn" }, "WhatsApp n'est pas encore relié : les réglages Meta ne sont pas enregistrés dans Cloudflare. Les conversations apparaîtront ici dès que ce sera fait."));
@@ -276,14 +281,14 @@
       const changer = (statut, msg) => ev => { const b = ev.currentTarget; b.disabled = true; api("POST", "admin/wa/statut", { id, statut }).then(async () => { toast(msg); await charger(); }).catch(e => { toast(e.message, true); b.disabled = false; }); };
       th.append(...[
         h("div", { class: "wa-top" }, h("button", { class: "btn fantome small retour", onclick: () => { waOuverte = null; th.parentNode.classList.remove("ouvert"); } }, "← Liste"),
-          h("div", { class: "who" }, h("b", {}, c.nom || "Sans nom"), h("small", {}, "+" + c.phone)),
+          h("div", { class: "who" }, h("b", {}, c.nom || "Sans nom"), h("small", {}, "+" + c.phone + " · réf. " + refWa(c))),
           h("span", { class: "badge " + STATUT_WA[c.statut][1] }, STATUT_WA[c.statut][0])),
         c.libelle || c.resume ? h("div", { class: "wa-resume" }, c.libelle ? h("b", {}, c.libelle) : null, c.resume ? h("span", {}, c.resume) : null) : null,
         h("div", { class: "wa-msgs" }, r.messages.map(m => h("div", { class: "wa-b " + m.role }, h("div", {}, m.texte), h("small", {}, ({ client: "Client", ia: "Robot", agent: "Agent" })[m.role] + " · " + heureWa(m.created_at))))),
         h("div", { class: "wa-rep" }, champ, h("div", { class: "row" }, envoyer,
           c.statut !== "traite" ? h("button", { class: "btn alt small", onclick: changer("traite", "Marqué comme traité.") }, ic("ok", "sm"), "Marquer traité") : null,
           c.statut !== "ia" ? h("button", { class: "btn fantome small", onclick: changer("ia", "Rendu au robot.") }, "Rendre au robot") : null,
-          h("a", { class: "btn fantome small", href: "https://wa.me/" + c.phone, target: "_blank", rel: "noopener" }, ic("ext", "sm"), "Ouvrir dans WhatsApp")))].filter(Boolean));
+          h("a", { class: "btn fantome small", href: lienAgentWa(c), target: "_blank", rel: "noopener", title: "Ouvre votre WhatsApp habituel avec un message préparé, que vous pouvez modifier avant d'envoyer" }, ic("ext", "sm"), "Contacter depuis mon WhatsApp")))].filter(Boolean));
       const m = th.querySelector(".wa-msgs"); m.scrollTop = m.scrollHeight;
       if (!silencieux) zone.querySelectorAll(".wa-it").forEach(b => { if (b.querySelector("b") && (b.querySelector("b").textContent === (c.nom || "+" + c.phone))) b.classList.add("on"); });
     }

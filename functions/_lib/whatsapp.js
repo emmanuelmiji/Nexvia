@@ -64,6 +64,7 @@ export function consigne() {
     "Tu es l'assistant WhatsApp de Nexvia RDC, une application congolaise (Kinshasa). Tu réponds aux visiteurs et aux commerces.",
     "",
     "COMMENT RÉPONDRE",
+    "- Tu es un assistant virtuel (une IA), et tu ne le cache pas : si on te le demande, dis-le simplement. Tu converses comme une personne attentive, pas comme un menu : tu salues, tu reformules le besoin, tu réponds précisément à la question posée et tu proposes la suite utile. Pas de phrases toutes faites.",
     "- Français simple et chaleureux, vouvoiement. Si la personne écrit en anglais, réponds en anglais.",
     "- Réponses courtes, adaptées à WhatsApp (en général moins de 600 caractères). Pas de titres, pas de tableaux. Au plus un emoji.",
     "- Utilise UNIQUEMENT les informations de la section INFORMATIONS ci-dessous. Si l'information n'y est pas, ne l'invente jamais (ni prix, ni délai, ni fonctionnalité) : dis-le simplement et passe la main à un agent.",
@@ -76,7 +77,7 @@ export function consigne() {
     "- Toujours pour : compte suspendu ou supprimé, mot de passe oublié, paiement non reconnu ou référence introuvable, plainte, fiche incorrecte, suppression de données personnelles, tout sujet de sécurité, et toute demande dont la réponse n'est pas dans les informations.",
     "- Avant de passer la main, pose au plus deux ou trois questions utiles, une à la fois : l'adresse e-mail du compte (ou l'identifiant du type NX-ABC123 s'il le connaît), le nom du commerce, ce qui s'est passé. Si la personne a déjà tout dit, appelle l'outil directement.",
     "- Pour un code de vérification non reçu, donne d'abord les conseils (spam, orthographe de l'adresse, attendre 60 secondes pour redemander). Passe la main seulement si cela ne règle pas le problème.",
-    "- Quand tu appelles l'outil, n'écris aucun texte : un message de confirmation est envoyé automatiquement.",
+    "- Quand tu appelles l'outil, n'écris aucun texte : un message de confirmation avec la référence du dossier est envoyé automatiquement. Ne donne jamais de numéro de téléphone d'agent.",
     "- Pour les questions simples dont la réponse est dans les informations, réponds toi-même, sans agent.",
     "",
     "INFORMATIONS",
@@ -86,7 +87,7 @@ export function consigne() {
 
 export const OUTIL = {
   name: "passer_a_un_agent",
-  description: "Transmet la conversation à un agent humain de Nexvia, qui recontactera la personne sur WhatsApp. À utiliser pour les cas sensibles ou quand la réponse n'est pas dans les informations.",
+  description: "Transmet la conversation à un agent humain de Nexvia, qui contactera la personne. À utiliser pour les cas sensibles ou quand la réponse n'est pas dans les informations.",
   input_schema: {
     type: "object",
     properties: {
@@ -98,14 +99,15 @@ export const OUTIL = {
   },
 };
 
+export const refConv = conv => "WA-" + String(conv && conv.id || 0).padStart(4, "0");
 const ACCUSE = {
-  defaut: "Merci, votre demande est bien enregistrée. Un agent de Nexvia va vous recontacter ici sur WhatsApp dès que possible.",
-  compte_suspendu: "Nous avons bien pris en compte votre situation. Un agent va examiner votre dossier et vous recontacter ici sur WhatsApp dès que possible.",
-  compte_supprime: "Nous avons bien pris en compte votre situation. Un agent va examiner votre dossier et vous recontacter ici sur WhatsApp dès que possible.",
+  defaut: "Merci, votre demande est bien enregistrée. Un agent de Nexvia va vous contacter dans les plus brefs délais.",
+  compte_suspendu: "Nous avons bien pris en compte votre situation. Un agent va examiner votre dossier et vous contacter dans les plus brefs délais.",
+  compte_supprime: "Nous avons bien pris en compte votre situation. Un agent va examiner votre dossier et vous contacter dans les plus brefs délais.",
   code_adresse: "Merci, nous avons bien reçu votre code. L'équipe le vérifie et valide votre adresse sous 48 à 72 heures.",
-  media: "Merci, nous avons bien reçu votre fichier. Un agent va l'examiner et vous recontacter ici dès que possible.",
+  media: "Merci, nous avons bien reçu votre fichier. Un agent va l'examiner et vous contacter dans les plus brefs délais.",
 };
-const accuse = cat => ACCUSE[cat] || ACCUSE.defaut;
+const accuse = (cat, conv) => (ACCUSE[cat] || ACCUSE.defaut) + (conv ? "\n\nVotre référence : " + refConv(conv) + ". Gardez-la, l'agent la citera en vous contactant." : "");
 
 // ---------- sécurité du webhook ----------
 export async function signatureValide(octets, entete, secret) {
@@ -219,7 +221,7 @@ export async function passerAgent(env, db, conv, { categorie, resume, email }) {
     if (a) {
       try {
         await Mail.envoyerCourriel(env, a, "Nexvia – WhatsApp à traiter : " + CATEGORIES[cat],
-          ["Un message WhatsApp attend un agent.", "", "Type : " + CATEGORIES[cat], "Numéro : +" + conv.phone + (conv.nom ? " (" + conv.nom + ")" : ""), "Résumé : " + (r || "—"), "", "Répondez depuis l'administration, onglet Messages : https://nexviardc.com/admin/"].join("\n"));
+          ["Un message WhatsApp attend un agent.", "", "Type : " + CATEGORIES[cat], "Référence : " + refConv(conv), "Numéro : +" + conv.phone + (conv.nom ? " (" + conv.nom + ")" : ""), "Résumé : " + (r || "—"), "", "Répondez depuis l'administration, onglet Messages : https://nexviardc.com/admin/"].join("\n"));
       } catch (e) { console.error("nexvia-wa-alerte", e && e.message || e); }
     }
   }
@@ -256,7 +258,7 @@ export async function traiterMessage(env, msg) {
   // Un agent a déjà la main : on enregistre, on confirme au plus une fois toutes les 12 heures, sans appeler l'IA.
   if (conv.statut === "a_traiter") {
     const dernier = await db.prepare("SELECT created_at FROM wa_messages WHERE conv_id = ? AND role IN ('ia','agent') ORDER BY id DESC LIMIT 1").bind(conv.id).first();
-    if (!dernier || Date.now() - Date.parse(dernier.created_at) > 12 * 3600e3) await repondre(env, db, conv, accuse("defaut"), "ia");
+    if (!dernier || Date.now() - Date.parse(dernier.created_at) > 12 * 3600e3) await repondre(env, db, conv, accuse("defaut", conv), "ia");
     return "en_attente_agent";
   }
   if (conv.statut === "traite") {
@@ -268,13 +270,13 @@ export async function traiterMessage(env, msg) {
   if (msg.type !== "text" && !msg.texte) {
     if (msg.type === "audio") { await repondre(env, db, conv, "Je ne peux pas écouter les messages vocaux. Pouvez-vous écrire votre demande en quelques mots ?"); return "audio"; }
     await passerAgent(env, db, conv, { categorie: "media", resume: "La personne a envoyé un message de type « " + msg.type + " » (non lu par l'assistant)." });
-    await repondre(env, db, conv, accuse("media")); return "media";
+    await repondre(env, db, conv, accuse("media", conv)); return "media";
   }
 
   // Code d'adresse envoyé par un commerce : l'équipe le vérifie, l'IA n'intervient pas
   if (RE_CODE_ADRESSE.test(msg.texte)) {
     await passerAgent(env, db, conv, { categorie: "code_adresse", resume: "Le commerce a envoyé son code d'adresse : NX-" + msg.texte.match(RE_CODE_ADRESSE)[1] + ". À rapprocher de la validation d'adresse." });
-    await repondre(env, db, conv, accuse("code_adresse")); return "code_adresse";
+    await repondre(env, db, conv, accuse("code_adresse", conv)); return "code_adresse";
   }
 
   // Limite par personne (anti-abus) : silence au-delà
@@ -283,7 +285,7 @@ export async function traiterMessage(env, msg) {
   // IA indisponible (clé absente, interrupteur coupé ou plafond du jour atteint) : on passe la main
   if (!(await iaDisponible(env, db))) {
     await passerAgent(env, db, conv, { categorie: "autre", resume: "Assistant indisponible : message à traiter par un agent. Dernier message : " + msg.texte.slice(0, 300) });
-    await repondre(env, db, conv, accuse("defaut")); return "ia_indisponible";
+    await repondre(env, db, conv, accuse("defaut", conv)); return "ia_indisponible";
   }
 
   const lignes = (await db.prepare("SELECT role, texte FROM wa_messages WHERE conv_id = ? ORDER BY id DESC LIMIT ?").bind(conv.id, HISTORIQUE).all()).results.reverse();
@@ -293,15 +295,15 @@ export async function traiterMessage(env, msg) {
     console.error("nexvia-wa-ia", e && e.message || e);
     await journaliser(env, "ia_erreur", String(e && e.message || e));
     await passerAgent(env, db, conv, { categorie: "autre", resume: "Erreur technique de l'assistant. Dernier message : " + msg.texte.slice(0, 300) });
-    await repondre(env, db, conv, accuse("defaut")); return "ia_erreur";
+    await repondre(env, db, conv, accuse("defaut", conv)); return "ia_erreur";
   }
   if (r.outil) {
     const cat = await passerAgent(env, db, conv, { categorie: r.outil.categorie, resume: r.outil.resume, email: r.outil.email_compte });
-    await repondre(env, db, conv, accuse(cat)); return "agent";
+    await repondre(env, db, conv, accuse(cat, conv)); return "agent";
   }
   if (r.texte) { await repondre(env, db, conv, r.texte); return "reponse"; }
   await passerAgent(env, db, conv, { categorie: "autre", resume: "L'assistant n'a pas su répondre. Dernier message : " + msg.texte.slice(0, 300) });
-  await repondre(env, db, conv, accuse("defaut")); return "agent";
+  await repondre(env, db, conv, accuse("defaut", conv)); return "agent";
 }
 
 export async function traiterPayload(env, payload) {
