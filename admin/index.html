@@ -75,10 +75,10 @@
       h("div", { class: "q-h" }, h("div", {}, h("h3", {}, x.marque_nom), h("div", { class: "by" }, x.email + (x.user_tel ? " · " + x.user_tel : ""))), h("div", { class: "chips" }, h("span", { class: "badge or" }, nomPlan + " · " + dollars(PRIX[x.plan])))),
       h("dl", { class: "meta" }, ligneMeta("paiement", "Référence", h("span", { class: "code" }, x.ref)), ligneMeta("horloge", "Demande du", date(x.created_at)), x.motif ? ligneMeta("alerte", "Motif", x.motif) : null),
       h("div", { class: "q-f" },
-        bouton("teal small", "ok", "Activer à la main", ev => { dialogue({ titre: "Activer l'abonnement " + nomPlan + " ?", texte: "Pour « " + x.marque_nom + " ». Vérifiez d'abord que le paiement est bien arrivé dans Zola.", bouton: "Activer l'abonnement" }).then(v => { if (v) agir(ev.currentTarget, () => api("POST", "admin/activer", { demande_id: x.id }), "Abonnement activé."); }); }),
+        bouton("teal small", "ok", "Activer à la main", ev => { const bt = ev.currentTarget; dialogue({ titre: "Activer l'abonnement " + nomPlan + " ?", texte: "Pour « " + x.marque_nom + " ». Vérifiez d'abord que le paiement est bien arrivé dans Zola.", bouton: "Activer l'abonnement" }).then(v => { if (v) agir(bt, () => api("POST", "admin/activer", { demande_id: x.id }), "Abonnement activé."); }); }),
         h("a", { class: "btn wa small", href: wa(msg, num.length >= 9 ? num : undefined), target: "_blank", rel: "noopener" }, ic("envoi", "sm"), "Écrire au commerce"),
         h("span", { class: "sp" }),
-        bouton("danger small", null, "Rejeter", ev => { dialogue({ titre: "Rejeter cette demande ?", texte: "Le motif est enregistré dans le dossier.", bouton: "Rejeter", style: "dg", champ: { label: "Motif du rejet", defaut: "Paiement introuvable chez Zola", requis: true } }).then(n => { if (n !== null) agir(ev.currentTarget, () => api("POST", "admin/rejeter", { demande_id: x.id, note: n }), "Demande rejetée."); }); })));
+        bouton("danger small", null, "Rejeter", ev => { const bt = ev.currentTarget; dialogue({ titre: "Rejeter cette demande ?", texte: "Le motif est enregistré dans le dossier.", bouton: "Rejeter", style: "dg", champ: { label: "Motif du rejet", defaut: "Paiement introuvable chez Zola", requis: true } }).then(n => { if (n !== null) agir(bt, () => api("POST", "admin/rejeter", { demande_id: x.id, note: n }), "Demande rejetée."); }); })));
   }
   function importBloc() {
     const f = h("input", { type: "file", accept: ".csv,text/csv,text/plain", style: "display:none" }), res = h("div", {}), nomF = h("span", { class: "muted", style: "margin:0" }, "Aucun fichier choisi");
@@ -107,7 +107,7 @@
       h("div", { class: "q-f" },
         bouton("teal small", "ok", "Valider la marque", ev => agir(ev.currentTarget, () => api("POST", "admin/marque", { id: m.id, action: "valider" }), "Marque validée.")),
         h("span", { class: "sp" }),
-        bouton("danger small", null, "Refuser", ev => { dialogue({ titre: "Refuser cette marque ?", texte: "Le commerce verra ce motif.", bouton: "Refuser", style: "dg", champ: { label: "Motif du refus", placeholder: "Expliquez la raison au commerce", requis: false } }).then(n => { if (n !== null) agir(ev.currentTarget, () => api("POST", "admin/marque", { id: m.id, action: "refuser", note: n }), "Marque refusée."); }); })));
+        bouton("danger small", null, "Refuser", ev => { const bt = ev.currentTarget; dialogue({ titre: "Refuser cette marque ?", texte: "Le commerce verra ce motif.", bouton: "Refuser", style: "dg", champ: { label: "Motif du refus", placeholder: "Expliquez la raison au commerce", requis: false } }).then(n => { if (n !== null) agir(bt, () => api("POST", "admin/marque", { id: m.id, action: "refuser", note: n }), "Marque refusée."); }); })));
   }
   const galerie = (ids, cls) => ids && ids.length ? h("div", { class: "photos " + (cls || "") }, ids.map(id => h("a", { href: "/api/photo/" + id, target: "_blank", rel: "noopener", class: "ph" }, h("img", { src: "/api/photo/" + id, alt: "Photo", loading: "lazy" })))) : null;
   function carteAdresse(a) {
@@ -130,7 +130,7 @@
         }),
         a.tel_verifie ? null : bouton("alt small", "tel", "Code reçu : numéro vérifié", ev => agir(ev.currentTarget, () => api("POST", "admin/adresse", { id: a.id, action: "tel_ok" }), "Numéro marqué vérifié.")),
         h("span", { class: "sp" }),
-        bouton("danger small", null, "Refuser", ev => { dialogue({ titre: "Refuser cette adresse ?", texte: "Le commerce verra ce motif.", bouton: "Refuser", style: "dg", champ: { label: "Motif du refus", placeholder: "Expliquez la raison au commerce" } }).then(n => { if (n !== null) agir(ev.currentTarget, () => api("POST", "admin/adresse", { id: a.id, action: "refuser", note: n }), "Adresse refusée."); }); })));
+        bouton("danger small", null, "Refuser", ev => { const bt = ev.currentTarget; dialogue({ titre: "Refuser cette adresse ?", texte: "Le commerce verra ce motif.", bouton: "Refuser", style: "dg", champ: { label: "Motif du refus", placeholder: "Expliquez la raison au commerce" } }).then(n => { if (n !== null) agir(bt, () => api("POST", "admin/adresse", { id: a.id, action: "refuser", note: n }), "Adresse refusée."); }); })));
   }
 
   // ---------- gestion des comptes ----------
