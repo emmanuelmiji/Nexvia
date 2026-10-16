@@ -31,6 +31,7 @@
     note: "M6 3h9l4 4v14H6zM14 3v5h5M9 13h7M9 17h5", photo: "M4 7h3l1.5-2h7L17 7h3v12H4zM12 16.500a3.500 3.500 0 1 0 0-7 3.500 3.500 0 0 0 0 7z",
     envoi: "M4 12 20 4l-4 16-4.500-6.500zM11.500 13.500 20 4", ext: "M14 4h6v6M20 4l-9 9M18 14v5H5V6h5",
     ok: "M5 12.500l4.500 4.500L19 7.500", alerte: "M12 4 2.500 20h19zM12 10v4.500M12 17.500h.01", fichier: "M7 3h7l5 5v13H7zM14 3v5h5M12 17v-5M9.500 14.500 12 12l2.500 2.500",
+    msg: "M4 5h16v11H9l-5 4zM8 9.500h8M8 12.500h5",
     marque: "M4 9.500 5.500 4h13L20 9.500M4 9.500a2.700 2.700 0 0 0 5.300 0 2.700 2.700 0 0 0 5.400 0 2.700 2.700 0 0 0 5.300 0M5 12.500V20h14v-7.500"
   };
   const ic = (n, cls) => { const e = document.createElementNS("http://www.w3.org/2000/svg", "svg"); e.setAttribute("viewBox", "0 0 24 24"); e.setAttribute("class", "ic " + (cls || "")); e.setAttribute("aria-hidden", "true"); const p = document.createElementNS("http://www.w3.org/2000/svg", "path"); p.setAttribute("d", IC[n]); e.append(p); return e; };
@@ -219,7 +220,7 @@
   // ---------- accueil ----------
   function accueil(s, nPay, nVal) {
     const ligne = (ico, titre, sous, n, cible, chaud) => h("li", {}, h("div", { class: "pt" + (chaud && n ? " hot" : "") }, ic(ico)), h("div", { class: "tx" }, h("b", {}, titre), h("span", {}, sous)), h("div", { class: "num" }, String(n)), h("button", { class: "btn small " + (n ? "gold" : "alt"), onclick: () => { onglet = cible; rendre(); window.scrollTo(0, 0); } }, n ? "Traiter" : "Ouvrir"));
-    const tout = nVal + nPay + (s.reclamations || 0);
+    const tout = nVal + nPay + (s.reclamations || 0) + (d.wa_a_traiter || 0);
     const kpi = (n, t) => h("div", { class: "kpi" }, h("span", {}, t), h("b", {}, String(n)));
     return [
       h("div", { class: "kpis" }, kpi(s.comptes, s.comptes > 1 ? "Comptes" : "Compte"), kpi(s.marques, s.marques > 1 ? "Commerces" : "Commerce"), kpi(s.adresses_validees, s.adresses_validees > 1 ? "Adresses validées" : "Adresse validée"), kpi(s.abonnes, s.abonnes > 1 ? "Abonnés actifs" : "Abonné actif")),
@@ -230,27 +231,80 @@
             ligne("marque", "Commerces à valider", "Nouvelles marques en attente de vérification", d.marques.length, "validations", true),
             ligne("lieu", "Adresses à valider", "Fiches, photos et numéros à contrôler", d.adresses.length, "validations", true),
             ligne("paiement", "Paiements à vérifier", "Références introuvables dans Zola", nPay, "paiements", true),
+            ligne("msg", "Messages WhatsApp", "Conversations passées à un agent", d.wa_a_traiter || 0, "messages", true),
             ligne("comptes", "Réclamations de comptes", "Personnes bannies qui contestent", s.reclamations || 0, "comptes", true))),
         h("div", {}, mailEtat(), raccourcis()))
     ];
   }
 
+
+  // ---------- messages WhatsApp ----------
+  let waFiltre = "a_traiter", waOuverte = null;
+  const heureWa = iso => { if (!iso) return ""; const t = new Date(iso), auj = new Date(); return t.toDateString() === auj.toDateString() ? t.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" }) : t.toLocaleDateString("fr-FR", { day: "numeric", month: "short" }) + " " + t.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" }); };
+  const STATUT_WA = { a_traiter: ["À traiter", "bad"], ia: ["Géré par le robot", "gris"], traite: ["Traité", "ok"] };
+  function messagesBloc() {
+    const zone = h("div", { class: "wa-zone" });
+    const alertes = [];
+    if (!d.wa_configure) alertes.push(h("div", { class: "alerte warn" }, "WhatsApp n'est pas encore relié : les réglages Meta ne sont pas enregistrés dans Cloudflare. Les conversations apparaîtront ici dès que ce sera fait."));
+    else if (!d.wa_ia) alertes.push(h("div", { class: "alerte warn" }, "Le robot est éteint (clé Anthropic absente ou WA_IA_ACTIVE = 0) : tous les messages arrivent ici pour un agent."));
+    async function liste() {
+      vider(zone);
+      let r; try { r = await api("GET", "admin/wa" + (waFiltre ? "?statut=" + waFiltre : "")); } catch (e) { zone.append(h("div", { class: "alerte bad" }, e.message)); return; }
+      const c = r.compte || {};
+      const onglets = h("div", { class: "wa-tabs" }, [["a_traiter", "À traiter"], ["traite", "Traités"], ["ia", "Robot"], ["", "Tous"]].map(([k, l]) => h("button", { class: waFiltre === k ? "on" : "", onclick: () => { waFiltre = k; waOuverte = null; liste(); } }, l, k && c[k] ? h("span", { class: "cnt" + (k === "a_traiter" ? " r" : "") }, c[k]) : null)));
+      const gauche = h("div", { class: "wa-list" }, r.conversations.length ? r.conversations.map(x => h("button", { class: "wa-it" + (waOuverte === x.id ? " on" : ""), onclick: () => ouvrir(x.id) },
+        h("div", { class: "av" }, initiales(x.nom || x.phone)),
+        h("div", { class: "tx" }, h("div", { class: "row between" }, h("b", {}, x.nom || "+" + x.phone), h("small", {}, heureWa(x.dernier_msg_at))),
+          h("span", { class: "ap" }, (x.libelle ? x.libelle + " · " : "") + (x.resume || x.dernier || "")), x.statut !== "ia" ? h("span", { class: "badge " + STATUT_WA[x.statut][1] }, STATUT_WA[x.statut][0]) : null),
+        x.non_lu ? h("span", { class: "pt-nl" }) : null)) : [vide(waFiltre === "a_traiter" ? "Rien à traiter pour le moment." : "Aucune conversation.")]);
+      const droite = h("div", { class: "wa-thread", id: "wa-thread" }, h("div", { class: "wa-vide" }, ic("msg"), "Choisissez une conversation."));
+      zone.append(onglets, h("div", { class: "wa-cols" + (waOuverte ? " ouvert" : "") }, gauche, droite));
+      if (waOuverte) ouvrir(waOuverte, true);
+    }
+    async function ouvrir(id, silencieux) {
+      waOuverte = id; const th = document.getElementById("wa-thread"); if (!th) return;
+      th.parentNode.classList.add("ouvert");
+      zone.querySelectorAll(".wa-it").forEach(b => b.classList.remove("on"));
+      let r; try { r = await api("GET", "admin/wa/conv?id=" + id); } catch (e) { toast(e.message, true); return; }
+      const c = r.conversation; vider(th);
+      const champ = h("textarea", { rows: 3, maxlength: 1500, placeholder: r.fenetre_ouverte ? "Votre réponse…" : "Plus de 24 h depuis son dernier message : WhatsApp n'autorise plus de réponse libre." });
+      champ.disabled = !r.fenetre_ouverte;
+      const envoyer = h("button", { class: "btn gold small", onclick: async ev => { const b = ev.currentTarget; if (!champ.value.trim()) return; b.disabled = true; try { await api("POST", "admin/wa/repondre", { id, texte: champ.value }); toast("Message envoyé."); await charger(); await ouvrir(id); } catch (e) { toast(e.message, true); b.disabled = false; } } }, ic("envoi", "sm"), "Envoyer");
+      envoyer.disabled = !r.fenetre_ouverte;
+      const changer = (statut, msg) => ev => { const b = ev.currentTarget; b.disabled = true; api("POST", "admin/wa/statut", { id, statut }).then(async () => { toast(msg); await charger(); }).catch(e => { toast(e.message, true); b.disabled = false; }); };
+      th.append(
+        h("div", { class: "wa-top" }, h("button", { class: "btn fantome small retour", onclick: () => { waOuverte = null; th.parentNode.classList.remove("ouvert"); } }, "← Liste"),
+          h("div", { class: "who" }, h("b", {}, c.nom || "Sans nom"), h("small", {}, "+" + c.phone)),
+          h("span", { class: "badge " + STATUT_WA[c.statut][1] }, STATUT_WA[c.statut][0])),
+        c.libelle || c.resume ? h("div", { class: "wa-resume" }, c.libelle ? h("b", {}, c.libelle) : null, c.resume ? h("span", {}, c.resume) : null) : null,
+        h("div", { class: "wa-msgs" }, r.messages.map(m => h("div", { class: "wa-b " + m.role }, h("div", {}, m.texte), h("small", {}, ({ client: "Client", ia: "Robot", agent: "Agent" })[m.role] + " · " + heureWa(m.created_at))))),
+        h("div", { class: "wa-rep" }, champ, h("div", { class: "row" }, envoyer,
+          c.statut !== "traite" ? h("button", { class: "btn alt small", onclick: changer("traite", "Marqué comme traité.") }, ic("ok", "sm"), "Marquer traité") : null,
+          c.statut !== "ia" ? h("button", { class: "btn fantome small", onclick: changer("ia", "Rendu au robot.") }, "Rendre au robot") : null,
+          h("a", { class: "btn fantome small", href: "https://wa.me/" + c.phone, target: "_blank", rel: "noopener" }, ic("ext", "sm"), "Ouvrir dans WhatsApp"))));
+      const m = th.querySelector(".wa-msgs"); m.scrollTop = m.scrollHeight;
+      if (!silencieux) zone.querySelectorAll(".wa-it").forEach(b => { if (b.querySelector("b") && (b.querySelector("b").textContent === (c.nom || "+" + c.phone))) b.classList.add("on"); });
+    }
+    liste();
+    return h("div", {}, ...alertes, zone);
+  }
+
   // ---------- page ----------
-  const NAV = [["accueil", "Accueil", "accueil", "Vue d'ensemble"], ["validations", "Validations", "valider"], ["paiements", "Paiements", "paiement"], ["comptes", "Comptes", "comptes"], ["recup", "Récupération", "cle"], ["outils", "Outils", "outils"]];
-  const TITRES = { accueil: ["Tableau de bord", null], validations: ["Validations", "Commerces et adresses en attente d'un contrôle avant publication."], paiements: ["Paiements", "Rapprochez les paiements Zola avec les abonnements demandés."], comptes: ["Comptes", "Rechercher, bannir ou supprimer un compte, et traiter les réclamations."], recup: ["Récupération de compte", "Aider une personne qui a perdu l'accès à son compte."], outils: ["Outils", "État du système et raccourcis utiles."] };
+  const NAV = [["accueil", "Accueil", "accueil", "Vue d'ensemble"], ["validations", "Validations", "valider"], ["paiements", "Paiements", "paiement"], ["messages", "Messages", "msg"], ["comptes", "Comptes", "comptes"], ["recup", "Récupération", "cle"], ["outils", "Outils", "outils"]];
+  const TITRES = { accueil: ["Tableau de bord", null], validations: ["Validations", "Commerces et adresses en attente d'un contrôle avant publication."], messages: ["Messages WhatsApp", "Conversations que le robot a passées à un agent."], paiements: ["Paiements", "Rapprochez les paiements Zola avec les abonnements demandés."], comptes: ["Comptes", "Rechercher, bannir ou supprimer un compte, et traiter les réclamations."], recup: ["Récupération de compte", "Aider une personne qui a perdu l'accès à son compte."], outils: ["Outils", "État du système et raccourcis utiles."] };
   function rendre() {
     const keep = window.scrollY;
     vider(app);
     const s = d.stats, nPay = d.a_verifier.length, nVal = d.marques.length + d.adresses.length;
-    const nombres = { validations: [nVal, ""], paiements: [nPay, ""], comptes: [s.reclamations || 0, "r"] };
+    const nombres = { validations: [nVal, ""], paiements: [nPay, ""], messages: [d.wa_a_traiter || 0, "r"], comptes: [s.reclamations || 0, "r"] };
     const aller = cle => { onglet = cle; rendre(); window.scrollTo(0, 0); };
     const marque = (cls) => h("a", { class: cls, href: "/" }, drapeau(30), h("span", {}, h("b", {}, "Nexvia RDC"), h("small", {}, "Administration")));
     const side = h("aside", { class: "side" }, marque("brand"),
-      h("div", { class: "grp" }, "Travail"), ...NAV.slice(0, 3).map(([k, l, i]) => h("button", { class: "nv" + (onglet === k ? " on" : ""), onclick: () => aller(k) }, ic(i), l, nombres[k] && nombres[k][0] ? h("span", { class: "n " + nombres[k][1] }, nombres[k][0]) : null)),
-      h("div", { class: "grp" }, "Communauté"), ...NAV.slice(3, 5).map(([k, l, i]) => h("button", { class: "nv" + (onglet === k ? " on" : ""), onclick: () => aller(k) }, ic(i), l, nombres[k] && nombres[k][0] ? h("span", { class: "n " + nombres[k][1] }, nombres[k][0]) : null)),
+      h("div", { class: "grp" }, "Travail"), ...NAV.slice(0, 4).map(([k, l, i]) => h("button", { class: "nv" + (onglet === k ? " on" : ""), onclick: () => aller(k) }, ic(i), l, nombres[k] && nombres[k][0] ? h("span", { class: "n " + nombres[k][1] }, nombres[k][0]) : null)),
+      h("div", { class: "grp" }, "Communauté"), ...NAV.slice(4, 6).map(([k, l, i]) => h("button", { class: "nv" + (onglet === k ? " on" : ""), onclick: () => aller(k) }, ic(i), l, nombres[k] && nombres[k][0] ? h("span", { class: "n " + nombres[k][1] }, nombres[k][0]) : null)),
       h("div", { class: "grp" }, "Système"), h("button", { class: "nv" + (onglet === "outils" ? " on" : ""), onclick: () => aller("outils") }, ic("outils"), "Outils"),
       h("div", { class: "foot" }, h("a", { href: "/" }, ic("ext", "sm"), "Ouvrir l'application"), h("a", { href: "/compte/" }, ic("comptes", "sm"), "Mon compte")));
-    const dock = h("nav", { class: "dock", "aria-label": "Sections" }, NAV.map(([k, l, i]) => h("button", { class: onglet === k ? "on" : "", onclick: () => aller(k), "aria-label": l }, ic(i), l === "Récupération" ? "Récup." : l, nombres[k] && nombres[k][0] ? h("span", { class: "n" }, nombres[k][0]) : null)));
+    const dock = h("nav", { class: "dock", "aria-label": "Sections" }, NAV.map(([k, l, i]) => h("button", { class: onglet === k ? "on" : "", onclick: () => aller(k), "aria-label": l }, ic(i), ({ "Récupération": "Récup.", Validations: "Valid.", Paiements: "Paie.", Messages: "Msg." })[l] || l, nombres[k] && nombres[k][0] ? h("span", { class: "n" }, nombres[k][0]) : null)));
     const [titre, sous] = TITRES[onglet];
     const jour = new Date().toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" });
     const page = h("div", { class: "page" }, h("div", { class: "head" }, h("div", {}, h("h1", {}, titre), h("p", {}, sous || (jour.charAt(0).toUpperCase() + jour.slice(1)))),
@@ -265,6 +319,7 @@
         h("div", {}, h("h2", { style: "font-size:15px;margin:0 0 10px;display:flex;gap:8px;align-items:center" }, "Paiements à vérifier", d.a_verifier.length ? h("span", { class: "cnt r" }, d.a_verifier.length) : null), ...(d.a_verifier.length ? d.a_verifier.map(ligneVerif) : [vide("Rien à vérifier.")]),
           h("div", { style: "height:14px" }), d.en_attente.length ? tableAttente() : panneau("En attente de l'import", 0, h("div", { class: "pb" }, vide("Aucun paiement en attente."))))));
     } else if (onglet === "comptes") page.append(comptesBloc());
+    else if (onglet === "messages") page.append(messagesBloc());
     else if (onglet === "recup") page.append(h("div", { class: "grid2" }, recupBloc(), mailEtat()));
     else page.append(h("div", { class: "grid2" }, raccourcis(), mailEtat()));
     app.append(side, h("div", { class: "main" }, h("div", { class: "topbar" }, marque("brand"), h("a", { class: "go", href: "/" }, "Application", ic("ext", "sm"))), page), dock);

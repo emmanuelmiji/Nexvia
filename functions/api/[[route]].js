@@ -2,6 +2,7 @@
 // Les routes /api/vue et /api/demande (statistiques anonymes) restent dans leurs propres fichiers.
 import * as C from "../_lib/core.js";
 import * as Mail from "../_lib/courriel.js";
+import * as WA from "../_lib/whatsapp.js";
 const { json, refuse, texte, lireJson, PLANS } = C;
 
 export async function onRequest({ request, env }) {
@@ -69,6 +70,10 @@ const ROUTES = {
   "POST admin/import": adminImport,
   "POST admin/motdepasse": adminMotDePasse,
   "GET public/commerces": publicCommerces,
+  "GET admin/wa": waListe,
+  "GET admin/wa/conv": waConversation,
+  "POST admin/wa/repondre": waRepondre,
+  "POST admin/wa/statut": waStatut,
 };
 
 // ---------- comptes ----------
@@ -382,7 +387,8 @@ async function fileAdmin({ request, env }) {
     const ph = await tout("SELECT id, adresse_id, type FROM photos WHERE adresse_id IN (" + adresses.map(() => "?").join(",") + ") ORDER BY id", ...adresses.map(a => a.id));
     for (const a of adresses) { a.photos = ph.filter(p => p.adresse_id === a.id && p.type !== "menu").map(p => p.id); a.menu_photos = ph.filter(p => p.adresse_id === a.id && p.type === "menu").map(p => p.id); a.plan_effectif = C.planEffectif(a); }
   }
-  return json({ ok: true, marques, adresses, a_verifier: averifier, en_attente: attente, imports, stats, whatsapp: C.WHATSAPP, mail_configure: Mail.mailConfigure(env) });
+  const waN = (await db.prepare("SELECT COUNT(*) AS n FROM wa_conversations WHERE statut = 'a_traiter'").first()).n;
+  return json({ ok: true, marques, adresses, a_verifier: averifier, en_attente: attente, imports, stats, whatsapp: C.WHATSAPP, mail_configure: Mail.mailConfigure(env), wa_a_traiter: waN, wa_configure: !!(env.WA_TOKEN && env.WA_PHONE_ID && env.WA_APP_SECRET && env.WA_VERIFY_TOKEN), wa_ia: !!env.ANTHROPIC_API_KEY && String(env.WA_IA_ACTIVE) !== "0" });
 }
 async function adminMarque({ request, env }) {
   await exigerAdmin(request, env); const db = await C.base(env), b = await lireJson(request);
@@ -555,4 +561,42 @@ async function publicCommerces({ env }) {
     sortie.push({ id: a.id, nom: a.nom, categorie: a.categorie, commune: a.commune, adresse: a.adresse, tel: a.tel, horaires: a.horaires, description: a.description, lat: a.lat, lng: a.lng, lieu_existant: a.lieu_existant, formule: nom, badge: p.badge, whatsapp: p.whatsapp, haut: p.haut, photos, menu_photos });
   }
   return new Response(JSON.stringify({ ok: true, commerces: sortie }), { headers: { "content-type": "application/json; charset=utf-8", "cache-control": "public, max-age=300" } });
+}
+
+// ---------- messages WhatsApp : conversations passées à un agent ----------
+async function waListe({ request, env, url }) {
+  await exigerAdmin(request, env); const db = await C.base(env);
+  const f = url.searchParams.get("statut"), statut = ["a_traiter", "traite", "ia"].includes(f) ? f : null;
+  const lignes = (await db.prepare("SELECT c.id, c.phone, c.nom, c.statut, c.categorie, c.resume, c.non_lu, c.dernier_msg_at, c.dernier_client_at, (SELECT texte FROM wa_messages m WHERE m.conv_id = c.id ORDER BY m.id DESC LIMIT 1) AS dernier FROM wa_conversations c" + (statut ? " WHERE c.statut = ?" : "") + " ORDER BY CASE c.statut WHEN 'a_traiter' THEN 0 ELSE 1 END, c.dernier_msg_at DESC LIMIT 80").bind(...(statut ? [statut] : [])).all()).results || [];
+  const nb = (await db.prepare("SELECT statut, COUNT(*) AS n FROM wa_conversations GROUP BY statut").all()).results || [];
+  return json({ ok: true, conversations: lignes.map(l => ({ ...l, libelle: WA.CATEGORIES[l.categorie] || null })), compte: Object.fromEntries(nb.map(x => [x.statut, x.n])) });
+}
+async function waConversation({ request, env, url }) {
+  await exigerAdmin(request, env); const db = await C.base(env), id = ent(url.searchParams.get("id"));
+  const c = await db.prepare("SELECT * FROM wa_conversations WHERE id = ?").bind(id).first();
+  if (!c) refuse("Conversation introuvable.", 404);
+  const messages = (await db.prepare("SELECT id, role, texte, created_at FROM wa_messages WHERE conv_id = ? ORDER BY id DESC LIMIT 120").bind(id).all()).results.reverse();
+  await db.prepare("UPDATE wa_conversations SET non_lu = 0 WHERE id = ?").bind(id).run();
+  const fenetre = c.dernier_client_at ? Date.now() - Date.parse(c.dernier_client_at) < 24 * 3600e3 : false;   // WhatsApp n'autorise une réponse libre que 24 h après le dernier message du client
+  return json({ ok: true, conversation: { ...c, libelle: WA.CATEGORIES[c.categorie] || null }, messages, fenetre_ouverte: fenetre });
+}
+async function waRepondre({ request, env }) {
+  await exigerAdmin(request, env); const db = await C.base(env), b = await lireJson(request, 6000);
+  const id = ent(b.id), t = texte(b.texte, 1500, true, "message");
+  const c = await db.prepare("SELECT * FROM wa_conversations WHERE id = ?").bind(id).first();
+  if (!c) refuse("Conversation introuvable.", 404);
+  if (!c.dernier_client_at || Date.now() - Date.parse(c.dernier_client_at) >= 24 * 3600e3) refuse("WhatsApp n'autorise une réponse libre que dans les 24 heures qui suivent le dernier message de la personne. Contactez-la autrement (appel ou SMS).", 409);
+  try { await WA.envoyerWhatsApp(env, c.phone, t); }
+  catch (e) { console.error("nexvia-wa-envoi", e && e.message || e); refuse("Le message n'a pas pu être envoyé : " + String(e && e.message || e).slice(0, 160), 502); }
+  const now = new Date().toISOString();
+  await db.prepare("INSERT INTO wa_messages (conv_id, role, texte, created_at) VALUES (?, 'agent', ?, ?)").bind(id, t, now).run();
+  await db.prepare("UPDATE wa_conversations SET dernier_msg_at = ?, non_lu = 0 WHERE id = ?").bind(now, id).run();
+  return json({ ok: true });
+}
+async function waStatut({ request, env }) {
+  await exigerAdmin(request, env); const db = await C.base(env), b = await lireJson(request);
+  const statut = ["traite", "ia", "a_traiter"].includes(b.statut) ? b.statut : refuse("Statut inconnu.");
+  const r = await db.prepare("UPDATE wa_conversations SET statut = ?, alerte_envoyee = ?, traite_at = ?, non_lu = 0 WHERE id = ?").bind(statut, statut === "a_traiter" ? 1 : 0, statut === "traite" ? new Date().toISOString() : null, ent(b.id)).run();
+  if (!r.meta.changes) refuse("Conversation introuvable.", 404);
+  return json({ ok: true });
 }

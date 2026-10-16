@@ -56,6 +56,10 @@ const SCHEMA = [
   `CREATE TABLE IF NOT EXISTS sanctions (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, email TEXT, nom TEXT, action TEXT NOT NULL, motif TEXT, jusqua TEXT, par TEXT, at TEXT NOT NULL)`,
   `CREATE TABLE IF NOT EXISTS reclamations (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL, message TEXT NOT NULL, statut TEXT NOT NULL DEFAULT 'en_attente', reponse TEXT, created_at TEXT NOT NULL, traite_at TEXT)`,
   `CREATE INDEX IF NOT EXISTS idx_reclam_user ON reclamations (user_id)`,
+  `CREATE TABLE IF NOT EXISTS wa_conversations (id INTEGER PRIMARY KEY AUTOINCREMENT, phone TEXT NOT NULL UNIQUE, nom TEXT, statut TEXT NOT NULL DEFAULT 'ia', categorie TEXT, resume TEXT, non_lu INTEGER NOT NULL DEFAULT 0, alerte_envoyee INTEGER NOT NULL DEFAULT 0, dernier_msg_at TEXT, dernier_client_at TEXT, created_at TEXT NOT NULL, traite_at TEXT)`,
+  `CREATE TABLE IF NOT EXISTS wa_messages (id INTEGER PRIMARY KEY AUTOINCREMENT, conv_id INTEGER NOT NULL, role TEXT NOT NULL, texte TEXT NOT NULL, wamid TEXT UNIQUE, created_at TEXT NOT NULL)`,
+  `CREATE INDEX IF NOT EXISTS idx_wa_messages_conv ON wa_messages (conv_id, id)`,
+  `CREATE INDEX IF NOT EXISTS idx_wa_conv_statut ON wa_conversations (statut, dernier_msg_at)`,
   `CREATE TABLE IF NOT EXISTS imports (id INTEGER PRIMARY KEY AUTOINCREMENT, ts TEXT NOT NULL, lignes INTEGER NOT NULL, activees INTEGER NOT NULL, a_verifier INTEGER NOT NULL, par INTEGER)`,
 ];
 let schemaPret = null;
