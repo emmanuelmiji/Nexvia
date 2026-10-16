@@ -8,7 +8,7 @@ export const PLANS = {
 };
 // Totaux relevés sur la page de paiement Zola (frais ajoutés au client, environ 9,5 %). À confirmer avec Zola.
 export const TOTAL_AVEC_FRAIS = { standard: 3.61, premium: 5.80 };
-export const WHATSAPP = "243862675126";
+export const WHATSAPP = "243841385686";
 export const DUREE_JOURS = 30;
 // Communes ouvertes aux commerces (les autres sont affichées « bientôt »).
 export const COMMUNES_OUVERTES = ["Gombe"];

@@ -3,7 +3,7 @@
 window.NX = (function () {
   const CFG = {
     ZOLA_LIEN: "https://zolamoneytrans.com/smart_pay.html?to=nEDXgnNkGQRmXSGvrK9hgbEqPGp2", // lien de paiement du marchand
-    WHATSAPP: "243862675126",
+    WHATSAPP: "243841385686",
   };
   async function api(methode, chemin, corps) {
     const opt = { method: methode, headers: { "content-type": "application/json" }, credentials: "same-origin" };

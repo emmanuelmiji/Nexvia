@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#14213d">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Nexvia RDC">
+<title>Nexvia RDC – Lieux et services à Gombe, Kinshasa</title>
+<meta name="description" content="Nexvia RDC : l'application pour trouver restaurants, pharmacies, banques, hôtels et services à Gombe, Kinshasa. Plus de 350 lieux sur une carte.">
+<link rel="canonical" href="https://nexvia-rdc.pages.dev/">
+<meta property="og:type" content="website"><meta property="og:site_name" content="Nexvia RDC">
+<meta property="og:title" content="Nexvia RDC – Les lieux de Gombe dans votre poche">
+<meta property="og:description" content="Restaurants, pharmacies, banques, hôtels et services à Gombe, Kinshasa, réunis sur une seule carte.">
+<meta property="og:url" content="https://nexvia-rdc.pages.dev/"><meta property="og:locale" content="fr_CD">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="icon" href="icon-192.png" type="image/png">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/MarkerCluster.css">
+<style>
+  :root { --nav:#14213d; --gold:#f2a900; --teal:#1b998b; --osm:#6b7a90; --bg:#f4f6fa; --ink:#14213d; --muted:#5b6575; --line:#dde1e8; }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; margin: 0; }
+  body { display: flex; flex-direction: column; height: 100vh; height: 100dvh; font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif; color: var(--ink); background: var(--bg); overflow: hidden; }
+  button { font-family: inherit; }
+  :focus-visible { outline: 3px solid #4c8dff; outline-offset: 2px; }
+
+  #app { flex: 1; position: relative; min-height: 0; }
+  .screen { position: absolute; inset: 0; display: none; flex-direction: column; }
+  .screen.on { display: flex; }
+
+  /* ---------- barre du bas ---------- */
+  nav#tabs { display: flex; background: #fff; border-top: 1px solid var(--line); padding-bottom: env(safe-area-inset-bottom); z-index: 1900; box-shadow: 0 -2px 10px rgba(20,33,61,.06); }
+  nav#tabs { justify-content: center; }
+  nav#tabs button { flex: 1; max-width: 220px; border: 0; background: none; padding: 8px 4px 7px; color: var(--muted); font-size: .72rem; font-weight: 700; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 2px; }
+  nav#tabs button span.i { font-size: 1.35rem; line-height: 1.2; filter: grayscale(1) opacity(.7); }
+  nav#tabs button[aria-current="page"] { color: var(--nav); }
+  nav#tabs button[aria-current="page"] span.i { filter: none; }
+  nav#tabs button { position: relative; }
+  nav#tabs .cour { position: absolute; top: 3px; left: calc(50% + 6px); width: 15px; height: 15px; display: none; filter: drop-shadow(0 1px 1px rgba(0,0,0,.25)); }
+  nav#tabs button.standard .cour, nav#tabs button.premium .cour { display: block; }
+  nav#tabs button.standard .cour { color: #8e9bb0; }
+  nav#tabs button.premium .cour { color: #f2a900; }
+  #compteCorps { flex: 1; overflow-y: auto; padding: 14px; }
+  .cptc { background: #fff; border: 1px solid var(--line); border-radius: 16px; padding: 16px; margin-bottom: 12px; }
+  .cptc h3 { margin: 0 0 6px; font-size: 1.05rem; }
+  .cptc p { margin: 6px 0; font-size: .9rem; line-height: 1.45; color: #3b475e; }
+  .cptc ul { margin: 8px 0; padding-left: 18px; font-size: .88rem; color: #3b475e; }
+  .cptc .actions { flex-direction: column; }
+  .cptc .actions .btn { flex: none; display: block; padding: 13px 10px; }
+  .cptc .btn.or { background: linear-gradient(180deg, #ffd93d, #f2a900); color: #1c1c1c !important; }
+  .cptc .pill { display: inline-flex; align-items: center; gap: 5px; padding: 3px 11px 3px 8px; border-radius: 999px; font-weight: 800; font-size: .82rem; background: #eef1f6; color: #4a5568; }
+  .cptc .pill.premium { background: #fff2cc; color: #8a5a00; }
+  .cptc .pill svg { width: 15px; height: 15px; }
+  .cptc .pill.standard svg { color: #8e9bb0; }
+  .cptc .pill.premium svg { color: #f2a900; }
+  nav#tabs button[aria-current="page"]::after { content: ""; width: 26px; height: 3px; border-radius: 3px; background: var(--gold); margin-top: 1px; }
+
+  /* ---------- Découvrir ---------- */
+  #s-decouvrir { overflow-y: auto; -webkit-overflow-scrolling: touch; }
+  .hero { position: relative; flex: none; color: #fff; padding: 18px max(16px, calc((100% - 760px) / 2 + 16px)) 78px; background: radial-gradient(120% 90% at 85% 0%, #1790f0 0%, rgba(23,144,240,0) 60%), linear-gradient(180deg, #0a2a6b 0%, #0b57b5 62%, #1a86e0 100%); overflow: hidden; }
+  .hero .bande { position: absolute; z-index: 0; right: -34px; top: -30px; width: 58px; height: 330px; transform: rotate(36deg); transform-origin: top right; background: linear-gradient(90deg, #f7d618 0 15%, #ce1021 15% 85%, #f7d618 85%); opacity: .92; box-shadow: 0 0 24px rgba(0,0,0,.25); }
+  .hero .etoile { position: absolute; z-index: 0; right: 92px; top: 16px; width: 26px; height: 26px; opacity: .95; filter: drop-shadow(0 1px 3px rgba(0,0,0,.35)); }
+  .hero .salut { position: relative; z-index: 1; display: inline-flex; align-items: center; gap: 8px; margin-top: 14px; padding: 5px 12px 5px 6px; border-radius: 999px; background: rgba(255,255,255,.16); border: 1px solid rgba(255,255,255,.3); font-size: .82rem; font-weight: 700; backdrop-filter: blur(4px); }
+  .flag { border-radius: 3px; box-shadow: 0 0 0 1.5px rgba(255,255,255,.85), 0 1px 4px rgba(0,0,0,.35); flex: none; }
+  .hero .ciel { position: absolute; left: 0; right: 0; bottom: 0; width: 100%; height: 56px; }
+  .hero .marque { position: relative; z-index: 1; display: flex; align-items: center; gap: 8px; font-weight: 800; letter-spacing: .4px; font-size: 1rem; opacity: .95; }
+  .hero .marque svg { width: 26px; height: 26px; }
+  .hero h1 { position: relative; z-index: 1; margin: 10px 0 4px; font-size: 1.75rem; line-height: 1.15; text-shadow: 0 2px 8px rgba(0,0,0,.3); }
+  .hero p { position: relative; z-index: 1; margin: 0; max-width: 78%; font-size: .92rem; opacity: .95; }
+  .wax { height: 14px; flex: none; background: linear-gradient(180deg, #14213d 0 11px, #f7d618 11px 14px); }
+  .pied .wax { height: 30px; margin-bottom: 12px; background: url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 390 34%22 preserveAspectRatio=%22none%22%3E%3Cg fill=%22%2314213d%22%3E%3Crect x=%220%22 y=%2216%22 width=%2228%22 height=%2218%22/%3E%3Crect x=%2230%22 y=%228%22 width=%2218%22 height=%2226%22/%3E%3Crect x=%2250%22 y=%2218%22 width=%2230%22 height=%2216%22/%3E%3Crect x=%2282%22 y=%222%22 width=%2214%22 height=%2232%22/%3E%3Crect x=%2298%22 y=%2212%22 width=%2226%22 height=%2222%22/%3E%3Crect x=%22126%22 y=%2220%22 width=%2222%22 height=%2214%22/%3E%3Crect x=%22150%22 y=%226%22 width=%2220%22 height=%2228%22/%3E%3Crect x=%22172%22 y=%2214%22 width=%2230%22 height=%2220%22/%3E%3Crect x=%22204%22 y=%220%22 width=%2212%22 height=%2234%22/%3E%3Crect x=%22218%22 y=%2210%22 width=%2226%22 height=%2224%22/%3E%3Crect x=%22246%22 y=%2218%22 width=%2224%22 height=%2216%22/%3E%3Crect x=%22272%22 y=%224%22 width=%2218%22 height=%2230%22/%3E%3Crect x=%22292%22 y=%2214%22 width=%2230%22 height=%2220%22/%3E%3Crect x=%22324%22 y=%229%22 width=%2220%22 height=%2225%22/%3E%3Crect x=%22346%22 y=%2217%22 width=%2244%22 height=%2217%22/%3E%3C/g%3E%3Crect y=%2231%22 width=%22390%22 height=%223%22 fill=%22%23f7d618%22/%3E%3C/svg%3E") left bottom / auto 100% repeat-x; }
+  .drapeau { height: 5px; flex: none; background: linear-gradient(90deg, #2e9bff 0 60%, #f2a900 60% 80%, #e03c31 80% 100%); }
+  .rech { position: relative; z-index: 3; margin: -26px auto 0; width: calc(100% - 28px); max-width: 732px; }
+  .rech input, .bar input[type=search] { width: 100%; padding: 14px 18px; font-size: 1rem; border: 1.5px solid #c5ccd8; border-radius: 999px; color: var(--ink); background: #fff; font-family: inherit; }
+  .rech input { box-shadow: 0 6px 18px rgba(20,33,61,.18); border-color: transparent; }
+  .corps { padding: 6px 14px 22px; max-width: 760px; margin: 0 auto; width: 100%; }
+  .corps h2 { font-size: 1.02rem; margin: 20px 0 10px; display: flex; align-items: center; gap: 7px; }
+  .corps h2::before { content: "★"; color: var(--gold); font-size: 1rem; text-shadow: 0 0 0 #ce1021; }
+  .mission { position: relative; margin-top: 22px; padding: 18px 16px 16px; border-radius: 18px; color: #fff; overflow: hidden; background: linear-gradient(135deg, #0a2a6b 0%, #0b57b5 70%, #1a86e0 100%); box-shadow: 0 8px 22px rgba(11,87,181,.28); }
+  .mission::after { content: ""; position: absolute; right: -26px; top: -40px; width: 46px; height: 200px; transform: rotate(36deg); background: linear-gradient(90deg, #f7d618 0 15%, #ce1021 15% 85%, #f7d618 85%); opacity: .9; }
+  .mission .tt { position: relative; z-index: 1; display: flex; align-items: center; gap: 9px; font-weight: 800; font-size: 1.05rem; margin-bottom: 6px; }
+  .mission p { position: relative; z-index: 1; margin: 0 38px 12px 0; font-size: .86rem; line-height: 1.5; opacity: .96; }
+  .mission button { position: relative; z-index: 1; padding: 11px 16px; border: 0; border-radius: 999px; background: var(--gold); color: #14213d; font-weight: 800; font-size: .9rem; cursor: pointer; }
+  .pied { margin: 22px -14px 0; text-align: center; font-size: .78rem; color: var(--muted); }
+  .pied .wax { margin-bottom: 10px; }
+  #resHome { margin-top: 10px; }
+  .res { display: flex; gap: 10px; align-items: center; width: 100%; text-align: left; padding: 10px 12px; margin-bottom: 8px; background: #fff; border: 1px solid var(--line); border-radius: 12px; cursor: pointer; }
+  .res .e { flex: none; width: 38px; height: 38px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.15rem; }
+  .res b { display: block; font-size: .95rem; }
+  .res small { color: var(--muted); font-size: .78rem; }
+  .cats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+  .cat { border: 1px solid var(--line); background: #fff; box-shadow: 0 2px 8px rgba(20,33,61,.06); border-radius: 14px; padding: 10px 2px 8px; display: flex; flex-direction: column; align-items: center; gap: 6px; cursor: pointer; color: var(--ink); font-size: .72rem; font-weight: 700; text-align: center; line-height: 1.15; }
+  .cat .e { width: 42px; height: 42px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.3rem; }
+  .cat small { color: var(--muted); font-weight: 600; font-size: .68rem; }
+  .sub1 { margin: -4px 0 10px; font-size: .78rem; color: var(--muted, #6b7385); }
+  .pops { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 6px; scroll-snap-type: x proximity; margin: 0 -14px; padding-left: 14px; padding-right: 14px; }
+  .pop { box-shadow: 0 2px 10px rgba(20,33,61,.08); flex: none; width: 150px; scroll-snap-align: start; background: #fff; border: 1px solid var(--line); border-radius: 14px; overflow: hidden; text-align: left; cursor: pointer; padding: 0; }
+  .pop .top { height: 54px; display: flex; align-items: center; justify-content: center; font-size: 1.8rem; }
+  .pop .txt { padding: 8px 10px 10px; }
+  .pop b { display: block; font-size: .85rem; line-height: 1.2; }
+  .pop small { color: var(--muted); font-size: .72rem; display: block; margin-top: 3px; }
+  .badge.on { background: #e3f6ea; color: #136a39; margin-left: 6px; }
+  .badge.off { background: #fde8e6; color: #a8281d; margin-left: 6px; }
+  .pres { display: block; width: 100%; margin: 14px 0 0; padding: 13px 14px; border: 0; border-radius: 14px; background: #14213d; color: #fff; font-size: .95rem; font-weight: 800; font-family: inherit; cursor: pointer; box-shadow: 0 4px 12px rgba(20,33,61,.22); }
+  .contact { margin-top: 16px; background: #fff; border: 1.5px solid #dde3ee; border-radius: 16px; padding: 14px; }
+  .contact .tt { font-weight: 800; font-size: 1rem; margin-bottom: 4px; }
+  .contact p { margin: 0 0 10px; font-size: .84rem; line-height: 1.45; color: #3b475e; }
+  .contact .lignes { display: flex; gap: 8px; flex-wrap: wrap; }
+  .contact a.b { flex: 1 1 140px; text-align: center; padding: 11px 8px; border-radius: 10px; text-decoration: none; font-size: .86rem; font-weight: 700; background: #14213d; color: #fff; }
+  .contact a.b.alt { background: #fff; color: #14213d; border: 1.5px solid #14213d; }
+  .contact a.b.wa { display: block; flex: none; width: 100%; margin-bottom: 8px; background: #1faa59; color: #fff; font-size: .92rem; }
+  .contact .mail { margin-top: 10px; font-size: .78rem; color: #5b6578; word-break: break-all; }
+  .lien-signal { display: block; margin-top: 12px; text-align: center; font-size: .8rem; color: #5b6578; }
+  .note-bas { font-size: .74rem; color: var(--muted); line-height: 1.45; margin-top: 18px; }
+  .install { margin-top: 16px; background: #fff; border: 1px dashed #b9c2d3; border-radius: 12px; padding: 12px; font-size: .82rem; line-height: 1.4; }
+  .install button { margin-top: 8px; width: 100%; padding: 11px; border: 0; border-radius: 10px; background: var(--nav); color: #fff; font-weight: 700; font-size: .9rem; cursor: pointer; }
+
+  /* ---------- Carte ---------- */
+  .bar { position: relative; background: #fff; border-bottom: 1px solid var(--line); padding: 8px 10px 6px; flex: none; }
+  .bar input[type=search] { padding: 11px 16px; font-size: .95rem; }
+  .bar input[type=search]:focus-visible { outline-offset: 1px; }
+  .chips { display: flex; gap: 6px; overflow-x: auto; padding: 8px 0 2px; -webkit-overflow-scrolling: touch; }
+  .chips button { flex: none; border: 1.5px solid var(--nav); background: #fff; color: var(--nav); padding: 7px 12px; border-radius: 999px; font-size: .82rem; font-weight: 700; cursor: pointer; white-space: nowrap; }
+  .chips button[aria-pressed="true"] { background: var(--nav); color: #fff; }
+  .ligne2 { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 4px 8px; padding-top: 6px; }
+  .seg { flex: none; display: flex; border: 1.5px solid var(--nav); border-radius: 9px; overflow: hidden; }
+  .seg button { border: 0; background: #fff; color: var(--nav); padding: 7px 14px; font-size: .84rem; font-weight: 700; cursor: pointer; }
+  .seg button[aria-pressed="true"] { background: var(--nav); color: #fff; }
+  .opt { display: flex; align-items: center; gap: 7px; font-size: .8rem; color: var(--muted); }
+  .opt input { width: 17px; height: 17px; }
+  #sugg { display: none; position: absolute; left: 10px; right: 10px; top: 52px; z-index: 1700; background: #fff; border: 1px solid #c5ccd8; border-radius: 12px; box-shadow: 0 8px 22px rgba(0,0,0,.2); max-height: 300px; overflow-y: auto; }
+  #sugg button { display: block; width: 100%; text-align: left; padding: 10px 12px; border: 0; border-bottom: 1px solid #eef1f6; background: #fff; cursor: pointer; }
+  #sugg button:last-child { border-bottom: 0; }
+  #sugg b { display: block; font-size: .93rem; }
+  #sugg small { color: var(--muted); font-size: .76rem; }
+  #cartewrap { flex: 1; position: relative; min-height: 0; }
+  #map { position: absolute; inset: 0; }
+  #liste { position: absolute; inset: 0; display: none; overflow-y: auto; padding: 10px; background: var(--bg); }
+  #statut { flex: none; font-size: .72rem; padding: 5px 10px; background: #eef1f6; color: #3b4658; }
+  #erreur { display: none; padding: 20px; text-align: center; }
+  #moi { position: absolute; right: 12px; bottom: 36px; z-index: 1001; width: 46px; height: 46px; border-radius: 50%; border: 0; background: #fff; box-shadow: 0 2px 10px rgba(0,0,0,.35); font-size: 1.3rem; cursor: pointer; }
+
+  .ico { width: 100%; height: 100%; position: relative; border: 2.5px solid #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 1px 5px rgba(0,0,0,.55); line-height: 1; }
+  .ico.ver { border-color: #ffd54a; box-shadow: 0 0 0 2px #14213d, 0 2px 7px rgba(0,0,0,.55); }
+  .ico i { position: absolute; font-style: normal; border-radius: 50%; text-align: center; }
+  .ico .ok { right: -6px; top: -6px; width: 17px; height: 17px; background: #1b998b; color: #fff; font: 700 11px/14px system-ui, sans-serif; border: 1.5px solid #fff; }
+  .ico .tel { right: -5px; bottom: -5px; width: 16px; height: 16px; background: #fff; border: 1px solid #c5ccd8; font-size: 9px; line-height: 14px; }
+  .cl { width: 100%; height: 100%; border-radius: 50%; background: var(--nav); color: #fff; border: 3px solid var(--gold); display: flex; align-items: center; justify-content: center; font: 800 14px system-ui, sans-serif; box-shadow: 0 2px 8px rgba(0,0,0,.4); }
+  .mine { width: 100%; height: 100%; border-radius: 50%; background: #2f6fed; border: 3px solid #fff; box-shadow: 0 0 0 6px rgba(47,111,237,.25); }
+
+  /* ---------- fiche du bas ---------- */
+  #sheet { position: absolute; left: 0; right: 0; bottom: 0; z-index: 1800; background: #fff; border-radius: 20px 20px 0 0; box-shadow: 0 -6px 24px rgba(20,33,61,.25); max-height: 56%; overflow-y: auto; transform: translateY(105%); transition: transform .22s ease; padding: 14px 14px 16px; }
+  #sheet.open { transform: translateY(0); }
+  #sheet::before { content: ""; display: block; width: 40px; height: 4px; border-radius: 4px; background: #cfd6e2; margin: -4px auto 10px; }
+  #sheet .x, #sheet .fav { position: absolute; top: 10px; width: 36px; height: 36px; border-radius: 50%; border: 0; background: rgba(255,255,255,.92); box-shadow: 0 1px 5px rgba(0,0,0,.3); font-size: 1.05rem; cursor: pointer; z-index: 2; }
+  #sheet .x { right: 12px; }
+  #sheet .fav { right: 56px; color: #d6336c; font-size: 1.2rem; }
+  .fiche h2 { font-size: 1.08rem; margin: 0 0 4px; }
+  .photos { display: flex; gap: 6px; overflow-x: auto; scroll-snap-type: x mandatory; margin: 0 0 10px; }
+  .photos img { flex: none; width: 100%; max-width: 260px; height: 130px; object-fit: cover; border-radius: 10px; scroll-snap-align: start; background: #e8ebf1; }
+  .banniere { height: 74px; border-radius: 12px; margin-bottom: 10px; display: flex; align-items: center; justify-content: center; font-size: 2.2rem; }
+  .badge { display: inline-block; font-size: .72rem; font-weight: 700; padding: 3px 9px; border-radius: 999px; margin-bottom: 6px; }
+  .badge.ok { background: #d9f2ec; color: #0e5f55; }
+  .badge.ref { background: #fff1cf; color: #7a5200; }
+  .badge.osm { background: #e8ebf1; color: #4a5568; }
+  .badge.prem { background: #fff1cf; color: #7a5200; margin-left: 4px; }
+  .fiche .desc { color: #34405a; line-height: 1.4; }
+  .fiche .menu-titre { font-weight: 700; margin: 10px 0 4px; }
+  .fiche p { margin: 4px 0; font-size: .88rem; line-height: 1.38; }
+  .fiche .note, .item .note { font-size: .75rem; color: var(--muted); }
+  .actions { display: flex; gap: 6px; margin-top: 10px; }
+  .btn { flex: 1; text-align: center; padding: 11px 6px; border-radius: 10px; text-decoration: none; font-size: .88rem; font-weight: 700; background: var(--nav); color: #fff !important; border: 0; cursor: pointer; }
+  .btn.alt { background: #fff; color: var(--nav) !important; border: 1.5px solid var(--nav); }
+  .btn.wa { background: #1faa59; }
+  .item { background: #fff; border: 1px solid var(--line); border-left: 5px solid var(--osm); border-radius: 12px; padding: 12px; margin-bottom: 10px; }
+  .item h3 { margin: 0 0 4px; font-size: 1rem; }
+  .item p { margin: 3px 0; font-size: .88rem; line-height: 1.35; }
+  .vide { text-align: center; color: var(--muted); padding: 34px 14px; font-size: .92rem; line-height: 1.5; }
+
+  /* ---------- Favoris ---------- */
+  .tete { flex: none; background: var(--nav); color: #fff; padding: 16px 16px 14px; font-weight: 800; font-size: 1.15rem; }
+  #favList { flex: 1; overflow-y: auto; padding: 10px; }
+  .leaflet-container { font-family: inherit; }
+
+  /* ---------- Demande de commune ---------- */
+  .demcarte { margin-top: 16px; position: relative; overflow: hidden; background: linear-gradient(135deg, #0b57b5, #0a2a6b); border: 0; border-radius: 16px; padding: 16px 72px 16px 16px; color: #fff; box-shadow: 0 4px 14px rgba(10,42,107,.28); }
+  .demcarte::after { content: ""; position: absolute; top: 0; right: 0; bottom: 0; width: 64px; background: linear-gradient(118deg, transparent 0 34%, #f7d618 34% 45%, #ce1021 45% 76%, #f7d618 76% 87%, transparent 87%); }
+  .demcarte .tt { font-weight: 800; font-size: 1rem; margin-bottom: 4px; color: #fff; }
+  .demcarte p { margin: 0 0 12px; font-size: .84rem; line-height: 1.45; color: #dbe7ff; }
+  .demcarte button { position: relative; z-index: 1; padding: 10px 16px; border: 0; border-radius: 999px; background: #f7d618; color: #14213d; font-weight: 800; font-size: .88rem; cursor: pointer; }
+  #dem { position: fixed; inset: 0; z-index: 3000; display: none; align-items: flex-end; justify-content: center; background: rgba(10,20,45,.55); }
+  #dem.open { display: flex; }
+  #dem .boite { width: 100%; max-width: 560px; max-height: 88vh; overflow-y: auto; background: #fff; border-radius: 22px 22px 0 0; padding: 18px 16px calc(18px + env(safe-area-inset-bottom)); }
+  #dem h3 { margin: 0 0 6px; font-size: 1.1rem; }
+  #dem .intro { margin: 0 0 12px; font-size: .88rem; line-height: 1.45; color: #3b475e; }
+  #dem .grille { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
+  #dem .grille button { padding: 9px 13px; border-radius: 999px; border: 1.5px solid #cfd7e6; background: #fff; color: var(--ink); font-weight: 700; font-size: .84rem; cursor: pointer; }
+  #dem .grille button.on { background: var(--nav); border-color: var(--nav); color: #fff; }
+  #dem .grille button:disabled { opacity: .45; cursor: default; }
+  #dem .act { display: flex; gap: 10px; }
+  #dem .act button { flex: 1; padding: 12px; border-radius: 999px; border: 0; font-weight: 800; font-size: .92rem; cursor: pointer; }
+  #demEnvoi { background: var(--gold); color: #14213d; }
+  #demEnvoi:disabled { opacity: .45; cursor: default; }
+  #demFerme { background: #eef1f7; color: var(--ink); }
+  #demMsg { margin: 0 0 12px; font-size: .9rem; line-height: 1.45; font-weight: 600; }
+  #demMsg.ok { color: #1b7a43; } #demMsg.err { color: #b3261e; }
+  #dem .boite { border-top: 0; position: relative; }
+  #dem .boite::before { content: ""; position: absolute; top: 0; left: 0; right: 0; height: 8px; border-radius: 22px 22px 0 0; background: linear-gradient(90deg, #0b57b5 0 62%, #f7d618 62% 76%, #ce1021 76% 90%, #f7d618 90% 100%); }
+  #dem .boite { padding-top: 26px; }
+  #dem h3::before { content: "★ "; color: #f7d618; text-shadow: 0 0 1px #b8960b; }
+  #dem .grille button.on { background: #0b57b5; border-color: #0b57b5; }
+  /* ---------- Touches congolaises (accueil) ---------- */
+  #s-decouvrir { background: #faf6ee; }
+  .sep { height: 5px; border-radius: 5px; margin: 24px 0 2px; background: linear-gradient(90deg, #0b57b5 0 62%, #f7d618 62% 78%, #ce1021 78% 100%); opacity: .9; }
+  .contact { border-left: 6px solid #ce1021 !important; }
+  /* ---------- Cadre de la carte ---------- */
+  #cartewrap::before { content: ""; position: absolute; top: 0; left: 0; right: 0; height: 6px; z-index: 900; pointer-events: none; background: linear-gradient(180deg, #14213d 0 3px, #f7d618 3px 6px); }
+  #statut::before { content: ""; display: block; height: 24px; margin: -5px -10px 5px; background: url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 390 34%22 preserveAspectRatio=%22none%22%3E%3Cg fill=%22%2314213d%22%3E%3Crect x=%220%22 y=%2216%22 width=%2228%22 height=%2218%22/%3E%3Crect x=%2230%22 y=%228%22 width=%2218%22 height=%2226%22/%3E%3Crect x=%2250%22 y=%2218%22 width=%2230%22 height=%2216%22/%3E%3Crect x=%2282%22 y=%222%22 width=%2214%22 height=%2232%22/%3E%3Crect x=%2298%22 y=%2212%22 width=%2226%22 height=%2222%22/%3E%3Crect x=%22126%22 y=%2220%22 width=%2222%22 height=%2214%22/%3E%3Crect x=%22150%22 y=%226%22 width=%2220%22 height=%2228%22/%3E%3Crect x=%22172%22 y=%2214%22 width=%2230%22 height=%2220%22/%3E%3Crect x=%22204%22 y=%220%22 width=%2212%22 height=%2234%22/%3E%3Crect x=%22218%22 y=%2210%22 width=%2226%22 height=%2224%22/%3E%3Crect x=%22246%22 y=%2218%22 width=%2224%22 height=%2216%22/%3E%3Crect x=%22272%22 y=%224%22 width=%2218%22 height=%2230%22/%3E%3Crect x=%22292%22 y=%2214%22 width=%2230%22 height=%2220%22/%3E%3Crect x=%22324%22 y=%229%22 width=%2220%22 height=%2225%22/%3E%3Crect x=%22346%22 y=%2217%22 width=%2244%22 height=%2217%22/%3E%3C/g%3E%3Crect y=%2231%22 width=%22390%22 height=%223%22 fill=%22%23f7d618%22/%3E%3C/svg%3E") left bottom / auto 100% repeat-x, #fff; }
+  #cartewrap { box-shadow: inset 0 0 0 0 transparent; }
+  /* ---------- Favoris ---------- */
+  #s-favoris { background: #faf6ee; }
+  .tete { position: relative; overflow: hidden; background: linear-gradient(135deg, #0a2a6b 0%, #0b57b5 72%, #1a86e0 100%); border-bottom: 3px solid #f7d618; padding: 18px 16px 15px; }
+  .tete::after { content: ""; position: absolute; right: -22px; top: -36px; width: 40px; height: 170px; transform: rotate(36deg); background: linear-gradient(90deg, #f7d618 0 15%, #ce1021 15% 85%, #f7d618 85%); opacity: .92; }
+  .tete .tt { position: relative; z-index: 1; font-weight: 800; font-size: 1.2rem; }
+  .tete .sub { position: relative; z-index: 1; margin-top: 3px; font-size: .8rem; font-weight: 500; opacity: .92; }
+  .favvide { text-align: center; padding: 46px 22px 20px; color: #3b475e; }
+  .favvide .coeur { position: relative; width: 92px; height: 92px; margin: 0 auto 16px; border-radius: 50%; background: linear-gradient(135deg, #0b57b5, #0a2a6b); color: #ce1021; display: flex; align-items: center; justify-content: center; font-size: 2.6rem; box-shadow: 0 8px 20px rgba(10,42,107,.3); border: 3px solid #f7d618; }
+  .favvide .coeur span { position: absolute; top: -6px; right: -4px; width: 28px; height: 28px; border-radius: 50%; background: #f7d618; color: #0a2a6b; font-size: .95rem; display: flex; align-items: center; justify-content: center; }
+  .favvide b { display: block; font-size: 1.1rem; color: var(--ink); margin-bottom: 6px; }
+  .favvide p { margin: 0 auto 18px; max-width: 280px; font-size: .88rem; line-height: 1.5; }
+  .favvide button { padding: 12px 20px; border: 0; border-radius: 999px; background: #f7d618; color: #14213d; font-weight: 800; font-size: .92rem; cursor: pointer; box-shadow: 0 4px 12px rgba(10,42,107,.2); }
+</style>
+</head>
+<body>
+{{SYM}}
+<div id="app">
+
+  <!-- ===== DÉCOUVRIR ===== -->
+  <section class="screen on" id="s-decouvrir" aria-label="Découvrir">
+    <div class="hero">
+      <svg class="ciel" viewBox="0 0 600 46" preserveAspectRatio="xMidYMax slice" aria-hidden="true"><use href="#skyline"/></svg>
+      <div class="bande" aria-hidden="true"></div>
+      <svg class="etoile" viewBox="-11 -11 22 22" aria-hidden="true"><polygon points="0,-10 2.25,-3.09 9.51,-3.09 3.63,1.18 5.88,8.09 0,3.82 -5.88,8.09 -3.63,1.18 -9.51,-3.09 -2.25,-3.09" fill="#f7d618"/></svg>
+      <div class="marque">{{LOGO}}<span>Nexvia RDC</span></div>
+      <div class="salut"><svg class="flag " width="30" height="20" viewBox="0 0 60 40" aria-hidden="true"><rect width="60" height="40" fill="#0a8fe8"/><line x1="-4" y1="44" x2="64" y2="-4" stroke="#f7d618" stroke-width="13"/><line x1="-4" y1="44" x2="64" y2="-4" stroke="#ce1021" stroke-width="8"/><g transform="translate(11,11) scale(.62)"><polygon points="0,-10 2.25,-3.09 9.51,-3.09 3.63,1.18 5.88,8.09 0,3.82 -5.88,8.09 -3.63,1.18 -9.51,-3.09 -2.25,-3.09" fill="#f7d618"/></g></svg><span>Mbote ! Bienvenue à Kinshasa</span></div>
+      <h1>Que cherchez-vous&nbsp;?</h1>
+      <p>Restaurants, pharmacies et services à Gombe, Kinshasa</p>
+    </div>
+    <div class="wax"></div>
+    <div class="rech"><input type="search" id="rechercheHome" placeholder="Un lieu, une avenue, un type…" aria-label="Rechercher un lieu" autocomplete="off"></div>
+    <div class="corps">
+      <div id="resHome"></div>
+      <button type="button" id="pres" class="pres">📍 Voir les lieux près de moi</button>
+      <h2>Catégories</h2>
+      <div class="cats" id="cats"></div>
+      <div class="sep" aria-hidden="true"></div>
+      <h2>À la une</h2><p class="sub1">Notre sélection du moment, elle change chaque jour.</p>
+      <div class="pops" id="pops"></div>
+      <div class="mission">
+        <div class="tt"><svg class="flag " width="34" height="23" viewBox="0 0 60 40" aria-hidden="true"><rect width="60" height="40" fill="#0a8fe8"/><line x1="-4" y1="44" x2="64" y2="-4" stroke="#f7d618" stroke-width="13"/><line x1="-4" y1="44" x2="64" y2="-4" stroke="#ce1021" stroke-width="8"/><g transform="translate(11,11) scale(.62)"><polygon points="0,-10 2.25,-3.09 9.51,-3.09 3.63,1.18 5.88,8.09 0,3.82 -5.88,8.09 -3.63,1.18 -9.51,-3.09 -2.25,-3.09" fill="#f7d618"/></g></svg><span>Un projet congolais, fait à Kinshasa</span></div>
+        <p>Nexvia RDC est créé ici, par un Congolais, pour aider les Congolais à trouver près de chez eux ce dont ils ont besoin. Chaque partage fait grandir le projet. Merci de le soutenir !</p>
+        <button type="button" id="partager">📲 Partager Nexvia RDC</button>
+      </div>
+      <div class="sep" aria-hidden="true"></div>
+      <div class="contact">
+        <div class="tt">💬 Une question ? Un souci ?</div>
+        <p>Un lieu à corriger, un commerce à ajouter, une idée pour améliorer Nexvia RDC ? Écrivez-nous, votre message nous aide à faire grandir le projet.</p>
+        <div class="lignes"><a class="b wa" target="_blank" rel="noopener" href="https://wa.me/243841385686?text=Bonjour%20l%27%C3%A9quipe%20Nexvia%20RDC%20%F0%9F%91%8B%0A%0AJe%20vous%20%C3%A9cris%20au%20sujet%20de%20%3A%0A%28un%20lieu%20%C3%A0%20corriger%20/%20ajouter%20mon%20commerce%20/%20une%20id%C3%A9e%20/%20un%20probl%C3%A8me%29%0A%0AMon%20message%20%3A%0A">💬 Nous écrire sur WhatsApp</a><a class="b" href="mailto:contact@nexviardc.com?subject=Nexvia%20RDC%20%E2%80%93%20Message&body=Bonjour%20l%27%C3%A9quipe%20Nexvia%20RDC%2C%0A%0AMon%20message%20%3A%0A%0A">✉️ Nous écrire</a><a class="b alt" href="/compte/?mode=inscription&amp;type=commerce">➕ Ajouter mon commerce</a></div>
+        <div class="mail">WhatsApp : <b>+243 841 385 686</b><br>E-mail : <b>contact@nexviardc.com</b></div>
+      </div>
+      <div class="demcarte">
+        <div class="tt">🗺️ Votre commune n'est pas encore là ?</div>
+        <p>Nexvia RDC commence à Gombe. Dites-nous dans quelle commune vous voulez la voir arriver.</p>
+        <button type="button" id="btnDem">Demander une commune</button>
+      </div>
+      <div class="install" id="install">📲 <b>Installer Nexvia RDC sur votre téléphone</b><br><span id="installTxt">Dans le menu de votre navigateur, choisissez « Ajouter à l'écran d'accueil ». Nexvia RDC s'ouvrira alors comme une application.</span></div>
+      <p class="note-bas">Lieux « ✔ Vérifiés » : confirmés par l'équipe. « Référencés » : collectés, pas encore confirmés. « OpenStreetMap » : informations de la communauté. Appelez avant de vous déplacer.<br>Carte © contributeurs OpenStreetMap.</p>
+      <div class="pied"><div class="wax"></div>Nexvia RDC · Kinshasa, République démocratique du Congo<br>Contact : contact@nexviardc.com<br><span style="font-size:.9em;opacity:.85">À Gombe : <a href="/pharmacies-gombe/" style="color:inherit">Pharmacies</a> · <a href="/restaurants-gombe/" style="color:inherit">Restaurants</a> · <a href="/banques-gombe/" style="color:inherit">Banques</a> · <a href="/hotels-gombe/" style="color:inherit">Hôtels</a></span><br><a href="confidentialite.html" style="color:inherit">Politique de confidentialité</a></div>
+    </div>
+  </section>
+
+  <!-- ===== CARTE ===== -->
+  <section class="screen" id="s-carte" aria-label="Carte">
+    <div class="bar">
+      <input type="search" id="recherche" placeholder="Rechercher un lieu (nom, avenue, type)" aria-label="Rechercher un lieu" autocomplete="off">
+      <div id="sugg" role="listbox"></div>
+      <div class="chips" id="chips" role="group" aria-label="Catégories"></div>
+      <div class="ligne2">
+        <div class="seg"><button type="button" id="btnCarte" aria-pressed="true">🗺️ Carte</button><button type="button" id="btnListe" aria-pressed="false">📋 Liste</button></div>
+        <label class="opt"><input type="checkbox" id="verifies"> Vérifiés seulement</label>
+        <label class="opt"><input type="checkbox" id="ouverts"> Ouverts maintenant</label>
+      </div>
+    </div>
+    <div id="cartewrap">
+      <div id="map" role="application" aria-label="Carte des lieux"></div>
+      <div id="liste" aria-label="Liste des lieux"></div>
+      <button type="button" id="moi" aria-label="Ma position" title="Ma position">📍</button>
+    </div>
+    <div id="statut">Chargement…</div>
+    <div id="erreur">La carte n'a pas pu se charger. Vérifiez votre connexion internet puis rechargez la page.</div>
+  </section>
+
+  <!-- ===== FAVORIS ===== -->
+  <section class="screen" id="s-favoris" aria-label="Favoris">
+    <div class="tete"><div class="tt">❤️ Mes favoris</div><div class="sub" id="favSub">Vos adresses, toujours sous la main</div></div>
+    <div id="favList"></div>
+  </section>
+
+  <!-- ===== COMPTE ===== -->
+  <section class="screen" id="s-compte" aria-label="Compte">
+    <div class="tete"><div class="tt">👤 Mon compte</div><div class="sub" id="compteSub">Pour les commerces : présentez votre établissement</div></div>
+    <div id="compteCorps"></div>
+  </section>
+
+  <div id="sheet" role="dialog" aria-label="Fiche du lieu"></div>
+</div>
+
+<nav id="tabs" aria-label="Navigation">
+  <button type="button" data-tab="decouvrir" aria-current="page"><span class="i">🧭</span>Découvrir</button>
+  <button type="button" data-tab="carte"><span class="i">🗺️</span>Carte</button>
+  <button type="button" data-tab="favoris"><span class="i">❤️</span>Favoris</button>
+  <button type="button" data-tab="compte"><span class="i">👤</span>Compte<svg class="cour" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 8l4.5 4L12 5l4.5 7L21 8l-2 11H5L3 8z" fill="currentColor"/></svg></button>
+</nav>
+
+<div id="dem" role="dialog" aria-modal="true" aria-labelledby="demT">
+  <div class="boite">
+    <h3 id="demT">Demander une commune</h3>
+    <p class="intro" id="demIntro">Nexvia RDC commence à Gombe. Choisissez la commune où vous voulez la voir arriver : les plus demandées seront ajoutées en premier.</p>
+    <div class="grille" id="demGrille"></div>
+    <p id="demMsg" hidden></p>
+    <div class="act"><button type="button" id="demFerme">Fermer</button><button type="button" id="demEnvoi" disabled>Envoyer ma demande</button></div>
+  </div>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/leaflet.markercluster.js"></script>
+<script>
+{{JS}}
+</script>
+</body>
+</html>
