@@ -4,201 +4,271 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
-<meta name="theme-color" content="#0a2a6b">
+<meta name="theme-color" content="#0c1b3d">
 <title>Administration – Nexvia RDC</title>
 <link rel="stylesheet" href="/assets/nx.css">
+<link rel="stylesheet" href="/assets/admin.css">
 </head>
 <body>
-<div id="app"><main><p class="muted">Chargement…</p></main></div>
+<div id="app" class="adm"><div class="page"><p style="color:#5d6a82">Chargement…</p></div></div>
 <script src="/assets/nx.js"></script>
 <script>
 (async function () {
-  const { h, api, toast, entete, vider, wa, date, dollars, chiffres, drapeau, etoile, horairesJolis } = NX, app = document.getElementById("app");
+  const { h, api, toast, vider, wa, date, dollars, chiffres, drapeau, horairesJolis } = NX, app = document.getElementById("app");
   const NOM = { gratuit: "Gratuit", standard: "Standard", premium: "Premium" }, PRIX = { standard: 3.3, premium: 5.3 };
   const CAT = { restaurant: "Restaurant", pharmacie: "Pharmacie", banque: "Banque", hotel: "Hôtel", bar: "Bar / loisirs", ecole: "École", distributeur: "Distributeur", "station-service": "Station-service", autre: "Autre" };
-  let d = null, bilan = null, mdpTemp = null, onglet = null;
+  let d = null, bilan = null, onglet = null;
+
+  // ---------- icônes ----------
+  const IC = {
+    accueil: "M3 11.5 12 4l9 7.5M5.5 10v9.5h13V10", valider: "M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zM8 12.3l2.8 2.8L16.2 9.5",
+    paiement: "M3 7.5A2.5 2.5 0 0 1 5.5 5h13A2.5 2.5 0 0 1 21 7.5v9a2.5 2.5 0 0 1-2.5 2.5h-13A2.5 2.5 0 0 1 3 16.5zM3 10h18M7 15h3",
+    comptes: "M9 11a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7zM2.5 20c.6-3.4 3.2-5.2 6.5-5.2s5.9 1.8 6.5 5.2M16.5 4.4a3.5 3.5 0 0 1 0 6.7M18 14.9c1.9.6 3.2 2.2 3.5 5.1",
+    cle: "M14.5 9.5a4.5 4.5 0 1 1-1.9 3.7L4 21v-3h-2v-2.5L10 8.5A4.5 4.5 0 0 1 14.5 9.5zM16.5 8.5h.01", outils: "M14.7 6.3a4 4 0 0 0 4.9 4.9l-9.3 9.3a2.1 2.1 0 0 1-3-3zM14.7 6.3 17 4l3 3-2.3 2.3",
+    chercher: "M11 18a7 7 0 1 0 0-14 7 7 0 0 0 0 14zM20.5 20.5 16 16", lien: "M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1",
+    mail: "M4 6h16v12H4zM4 7l8 6 8-6", tel: "M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a1 1 0 0 1-1 1A15 15 0 0 1 4 5a1 1 0 0 1 1-1z",
+    lieu: "M12 21s7-6.2 7-11.5a7 7 0 1 0-14 0C5 14.800 12 21 12 21zM12 12a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5z", horloge: "M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zM12 7v5l3 2",
+    note: "M6 3h9l4 4v14H6zM14 3v5h5M9 13h7M9 17h5", photo: "M4 7h3l1.5-2h7L17 7h3v12H4zM12 16.500a3.500 3.500 0 1 0 0-7 3.500 3.500 0 0 0 0 7z",
+    envoi: "M4 12 20 4l-4 16-4.500-6.500zM11.500 13.500 20 4", ext: "M14 4h6v6M20 4l-9 9M18 14v5H5V6h5",
+    ok: "M5 12.500l4.500 4.500L19 7.500", alerte: "M12 4 2.500 20h19zM12 10v4.500M12 17.500h.01", fichier: "M7 3h7l5 5v13H7zM14 3v5h5M12 17v-5M9.500 14.500 12 12l2.500 2.500",
+    marque: "M4 9.500 5.500 4h13L20 9.500M4 9.500a2.700 2.700 0 0 0 5.300 0 2.700 2.700 0 0 0 5.400 0 2.700 2.700 0 0 0 5.300 0M5 12.500V20h14v-7.500"
+  };
+  const ic = (n, cls) => { const e = document.createElementNS("http://www.w3.org/2000/svg", "svg"); e.setAttribute("viewBox", "0 0 24 24"); e.setAttribute("class", "ic " + (cls || "")); e.setAttribute("aria-hidden", "true"); const p = document.createElementNS("http://www.w3.org/2000/svg", "path"); p.setAttribute("d", IC[n]); e.append(p); return e; };
+
+  // ---------- fenêtres de dialogue (remplacent confirm / prompt) ----------
+  function dialogue({ titre, texte, bouton = "Confirmer", style = "go", champ = null }) {
+    return new Promise(res => {
+      const ov = h("div", { class: "adm-ov", role: "presentation" }), err = h("div", { class: "err" });
+      const inp = champ ? h(champ.long ? "textarea" : "input", { type: "text", placeholder: champ.placeholder || "", maxlength: 300, rows: 3 }) : null; if (inp && champ.defaut) inp.value = champ.defaut;
+      const fin = v => { document.removeEventListener("keydown", cl); ov.remove(); res(v); };
+      const ok = () => { if (inp && champ.requis && !inp.value.trim()) { err.textContent = "Ce champ est obligatoire."; inp.focus(); return; } fin(inp ? inp.value : true); };
+      const cl = ev => { if (ev.key === "Escape") fin(null); };
+      const ouiBtn = h("button", { class: "btn " + style, onclick: ok }, bouton);
+      const box = h("div", { class: "adm-dlg", role: "dialog", "aria-modal": "true", "aria-label": titre }, h("h3", {}, titre), texte ? h("p", {}, texte) : null, champ ? [h("label", {}, champ.label || ""), inp, err] : null, h("div", { class: "bar" }, h("button", { class: "btn alt", onclick: () => fin(null) }, "Annuler"), ouiBtn));
+      ov.append(box); ov.addEventListener("mousedown", ev => { if (ev.target === ov) fin(null); }); document.addEventListener("keydown", cl);
+      if (inp) inp.addEventListener("keydown", ev => { if (ev.key === "Enter" && !champ.long) ok(); });
+      document.body.append(ov); (inp || ouiBtn).focus();
+    });
+  }
 
   async function charger() {
     try { d = await api("GET", "admin/file"); }
     catch (e) {
       if (e.status === 401) { location.href = "/compte/?suite=/admin/"; return; }
-      vider(app); app.append(h("main", {}, h("h1", {}, "Accès refusé"), h("div", { class: "alerte bad" }, e.message), h("p", {}, h("a", { href: "/" }, "Retour à la carte")))); return;
+      vider(app); app.append(h("div", { class: "page" }, h("h1", {}, "Accès refusé"), h("div", { class: "alerte bad" }, e.message), h("p", {}, h("a", { href: "/" }, "Retour à la carte")))); return;
     }
-    if (onglet === null) onglet = d.a_verifier.length ? "paiements" : (d.marques.length || d.adresses.length) ? "validations" : d.en_attente.length ? "paiements" : "validations";
+    if (onglet === null) onglet = "accueil";
     rendre();
   }
   async function agir(btn, fn, ok) { btn.disabled = true; try { await fn(); if (ok) toast(ok); await charger(); } catch (e) { toast(e.message, true); btn.disabled = false; } }
-  const pastille = n => n ? h("span", { class: "compteur" }, n) : null;
-  const vide = (icone, txt) => h("div", { class: "vide-ok" }, h("b", {}, icone), txt);
-  const sec = (txt, n) => h("h2", { class: "sec" }, etoile(16), txt, pastille(n));
+  const bouton = (cls, ico, txt, onclick) => h("button", { class: "btn " + cls, onclick }, ico ? ic(ico, "sm") : null, txt);
+  const panneau = (titre, n, ...corps) => h("section", { class: "panel" }, h("div", { class: "ph" }, h("h2", {}, titre, n ? h("span", { class: "cnt" }, n) : null)), ...corps);
+  const vide = (txt) => h("div", { class: "vide" }, ic("ok"), txt);
+  const ligneMeta = (ico, lib, val) => val ? h("div", {}, h("dt", {}, ic(ico, "sm"), lib), h("dd", {}, val)) : null;
 
   // ---------- paiements ----------
   function ligneVerif(x) {
     const nomPlan = NOM[x.plan] || x.plan;
     const msg = "Bonjour, concernant votre abonnement " + nomPlan + " sur Nexvia RDC (référence " + x.ref + ") : nous n'avons pas pu valider votre paiement. " + (x.motif || "") + " Pouvez-vous vérifier votre numéro de référence ou nous envoyer la capture du paiement ?";
     const num = chiffres(x.user_tel);
-    return h("div", { class: "card dem rouge" },
-      h("div", { class: "row between" }, h("h3", {}, x.marque_nom), h("span", { class: "badge gris" }, nomPlan + " · " + dollars(PRIX[x.plan]))),
-      h("p", { class: "muted" }, x.email + (x.user_tel ? " · " + x.user_tel : "") + " · " + date(x.created_at)),
-      h("p", {}, "Référence : ", h("span", { class: "code" }, x.ref)),
-      x.motif ? h("p", { class: "muted" }, "Motif : " + x.motif) : null,
-      h("div", { class: "row" },
-        h("button", { class: "btn teal small", onclick: ev => { if (confirm("Activer l'abonnement " + nomPlan + " pour « " + x.marque_nom + " » ? Vérifiez d'abord le paiement dans Zola.")) agir(ev.target, () => api("POST", "admin/activer", { demande_id: x.id }), "Abonnement activé."); } }, "Activer à la main"),
-        h("a", { class: "btn wa small", href: wa(msg, num.length >= 9 ? num : undefined), target: "_blank", rel: "noopener" }, "Écrire au commerce"),
-        h("button", { class: "btn danger small", onclick: ev => { const n = prompt("Motif du rejet (visible dans le dossier) :", "Paiement introuvable chez Zola"); if (n !== null) agir(ev.target, () => api("POST", "admin/rejeter", { demande_id: x.id, note: n }), "Demande rejetée."); } }, "Rejeter")));
+    return h("article", { class: "q rouge" },
+      h("div", { class: "q-h" }, h("div", {}, h("h3", {}, x.marque_nom), h("div", { class: "by" }, x.email + (x.user_tel ? " · " + x.user_tel : ""))), h("div", { class: "chips" }, h("span", { class: "badge or" }, nomPlan + " · " + dollars(PRIX[x.plan])))),
+      h("dl", { class: "meta" }, ligneMeta("paiement", "Référence", h("span", { class: "code" }, x.ref)), ligneMeta("horloge", "Demande du", date(x.created_at)), x.motif ? ligneMeta("alerte", "Motif", x.motif) : null),
+      h("div", { class: "q-f" },
+        bouton("teal small", "ok", "Activer à la main", ev => { dialogue({ titre: "Activer l'abonnement " + nomPlan + " ?", texte: "Pour « " + x.marque_nom + " ». Vérifiez d'abord que le paiement est bien arrivé dans Zola.", bouton: "Activer l'abonnement" }).then(v => { if (v) agir(ev.currentTarget, () => api("POST", "admin/activer", { demande_id: x.id }), "Abonnement activé."); }); }),
+        h("a", { class: "btn wa small", href: wa(msg, num.length >= 9 ? num : undefined), target: "_blank", rel: "noopener" }, ic("envoi", "sm"), "Écrire au commerce"),
+        h("span", { class: "sp" }),
+        bouton("danger small", null, "Rejeter", ev => { dialogue({ titre: "Rejeter cette demande ?", texte: "Le motif est enregistré dans le dossier.", bouton: "Rejeter", style: "dg", champ: { label: "Motif du rejet", defaut: "Paiement introuvable chez Zola", requis: true } }).then(n => { if (n !== null) agir(ev.currentTarget, () => api("POST", "admin/rejeter", { demande_id: x.id, note: n }), "Demande rejetée."); }); })));
   }
   function importBloc() {
-    const f = h("input", { type: "file", accept: ".csv,text/csv,text/plain" }), res = h("div", {});
-    return h("div", { class: "card gold" },
-      h("h3", {}, "📥 Importer l'historique Zola"),
-      h("p", { class: "muted" }, "Dans Zola : Historique → Export CSV. Déposez le fichier ici : les paiements confirmés sont rapprochés des références saisies par les commerces et les abonnements s'activent tout seuls."),
-      f, h("p", {}, h("button", { class: "btn gold", onclick: async ev => {
+    const f = h("input", { type: "file", accept: ".csv,text/csv,text/plain", style: "display:none" }), res = h("div", {}), nomF = h("span", { class: "muted", style: "margin:0" }, "Aucun fichier choisi");
+    f.onchange = () => { nomF.textContent = f.files[0] ? f.files[0].name : "Aucun fichier choisi"; };
+    return panneau("Importer l'historique Zola", 0, h("div", { class: "pb" },
+      h("p", { class: "sub" }, "Dans Zola : Historique, puis Export CSV. Déposez le fichier ici : les paiements confirmés sont rapprochés des références saisies par les commerces, et les abonnements s'activent tout seuls."),
+      h("div", { class: "file" }, ic("fichier"), h("button", { class: "btn alt small", type: "button", onclick: () => f.click() }, "Choisir le fichier CSV"), nomF, f),
+      bouton("gold", "ok", "Importer et rapprocher", async ev => {
         const fi = f.files[0]; if (!fi) return toast("Choisissez d'abord le fichier CSV.", true);
-        const btn = ev.target; btn.disabled = true; vider(res);
+        const btn = ev.currentTarget; btn.disabled = true; vider(res);
         try { const r = await api("POST", "admin/import", { csv: await fi.text() }); bilan = r; toast(r.activees + " abonnement(s) activé(s)."); await charger(); }
         catch (e) { res.append(h("div", { class: "alerte bad" }, e.message)); btn.disabled = false; }
-      } }, "Importer et rapprocher")), res,
+      }), res,
       bilan ? h("div", { class: "alerte ok" }, "Dernier import : " + bilan.lignes + " lignes lues, " + bilan.paiements + " paiements, " + bilan.reversements + " reversements. ", h("b", {}, bilan.activees + " abonnement(s) activé(s)"), ", " + bilan.a_verifier + " à vérifier.") : null,
-      d.imports.length ? h("p", { class: "muted" }, "Imports précédents : " + d.imports.map(i => date(i.ts) + " (" + i.activees + " activé(s))").join(" · ")) : h("p", { class: "muted" }, "Aucun import pour l'instant."));
+      d.imports.length ? h("p", { class: "muted" }, "Imports précédents : " + d.imports.map(i => date(i.ts) + " (" + i.activees + " activé(s))").join(" · ")) : h("p", { class: "muted" }, "Aucun import pour l'instant.")));
   }
-  const tableAttente = () => h("div", { class: "card" }, h("table", { class: "t" }, h("tr", {}, h("th", {}, "Commerce"), h("th", {}, "Formule"), h("th", {}, "Référence"), h("th", {}, "Imports")),
-    d.en_attente.map(x => h("tr", {}, h("td", {}, x.marque_nom), h("td", {}, NOM[x.plan]), h("td", {}, h("span", { class: "code", style: "font-size:.8rem" }, x.ref)), h("td", {}, x.tentatives + "/2")))));
+  const tableAttente = () => panneau("En attente de l'import", d.en_attente.length, h("div", { class: "scroll" }, h("table", { class: "t" }, h("thead", {}, h("tr", {}, h("th", {}, "Commerce"), h("th", {}, "Formule"), h("th", {}, "Référence"), h("th", {}, "Imports"))),
+    h("tbody", {}, d.en_attente.map(x => h("tr", {}, h("td", {}, x.marque_nom), h("td", {}, NOM[x.plan]), h("td", {}, h("span", { class: "code" }, x.ref)), h("td", {}, x.tentatives + "/2")))))));
 
   // ---------- validations ----------
   function carteMarque(m) {
-    return h("div", { class: "card dem" },
-      h("h3", {}, "🏪 " + m.nom), h("p", { class: "muted" }, m.user_nom + " · " + m.email + (m.user_tel ? " · " + m.user_tel : "") + " · " + date(m.created_at)),
-      m.plan_souhaite && m.plan_souhaite !== "gratuit" ? h("p", {}, h("span", { class: "badge warn" }, "Formule choisie : " + NOM[m.plan_souhaite])) : null,
-      h("p", { class: "muted" }, "Vérifiez que cette personne représente bien la marque (document de l'entreprise, ou appel au numéro officiel)."),
-      h("div", { class: "row" },
-        h("button", { class: "btn teal small", onclick: ev => agir(ev.target, () => api("POST", "admin/marque", { id: m.id, action: "valider" }), "Marque validée.") }, "Valider la marque"),
-        h("button", { class: "btn danger small", onclick: ev => { const n = prompt("Motif du refus (visible par le commerce) :", ""); if (n !== null) agir(ev.target, () => api("POST", "admin/marque", { id: m.id, action: "refuser", note: n }), "Marque refusée."); } }, "Refuser")));
+    return h("article", { class: "q" },
+      h("div", { class: "q-h" }, h("div", {}, h("h3", {}, m.nom), h("div", { class: "by" }, "Nouveau commerce")), h("div", { class: "chips" }, m.plan_souhaite && m.plan_souhaite !== "gratuit" ? h("span", { class: "badge warn" }, "Formule choisie : " + NOM[m.plan_souhaite]) : h("span", { class: "badge gris" }, "Formule gratuite"))),
+      h("dl", { class: "meta" }, ligneMeta("comptes", "Gérant", m.user_nom), ligneMeta("mail", "E-mail", m.email), ligneMeta("tel", "Téléphone", m.user_tel), ligneMeta("horloge", "Inscrit le", date(m.created_at))),
+      h("div", { class: "q-b" }, h("div", { class: "verif" }, ic("valider"), "Vérifiez que cette personne représente bien la marque : document de l'entreprise, ou appel au numéro officiel.")),
+      h("div", { class: "q-f" },
+        bouton("teal small", "ok", "Valider la marque", ev => agir(ev.currentTarget, () => api("POST", "admin/marque", { id: m.id, action: "valider" }), "Marque validée.")),
+        h("span", { class: "sp" }),
+        bouton("danger small", null, "Refuser", ev => { dialogue({ titre: "Refuser cette marque ?", texte: "Le commerce verra ce motif.", bouton: "Refuser", style: "dg", champ: { label: "Motif du refus", placeholder: "Expliquez la raison au commerce", requis: false } }).then(n => { if (n !== null) agir(ev.currentTarget, () => api("POST", "admin/marque", { id: m.id, action: "refuser", note: n }), "Marque refusée."); }); })));
   }
-  const rangee = (icone, txt) => txt ? h("div", { class: "row", style: "align-items:flex-start;gap:8px;margin:4px 0;flex-wrap:nowrap" }, h("span", {}, icone), h("span", {}, txt)) : null;
   const galerie = (ids, cls) => ids && ids.length ? h("div", { class: "photos " + (cls || "") }, ids.map(id => h("a", { href: "/api/photo/" + id, target: "_blank", rel: "noopener", class: "ph" }, h("img", { src: "/api/photo/" + id, alt: "Photo", loading: "lazy" })))) : null;
   function carteAdresse(a) {
     const choisie = NOM[a.plan_souhaite] || "Gratuit", payant = a.plan_souhaite && a.plan_souhaite !== "gratuit";
-    return h("div", { class: "card dem" },
-      h("div", { class: "row between" }, h("h3", {}, a.nom), h("span", { class: "badge " + (a.tel_verifie ? "ok" : "warn") }, a.tel_verifie ? "Numéro vérifié" : "Numéro non vérifié")),
-      h("p", { class: "muted" }, "Marque : " + a.marque_nom + (a.marque_statut !== "validee" ? " (non validée)" : "") + " · " + a.email),
-      h("p", {}, h("span", { class: "badge " + (a.plan_effectif !== "gratuit" ? "ok" : payant ? "warn" : "gris") }, "Formule choisie : " + choisie + (payant ? (a.plan_effectif === a.plan_souhaite ? " · payée" : " · pas encore payée") : "")), " ", h("span", { class: "badge gris" }, CAT[a.categorie] || "Autre")),
-      rangee("🏠", a.adresse + (a.commune ? ", " + a.commune : "")), rangee("📞", a.tel),
-      rangee("🕘", a.horaires ? horairesJolis(a.horaires).join(" · ") : ""), rangee("📝", a.description),
-      a.lieu_existant ? h("div", { class: "alerte bad" }, h("b", {}, "⚠️ Réclame une fiche existante : " + a.lieu_existant + "."), " Vérification approfondie obligatoire : appelez le numéro officiel du commerce ou demandez un document (RCCM, facture, pièce d'identité du gérant) avant de valider. Ne laissez personne profiter de la fiche ou de l'abonnement d'un autre.") : null,
-      h("h3", { style: "margin-top:10px" }, "📷 Photos du lieu"), galerie(a.photos) || h("p", { class: "muted" }, "Aucune photo envoyée."),
-      a.menu_photos && a.menu_photos.length ? [h("h3", { style: "margin-top:6px" }, "📋 Menu (photos)"), galerie(a.menu_photos, "menus")] : null,
-      h("p", { style: "margin-top:10px" }, "Code attendu par WhatsApp : ", h("span", { class: "code" }, a.code), " (doit venir du numéro ", h("b", {}, a.tel), ")"),
-      h("div", { class: "row" },
-        a.tel_verifie ? null : h("button", { class: "btn alt small", onclick: ev => agir(ev.target, () => api("POST", "admin/adresse", { id: a.id, action: "tel_ok" }), "Numéro marqué vérifié.") }, "Code reçu : numéro vérifié"),
-        h("button", { class: "btn teal small", onclick: ev => { if ((a.tel_verifie || confirm("Le numéro n'est pas marqué comme vérifié. Valider quand même ?")) && (!a.lieu_existant || confirm("Cette adresse réclame la fiche existante « " + a.lieu_existant + " ». Avez-vous vérifié que la personne en est bien le propriétaire ?"))) agir(ev.target, () => api("POST", "admin/adresse", { id: a.id, action: "valider" }), "Adresse validée."); } }, "Valider l'adresse"),
-        h("button", { class: "btn danger small", onclick: ev => { const n = prompt("Motif du refus (visible par le commerce) :", ""); if (n !== null) agir(ev.target, () => api("POST", "admin/adresse", { id: a.id, action: "refuser", note: n }), "Adresse refusée."); } }, "Refuser")));
+    return h("article", { class: "q" },
+      h("div", { class: "q-h" }, h("div", {}, h("h3", {}, a.nom), h("div", { class: "by" }, "Marque : " + a.marque_nom + (a.marque_statut !== "validee" ? " (non validée)" : ""))),
+        h("div", { class: "chips" }, h("span", { class: "badge " + (a.tel_verifie ? "ok" : "warn") }, a.tel_verifie ? "Numéro vérifié" : "Numéro non vérifié"), h("span", { class: "badge " + (a.plan_effectif !== "gratuit" ? "ok" : payant ? "warn" : "gris") }, choisie + (payant ? (a.plan_effectif === a.plan_souhaite ? " · payée" : " · pas encore payée") : "")), h("span", { class: "badge bleu" }, CAT[a.categorie] || "Autre"))),
+      h("dl", { class: "meta" }, ligneMeta("mail", "E-mail", a.email), ligneMeta("lieu", "Adresse", a.adresse + (a.commune ? ", " + a.commune : "")), ligneMeta("tel", "Téléphone", a.tel), ligneMeta("horloge", "Horaires", a.horaires ? horairesJolis(a.horaires).join(" · ") : ""), ligneMeta("note", "Description", a.description)),
+      h("div", { class: "q-b" },
+        a.lieu_existant ? h("div", { class: "alerte bad" }, h("b", {}, "Réclame une fiche existante : " + a.lieu_existant + "."), " Vérification approfondie obligatoire : appelez le numéro officiel du commerce ou demandez un document (RCCM, facture, pièce d'identité du gérant) avant de valider. Ne laissez personne profiter de la fiche ou de l'abonnement d'un autre.") : null,
+        h("h4", {}, "Photos du lieu"), galerie(a.photos) || h("p", { class: "muted" }, "Aucune photo envoyée."),
+        a.menu_photos && a.menu_photos.length ? [h("h4", {}, "Menu"), galerie(a.menu_photos, "menus")] : null,
+        h("div", { class: "verif" }, ic("envoi"), h("span", {}, "Code attendu par WhatsApp : ", h("span", { class: "code" }, a.code), " depuis le numéro ", h("b", {}, a.tel)))),
+      h("div", { class: "q-f" },
+        bouton("teal small", "ok", "Valider l'adresse", async ev => {
+          const btn = ev.currentTarget;
+          if (!a.tel_verifie && !(await dialogue({ titre: "Numéro non vérifié", texte: "Le numéro n'est pas marqué comme vérifié. Valider quand même ?", bouton: "Valider quand même" }))) return;
+          if (a.lieu_existant && !(await dialogue({ titre: "Fiche existante réclamée", texte: "Cette adresse réclame la fiche « " + a.lieu_existant + " ». Avez-vous vérifié que la personne en est bien le propriétaire ?", bouton: "Oui, j'ai vérifié" }))) return;
+          agir(btn, () => api("POST", "admin/adresse", { id: a.id, action: "valider" }), "Adresse validée.");
+        }),
+        a.tel_verifie ? null : bouton("alt small", "tel", "Code reçu : numéro vérifié", ev => agir(ev.currentTarget, () => api("POST", "admin/adresse", { id: a.id, action: "tel_ok" }), "Numéro marqué vérifié.")),
+        h("span", { class: "sp" }),
+        bouton("danger small", null, "Refuser", ev => { dialogue({ titre: "Refuser cette adresse ?", texte: "Le commerce verra ce motif.", bouton: "Refuser", style: "dg", champ: { label: "Motif du refus", placeholder: "Expliquez la raison au commerce" } }).then(n => { if (n !== null) agir(ev.currentTarget, () => api("POST", "admin/adresse", { id: a.id, action: "refuser", note: n }), "Adresse refusée."); }); })));
   }
 
-  // ---------- gestion des comptes (recherche, bannissement, suppression, réclamations) ----------
+  // ---------- gestion des comptes ----------
   let listeComptes = null, journal = [], rechercheComptes = "", filtreComptes = "";
   async function chargerComptes() { try { const r = await api("GET", "admin/comptes?q=" + encodeURIComponent(rechercheComptes) + (filtreComptes ? "&" + filtreComptes + "=1" : "")); listeComptes = r.comptes; journal = r.journal; } catch (e) { toast(e.message, true); listeComptes = []; } rendre(); }
-  const ACTIONS = { ban: "🚫 Banni", deban: "✅ Rétabli", suppression: "🗑️ Supprimé", reclamation_acceptee: "✅ Réclamation acceptée", reclamation_refusee: "❌ Réclamation refusée" };
+  const ACTIONS = { ban: "Banni", deban: "Rétabli", suppression: "Supprimé", reclamation_acceptee: "Réclamation acceptée", reclamation_refusee: "Réclamation refusée" };
   const DUREES = [["1", "24 heures"], ["7", "7 jours"], ["30", "30 jours"], ["90", "90 jours"], ["0", "Définitivement"]];
-  const agirCompte = (ev, chemin, corps, ok) => { ev.target.disabled = true; return api("POST", chemin, corps).then(async () => { toast(ok); await charger(); return chargerComptes(); }).catch(er => { toast(er.message, true); ev.target.disabled = false; }); };
+  const agirCompte = (ev, chemin, corps, ok) => { const b = ev.currentTarget; b.disabled = true; return api("POST", chemin, corps).then(async () => { toast(ok); await charger(); return chargerComptes(); }).catch(er => { toast(er.message, true); b.disabled = false; }); };
+  const initiales = n => (String(n || "?").trim().split(/\s+/).slice(0, 2).map(x => x[0]).join("") || "?").toUpperCase();
   function comptesBloc() {
     if (listeComptes === null) { listeComptes = []; chargerComptes(); }
-    const champ = h("input", { type: "search", placeholder: "Chercher par identifiant, e-mail, nom ou commerce", maxlength: 80, value: rechercheComptes });
+    const champ = h("input", { type: "search", placeholder: "Chercher par identifiant, e-mail, nom ou commerce", maxlength: 80, value: rechercheComptes, "aria-label": "Chercher un compte" });
     const chercher = () => { rechercheComptes = champ.value; chargerComptes(); };
     champ.onkeydown = ev => { if (ev.key === "Enter") chercher(); };
-    const filtre = (cle, lib) => h("button", { type: "button", class: "btn small " + (filtreComptes === cle ? "gold" : "fantome"), onclick: () => { filtreComptes = filtreComptes === cle ? "" : cle; rechercheComptes = champ.value; chargerComptes(); } }, lib);
+    const filtre = (cle, lib) => h("button", { type: "button", class: "btn small alt " + (filtreComptes === cle ? "on" : ""), onclick: () => { filtreComptes = filtreComptes === cle ? "" : cle; rechercheComptes = champ.value; chargerComptes(); } }, lib);
     const ligne = c => {
       const motif = h("input", { type: "text", placeholder: "Qu'a-t-il fait ? (obligatoire, il le verra)", maxlength: 300 });
       const duree = h("select", {}, DUREES.map(([v, t]) => h("option", { value: v }, t)));
-      const zoneBan = h("div", { style: "display:none;margin-top:8px" }, h("label", {}, "Durée du bannissement"), duree, motif,
-        h("div", { class: "row", style: "margin-top:8px" }, h("button", { class: "btn danger small", onclick: ev => agirCompte(ev, "admin/bannir", { id: c.id, motif: motif.value, jours: Number(duree.value) }, "Compte banni.") }, "Confirmer le bannissement"), h("button", { class: "btn fantome small", onclick: () => { zoneBan.style.display = "none"; } }, "Annuler")));
+      const zoneBan = h("div", { class: "zone", style: "display:none" }, h("label", {}, "Durée du bannissement"), duree, h("label", {}, "Raison"), motif,
+        h("div", { class: "row", style: "margin-top:10px" }, h("button", { class: "btn danger plein small", onclick: ev => agirCompte(ev, "admin/bannir", { id: c.id, motif: motif.value, jours: Number(duree.value) }, "Compte banni.") }, "Confirmer le bannissement"), h("button", { class: "btn fantome small", onclick: () => { zoneBan.style.display = "none"; } }, "Annuler")));
       const motifSup = h("input", { type: "text", placeholder: "Raison (obligatoire, gardée dans le journal)", maxlength: 300 });
-      const zoneSup = h("div", { style: "display:none;margin-top:8px" }, h("div", { class: "alerte bad" }, "Suppression définitive : le compte, le commerce, les adresses, les photos et l'abonnement sont effacés. La personne ne pourra pas réclamer. Irréversible."), motifSup,
-        h("div", { class: "row", style: "margin-top:8px" }, h("button", { class: "btn danger small", onclick: ev => agirCompte(ev, "admin/supprimer", { id: c.id, motif: motifSup.value }, "Compte supprimé.") }, "Supprimer pour toujours"), h("button", { class: "btn fantome small", onclick: () => { zoneSup.style.display = "none"; } }, "Annuler")));
+      const zoneSup = h("div", { class: "zone", style: "display:none" }, h("div", { class: "alerte bad", style: "margin-top:0" }, "Suppression définitive : le compte, le commerce, les adresses, les photos et l'abonnement sont effacés. La personne ne pourra pas réclamer. Irréversible."), h("label", {}, "Raison"), motifSup,
+        h("div", { class: "row", style: "margin-top:10px" }, h("button", { class: "btn danger plein small", onclick: ev => agirCompte(ev, "admin/supprimer", { id: c.id, motif: motifSup.value }, "Compte supprimé.") }, "Supprimer pour toujours"), h("button", { class: "btn fantome small", onclick: () => { zoneSup.style.display = "none"; } }, "Annuler")));
       const rep = h("input", { type: "text", placeholder: "Réponse (obligatoire si tu refuses)", maxlength: 300 });
-      const reclam = c.rec_id ? h("div", { class: "alerte warn" }, h("b", {}, "📨 Réclamation : "), h("span", { style: "white-space:pre-wrap" }, c.rec_message), rep,
-        h("div", { class: "row", style: "margin-top:8px" }, h("button", { class: "btn gold small", onclick: ev => agirCompte(ev, "admin/reclamation", { id: c.rec_id, decision: "accepter", reponse: rep.value }, "Réclamation acceptée : compte rétabli.") }, "Accepter et rétablir"), h("button", { class: "btn danger small", onclick: ev => agirCompte(ev, "admin/reclamation", { id: c.rec_id, decision: "refuser", reponse: rep.value }, "Réclamation refusée.") }, "Refuser"))) : null;
-      return h("div", { class: "dem" },
-        h("div", { class: "row between" }, h("b", {}, c.nom || "(sans nom)"), c.banni ? h("span", { class: "pastille-formule", style: "background:#fde8e8;color:#b00020" }, c.banni_jusqua ? "Banni jusqu'au " + date(c.banni_jusqua) : "Banni définitivement") : c.admin ? h("span", { class: "pastille-formule premium" }, "Admin") : null),
-        h("p", { class: "muted" }, (c.identifiant ? c.identifiant + " · " : "") + c.email + (c.tel ? " · " + c.tel : "") + " · " + (c.commerce ? "Commerce : " + c.commerce : c.type === "commerce" ? "Commerce (fiche pas encore créée)" : "Utilisateur") + " · inscrit le " + date(c.created_at)),
-        c.banni && c.banni_motif ? h("p", { class: "muted" }, "Raison : " + c.banni_motif) : null,
+      const reclam = c.rec_id ? h("div", { class: "zone", style: "background:#fff8e1;border-color:#f3dc9a" }, h("b", {}, "Réclamation : "), h("span", { style: "white-space:pre-wrap" }, c.rec_message), h("div", { style: "margin-top:8px" }, rep),
+        h("div", { class: "row", style: "margin-top:10px" }, h("button", { class: "btn gold small", onclick: ev => agirCompte(ev, "admin/reclamation", { id: c.rec_id, decision: "accepter", reponse: rep.value }, "Réclamation acceptée : compte rétabli.") }, "Accepter et rétablir"), h("button", { class: "btn danger small", onclick: ev => agirCompte(ev, "admin/reclamation", { id: c.rec_id, decision: "refuser", reponse: rep.value }, "Réclamation refusée.") }, "Refuser"))) : null;
+      return h("div", { class: "acct dem" },
+        h("div", { class: "top" }, h("div", { class: "av" + (c.banni ? " ban" : "") }, initiales(c.nom)),
+          h("div", { class: "who" }, h("div", { class: "row between" }, h("b", {}, c.nom || "(sans nom)"), c.banni ? h("span", { class: "badge bad" }, c.banni_jusqua ? "Banni jusqu'au " + date(c.banni_jusqua) : "Banni définitivement") : c.admin ? h("span", { class: "badge or" }, "Admin") : null),
+            h("p", { class: "muted" }, (c.identifiant ? c.identifiant + " · " : "") + c.email + (c.tel ? " · " + c.tel : "")),
+            h("p", { class: "muted" }, (c.commerce ? "Commerce : " + c.commerce : c.type === "commerce" ? "Commerce (fiche pas encore créée)" : "Utilisateur") + " · inscrit le " + date(c.created_at)),
+            c.banni && c.banni_motif ? h("p", { class: "muted" }, "Raison : " + c.banni_motif) : null)),
         reclam,
-        c.admin ? null : h("div", { class: "row" },
+        c.admin ? null : h("div", { class: "actions" },
           c.banni ? h("button", { class: "btn alt small", onclick: ev => agirCompte(ev, "admin/debannir", { id: c.id }, "Compte rétabli.") }, "Rétablir le compte") : h("button", { class: "btn danger small", onclick: () => { zoneBan.style.display = "block"; motif.focus(); } }, "Bannir"),
           h("button", { class: "btn fantome small", onclick: () => { zoneSup.style.display = "block"; motifSup.focus(); } }, "Supprimer")),
         zoneBan, zoneSup);
     };
-    const histo = journal.length ? h("details", { style: "margin-top:12px" }, h("summary", {}, "Journal des sanctions (" + journal.length + " dernières)"),
-      journal.map(j => h("p", { class: "muted", style: "margin:6px 0" }, date(j.at) + " · " + (ACTIONS[j.action] || j.action) + " · " + (j.nom || "") + " <" + j.email + ">" + (j.jusqua ? " · jusqu'au " + date(j.jusqua) : j.action === "ban" ? " · définitif" : "") + (j.motif ? " · « " + j.motif + " »" : "")))) : null;
-    return h("div", { class: "card" }, h("h3", {}, "🚫 Comptes, bannissements et suppressions"),
-      h("p", { class: "muted" }, "Les comptes des utilisateurs et des commerçants (pas le tien). Bannir : la personne est déconnectée, ne peut plus se connecter, ses commerces disparaissent de l'application. Elle voit la raison et peut envoyer une réclamation. Supprimer : tout est effacé, sans réclamation possible. Tout est noté dans le journal."),
-      champ,
-      h("div", { class: "row", style: "margin:8px 0" }, h("button", { class: "btn alt small", onclick: chercher }, "Chercher"), filtre("banni", "Bannis"), filtre("reclam", "Réclamations" + (d.stats.reclamations ? " (" + d.stats.reclamations + ")" : ""))),
-      !listeComptes.length ? h("p", { class: "muted" }, "Aucun compte trouvé.") : listeComptes.map(ligne), histo);
+    const histo = journal.length ? h("details", { class: "jr" }, h("summary", {}, "Journal des sanctions (" + journal.length + " dernières)"),
+      h("div", { class: "lg" }, journal.map(j => h("p", {}, date(j.at) + " · " + (ACTIONS[j.action] || j.action) + " · " + (j.nom || "") + " <" + j.email + ">" + (j.jusqua ? " · jusqu'au " + date(j.jusqua) : j.action === "ban" ? " · définitif" : "") + (j.motif ? " · « " + j.motif + " »" : "")))) ) : null;
+    return h("section", { class: "panel" }, h("div", { class: "ph" }, h("h2", {}, "Comptes", d.stats.reclamations ? h("span", { class: "cnt r" }, d.stats.reclamations) : null)),
+      h("div", { class: "pb", style: "border-bottom:1px solid var(--line)" },
+        h("p", { class: "sub" }, "Utilisateurs et commerçants (pas le tien). Bannir : la personne est déconnectée et ses commerces disparaissent de l'application ; elle voit la raison et peut envoyer une réclamation. Supprimer : tout est effacé, sans réclamation possible. Tout est noté dans le journal."),
+        h("div", { class: "search", style: "margin-top:12px" }, ic("chercher"), champ),
+        h("div", { class: "chipf" }, bouton("gold small", null, "Chercher", chercher), filtre("banni", "Bannis"), filtre("reclam", "Réclamations" + (d.stats.reclamations ? " (" + d.stats.reclamations + ")" : "")))),
+      !listeComptes.length ? h("div", { class: "pb" }, vide("Aucun compte trouvé.")) : h("div", {}, listeComptes.map(ligne)), histo);
   }
-  // ---------- outils ----------
-  // ---------- récupération de compte : identifiant → code envoyé à l'e-mail du compte → la personne te le donne ----------
+
+  // ---------- récupération de compte ----------
   let recup = { etape: "saisie" };
   function recupBloc() {
     const nouveau = () => { recup = { etape: "saisie" }; rendre(); };
-    const carte = (...enfants) => h("div", { class: "card" }, h("h3", {}, "🔑 Récupérer un compte"), ...enfants);
-    const aide = h("p", { class: "muted" }, "Quelqu'un t'écrit : « j'ai perdu mon compte ». Demande-lui son identifiant (il commence par NX-, visible dans « Mon compte ») ou son pseudo. Un code part vers l'e-mail du compte : s'il te le donne, c'est bien lui.");
+    const idx = { saisie: 0, code: 1, ok: 2 }[recup.etape];
+    const etapes = h("div", { class: "steps" }, ["Identifiant", "Code", "Accès"].map((t, i) => h("div", { class: i < idx ? "fait" : i === idx ? "on" : "" }, h("i", {}, i < idx ? "✓" : String(i + 1)), t)));
+    const carte = (...enfants) => h("section", { class: "panel" }, h("div", { class: "ph" }, h("h2", {}, "Récupérer un compte")), etapes, h("div", { class: "pb" }, ...enfants));
+    const aide = h("p", { class: "sub" }, "Quelqu'un t'écrit : « j'ai perdu mon compte ». Demande-lui son identifiant (il commence par NX-, visible dans « Mon compte ») ou son pseudo. Un code part vers l'e-mail du compte : s'il te le donne, c'est bien lui.");
     if (recup.etape === "saisie") {
       const q = h("input", { type: "text", placeholder: "Identifiant (NX-…), pseudo ou e-mail", maxlength: 120, autocapitalize: "characters" }), msg = h("div", {});
       const envoyer = async ev => { ev.preventDefault && ev.preventDefault(); vider(msg); try { const r = await api("POST", "admin/recuperation/envoyer", { q: q.value }); recup = { etape: "code", vid: r.vid, nom: r.nom, identifiant: r.identifiant, masque: r.email_masque }; rendre(); } catch (e) { msg.append(h("div", { class: "alerte bad" }, e.message)); } };
       q.onkeydown = ev => { if (ev.key === "Enter") envoyer(ev); };
-      return carte(aide, q, msg, h("p", {}, h("button", { class: "btn gold small", onclick: envoyer }, "Envoyer le code à son e-mail")));
+      return carte(aide, h("div", { style: "margin-top:12px" }, q), msg, h("div", { class: "row", style: "margin-top:12px" }, bouton("gold small", "mail", "Envoyer le code à son e-mail", envoyer)));
     }
     if (recup.etape === "code") {
-      const code = h("input", { type: "text", inputmode: "numeric", maxlength: 7, placeholder: "Code à 6 chiffres donné par la personne", class: "code-saisie" }), msg = h("div", {});
+      const code = h("input", { type: "text", inputmode: "numeric", maxlength: 7, placeholder: "Code à 6 chiffres", class: "code-saisie" }), msg = h("div", {});
       const verifier = async () => { vider(msg); try { const r = await api("POST", "admin/recuperation/confirmer", { vid: recup.vid, code: code.value }); recup = { etape: "ok", compte: r.compte, mdp: null }; rendre(); } catch (e) { msg.append(h("div", { class: "alerte bad" }, e.message)); } };
       code.onkeydown = ev => { if (ev.key === "Enter") verifier(); };
-      return carte(h("div", { class: "alerte info" }, "Code envoyé à ", h("b", {}, recup.masque), " (compte de ", h("b", {}, recup.nom || "?"), " · ", recup.identifiant, "). Demande-lui de te le lire. Il est valable 10 minutes."), code, msg,
-        h("div", { class: "row", style: "margin-top:10px" }, h("button", { class: "btn gold small", onclick: verifier }, "Confirmer le code"), h("button", { class: "btn fantome small", onclick: nouveau }, "Annuler")));
+      return carte(h("div", { class: "alerte info", style: "margin-top:0" }, "Code envoyé à ", h("b", {}, recup.masque), " (compte de ", h("b", {}, recup.nom || "?"), " · ", recup.identifiant, "). Demande-lui de te le lire. Il est valable 10 minutes."), code, msg,
+        h("div", { class: "row", style: "margin-top:12px" }, h("button", { class: "btn gold small", onclick: verifier }, "Confirmer le code"), h("button", { class: "btn fantome small", onclick: nouveau }, "Annuler")));
     }
     const c = recup.compte;
-    return carte(h("div", { class: "alerte ok" }, "✔ Identité confirmée : la personne a bien accès à l'e-mail de ce compte."),
-      h("div", { class: "dem" }, h("b", {}, c.nom || "(sans nom)"), h("p", { class: "muted" }, c.identifiant + " · " + c.email + (c.tel ? " · " + c.tel : "")), h("p", { class: "muted" }, (c.commerce ? "Commerce : " + c.commerce + " (" + (c.commerce_statut || "") + (c.plan ? ", formule " + c.plan : "") + ")" : c.type === "commerce" ? "Commerce : fiche pas encore créée" : "Utilisateur") + (c.banni ? " · ⚠ compte banni" : ""))),
+    return carte(h("div", { class: "alerte ok", style: "margin-top:0" }, "Identité confirmée : la personne a bien accès à l'e-mail de ce compte."),
+      h("div", { class: "acct", style: "padding:6px 0;border:0" }, h("div", { class: "top" }, h("div", { class: "av" }, initiales(c.nom)), h("div", { class: "who" }, h("b", {}, c.nom || "(sans nom)"), h("p", { class: "muted" }, c.identifiant + " · " + c.email + (c.tel ? " · " + c.tel : "")), h("p", { class: "muted" }, (c.commerce ? "Commerce : " + c.commerce + " (" + (c.commerce_statut || "") + (c.plan ? ", formule " + c.plan : "") + ")" : c.type === "commerce" ? "Commerce : fiche pas encore créée" : "Utilisateur") + (c.banni ? " · compte banni" : ""))))),
       recup.mdp ? h("div", { class: "alerte ok" }, "Mot de passe temporaire : ", h("span", { class: "code" }, recup.mdp), h("br"), h("span", { class: "muted" }, "Transmets-le par WhatsApp. Ses anciennes sessions sont fermées. Il pourra le changer dans « Mon compte ». Ce mot de passe ne sera plus affichable après avoir quitté cette page.")) :
-        h("p", {}, h("button", { class: "btn gold small", onclick: async ev => { ev.target.disabled = true; try { const r = await api("POST", "admin/motdepasse", { email: c.email }); recup.mdp = r.mot_de_passe_temporaire; rendre(); } catch (e) { toast(e.message, true); ev.target.disabled = false; } } }, "Rétablir son accès (mot de passe temporaire)")),
-      h("p", {}, h("button", { class: "btn fantome small", onclick: nouveau }, "Terminer")));
+        h("div", { class: "row", style: "margin-top:10px" }, h("button", { class: "btn gold small", onclick: async ev => { const b = ev.currentTarget; b.disabled = true; try { const r = await api("POST", "admin/motdepasse", { email: c.email }); recup.mdp = r.mot_de_passe_temporaire; rendre(); } catch (e) { toast(e.message, true); b.disabled = false; } } }, "Rétablir son accès (mot de passe temporaire)")),
+      h("div", { class: "row", style: "margin-top:10px" }, h("button", { class: "btn fantome small", onclick: nouveau }, "Terminer")));
   }
   function mailEtat() {
     const etat = d.mail_configure;
-    return h("div", { class: "card" }, h("h3", {}, "✉️ Envoi des e-mails"),
-      h("div", { class: "alerte " + (etat ? "ok" : "warn") }, etat ? "✔ Configuré : les codes de vérification partent depuis l'adresse Nexvia." : "Non configuré : variables MAIL_UTILISATEUR et MAIL_MOT_DE_PASSE manquantes. Les inscriptions restent fermées."),
-      h("p", {}, h("button", { class: "btn alt small", disabled: !etat, onclick: async ev => { ev.target.disabled = true; try { const r = await api("POST", "admin/test-mail", {}); toast("E-mail de test envoyé à " + r.envoye_a + " (regardez aussi les spams)."); } catch (er) { toast(er.message, true); } ev.target.disabled = false; } }, "M'envoyer un e-mail de test")));
+    return panneau("Envoi des e-mails", 0, h("div", { class: "pb" },
+      h("div", { class: "alerte " + (etat ? "ok" : "warn"), style: "margin-top:0" }, etat ? "Configuré : les codes de vérification partent depuis l'adresse Nexvia." : "Non configuré : variables MAIL_UTILISATEUR et MAIL_MOT_DE_PASSE manquantes. Les inscriptions restent fermées."),
+      h("button", { class: "btn alt small", disabled: !etat, onclick: async ev => { const b = ev.currentTarget; b.disabled = true; try { const r = await api("POST", "admin/test-mail", {}); toast("E-mail de test envoyé à " + r.envoye_a + " (regardez aussi les spams)."); } catch (er) { toast(er.message, true); } b.disabled = false; } }, ic("mail", "sm"), "M'envoyer un e-mail de test")));
   }
-  const raccourcis = () => h("div", { class: "card" }, h("h3", {}, "🔗 Raccourcis"),
-    h("div", { class: "row" }, h("a", { class: "btn alt small", href: NX.CFG.ZOLA_LIEN, target: "_blank", rel: "noopener" }, "Page de paiement Zola"), h("a", { class: "btn alt small", href: "/", target: "_blank" }, "L'application"), h("a", { class: "btn alt small", href: "/tarifs/", target: "_blank" }, "Les tarifs"), h("a", { class: "btn wa small", href: wa("Bonjour"), target: "_blank", rel: "noopener" }, "WhatsApp Nexvia")));
+  const raccourcis = () => panneau("Raccourcis", 0, h("div", { class: "pb" }, h("div", { class: "row" },
+    h("a", { class: "btn alt small", href: NX.CFG.ZOLA_LIEN, target: "_blank", rel: "noopener" }, ic("ext", "sm"), "Page de paiement Zola"), h("a", { class: "btn alt small", href: "/", target: "_blank" }, ic("ext", "sm"), "L'application"), h("a", { class: "btn alt small", href: "/tarifs/", target: "_blank" }, ic("ext", "sm"), "Les tarifs"), h("a", { class: "btn wa small", href: wa("Bonjour"), target: "_blank", rel: "noopener" }, ic("envoi", "sm"), "WhatsApp Nexvia"))));
+
+  // ---------- accueil ----------
+  function accueil(s, nPay, nVal) {
+    const ligne = (ico, titre, sous, n, cible, chaud) => h("li", {}, h("div", { class: "pt" + (chaud && n ? " hot" : "") }, ic(ico)), h("div", { class: "tx" }, h("b", {}, titre), h("span", {}, sous)), h("div", { class: "num" }, String(n)), h("button", { class: "btn small " + (n ? "gold" : "alt"), onclick: () => { onglet = cible; rendre(); window.scrollTo(0, 0); } }, n ? "Traiter" : "Ouvrir"));
+    const tout = nVal + nPay + (s.reclamations || 0);
+    const kpi = (n, t) => h("div", { class: "kpi" }, h("span", {}, t), h("b", {}, String(n)));
+    return [
+      h("div", { class: "kpis" }, kpi(s.comptes, s.comptes > 1 ? "Comptes" : "Compte"), kpi(s.marques, s.marques > 1 ? "Commerces" : "Commerce"), kpi(s.adresses_validees, s.adresses_validees > 1 ? "Adresses validées" : "Adresse validée"), kpi(s.abonnes, s.abonnes > 1 ? "Abonnés actifs" : "Abonné actif")),
+      h("div", { class: "grid2 wide" },
+        h("section", { class: "panel" }, h("div", { class: "ph" }, h("h2", {}, "À traiter", tout ? h("span", { class: "cnt" }, tout) : null)),
+          tout === 0 ? h("div", { class: "calme" }, h("div", { class: "pt" }, ic("ok")), h("div", {}, h("b", {}, "Tout est à jour"), h("span", {}, "Aucune validation, aucun paiement ni aucune réclamation en attente."))) : null,
+          h("ul", { class: "todo" },
+            ligne("marque", "Commerces à valider", "Nouvelles marques en attente de vérification", d.marques.length, "validations", true),
+            ligne("lieu", "Adresses à valider", "Fiches, photos et numéros à contrôler", d.adresses.length, "validations", true),
+            ligne("paiement", "Paiements à vérifier", "Références introuvables dans Zola", nPay, "paiements", true),
+            ligne("comptes", "Réclamations de comptes", "Personnes bannies qui contestent", s.reclamations || 0, "comptes", true))),
+        h("div", {}, mailEtat(), raccourcis()))
+    ];
+  }
 
   // ---------- page ----------
+  const NAV = [["accueil", "Accueil", "accueil", "Vue d'ensemble"], ["validations", "Validations", "valider"], ["paiements", "Paiements", "paiement"], ["comptes", "Comptes", "comptes"], ["recup", "Récupération", "cle"], ["outils", "Outils", "outils"]];
+  const TITRES = { accueil: ["Tableau de bord", null], validations: ["Validations", "Commerces et adresses en attente d'un contrôle avant publication."], paiements: ["Paiements", "Rapprochez les paiements Zola avec les abonnements demandés."], comptes: ["Comptes", "Rechercher, bannir ou supprimer un compte, et traiter les réclamations."], recup: ["Récupération de compte", "Aider une personne qui a perdu l'accès à son compte."], outils: ["Outils", "État du système et raccourcis utiles."] };
   function rendre() {
-    vider(app); app.append(entete({ admin: true, type: "commerce" }));
+    const keep = window.scrollY;
+    vider(app);
     const s = d.stats, nPay = d.a_verifier.length, nVal = d.marques.length + d.adresses.length;
-    const kpi = (n, t) => h("div", { class: "kpi" }, h("b", {}, n), h("span", {}, t));
-    app.append(h("div", { class: "hero-com" }, h("div", { class: "in", style: "max-width:1100px" },
-      h("div", { class: "mbote" }, drapeau(26), h("span", {}, "Mbote ! Poste de commande")), h("h1", {}, "Administration"),
-      h("div", { class: "kpis" }, kpi(s.comptes, s.comptes > 1 ? "comptes" : "compte"), kpi(s.marques, s.marques > 1 ? "commerces" : "commerce"), kpi(s.adresses_validees, s.adresses_validees > 1 ? "adresses validées" : "adresse validée"), kpi(s.abonnes, s.abonnes > 1 ? "abonnés actifs" : "abonné actif")))),
-      h("div", { class: "bande-rdc" }));
-    const tab = (cle, lib, n) => h("button", { class: onglet === cle ? "on" : "", onclick: () => { onglet = cle; rendre(); } }, lib, pastille(n));
-    app.append(h("div", { class: "onglets-admin" }, tab("validations", "✅ Validations", nVal), tab("paiements", "💳 Paiements", nPay), tab("comptes", "👥 Comptes", s.reclamations), tab("recup", "🔑 Récupération"), tab("outils", "🧰 Outils")));
-    const main = h("main", { class: "large" });
-    if (onglet === "validations") {
-      main.append(h("div", { class: "cols" },
-        h("div", {}, sec("Commerces à valider", d.marques.length), ...(d.marques.length ? d.marques.map(carteMarque) : [vide("✓", "Aucun commerce à valider.")])),
-        h("div", {}, sec("Adresses à valider", d.adresses.length), ...(d.adresses.length ? d.adresses.map(carteAdresse) : [vide("✓", "Aucune adresse à valider.")]))));
+    const nombres = { validations: [nVal, ""], paiements: [nPay, ""], comptes: [s.reclamations || 0, "r"] };
+    const aller = cle => { onglet = cle; rendre(); window.scrollTo(0, 0); };
+    const marque = (cls) => h("a", { class: cls, href: "/" }, drapeau(30), h("span", {}, h("b", {}, "Nexvia RDC"), h("small", {}, "Administration")));
+    const side = h("aside", { class: "side" }, marque("brand"),
+      h("div", { class: "grp" }, "Travail"), ...NAV.slice(0, 3).map(([k, l, i]) => h("button", { class: "nv" + (onglet === k ? " on" : ""), onclick: () => aller(k) }, ic(i), l, nombres[k] && nombres[k][0] ? h("span", { class: "n " + nombres[k][1] }, nombres[k][0]) : null)),
+      h("div", { class: "grp" }, "Communauté"), ...NAV.slice(3, 5).map(([k, l, i]) => h("button", { class: "nv" + (onglet === k ? " on" : ""), onclick: () => aller(k) }, ic(i), l, nombres[k] && nombres[k][0] ? h("span", { class: "n " + nombres[k][1] }, nombres[k][0]) : null)),
+      h("div", { class: "grp" }, "Système"), h("button", { class: "nv" + (onglet === "outils" ? " on" : ""), onclick: () => aller("outils") }, ic("outils"), "Outils"),
+      h("div", { class: "foot" }, h("a", { href: "/" }, ic("ext", "sm"), "Ouvrir l'application"), h("a", { href: "/compte/" }, ic("comptes", "sm"), "Mon compte")));
+    const dock = h("nav", { class: "dock", "aria-label": "Sections" }, NAV.map(([k, l, i]) => h("button", { class: onglet === k ? "on" : "", onclick: () => aller(k), "aria-label": l }, ic(i), l === "Récupération" ? "Récup." : l, nombres[k] && nombres[k][0] ? h("span", { class: "n" }, nombres[k][0]) : null)));
+    const [titre, sous] = TITRES[onglet];
+    const jour = new Date().toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" });
+    const page = h("div", { class: "page" }, h("div", { class: "head" }, h("div", {}, h("h1", {}, titre), h("p", {}, sous || (jour.charAt(0).toUpperCase() + jour.slice(1)))),
+      h("button", { class: "btn alt small", onclick: async ev => { ev.currentTarget.disabled = true; await charger(); toast("Données actualisées."); } }, "Actualiser")));
+    if (onglet === "accueil") page.append(...accueil(s, nPay, nVal));
+    else if (onglet === "validations") {
+      page.append(h("div", { class: "grid2" },
+        h("div", {}, h("h2", { style: "font-size:15px;margin:0 0 10px;display:flex;gap:8px;align-items:center" }, "Commerces à valider", d.marques.length ? h("span", { class: "cnt" }, d.marques.length) : null), ...(d.marques.length ? d.marques.map(carteMarque) : [vide("Aucun commerce à valider.")])),
+        h("div", {}, h("h2", { style: "font-size:15px;margin:0 0 10px;display:flex;gap:8px;align-items:center" }, "Adresses à valider", d.adresses.length ? h("span", { class: "cnt" }, d.adresses.length) : null), ...(d.adresses.length ? d.adresses.map(carteAdresse) : [vide("Aucune adresse à valider.")]))));
     } else if (onglet === "paiements") {
-      main.append(h("div", { class: "cols" },
-        h("div", {}, sec("Importer le CSV"), importBloc()),
-        h("div", {}, sec("Paiements à vérifier", d.a_verifier.length), ...(d.a_verifier.length ? d.a_verifier.map(ligneVerif) : [vide("✓", "Rien à vérifier.")]),
-          sec("En attente de l'import", d.en_attente.length), d.en_attente.length ? tableAttente() : vide("·", "Aucun paiement en attente."))));
-    } else {
-      main.append(onglet === "comptes" ? h("div", { class: "cols" }, h("div", {}, sec("Comptes des utilisateurs"), comptesBloc()))
-        : onglet === "recup" ? h("div", { class: "cols" }, h("div", {}, sec("Récupération de compte"), recupBloc()), h("div", {}, sec("E-mails"), mailEtat()))
-        : h("div", { class: "cols" }, h("div", {}, sec("Outils"), raccourcis())));
-    }
-    main.append(h("div", { class: "pied-rdc" }, drapeau(22), "Nexvia RDC · fait à Kinshasa"));
-    app.append(main);
+      page.append(h("div", { class: "grid2" }, h("div", {}, importBloc()),
+        h("div", {}, h("h2", { style: "font-size:15px;margin:0 0 10px;display:flex;gap:8px;align-items:center" }, "Paiements à vérifier", d.a_verifier.length ? h("span", { class: "cnt r" }, d.a_verifier.length) : null), ...(d.a_verifier.length ? d.a_verifier.map(ligneVerif) : [vide("Rien à vérifier.")]),
+          h("div", { style: "height:14px" }), d.en_attente.length ? tableAttente() : panneau("En attente de l'import", 0, h("div", { class: "pb" }, vide("Aucun paiement en attente."))))));
+    } else if (onglet === "comptes") page.append(comptesBloc());
+    else if (onglet === "recup") page.append(h("div", { class: "grid2" }, recupBloc(), mailEtat()));
+    else page.append(h("div", { class: "grid2" }, raccourcis(), mailEtat()));
+    app.append(side, h("div", { class: "main" }, h("div", { class: "topbar" }, marque("brand"), h("a", { class: "go", href: "/" }, "Application", ic("ext", "sm"))), page), dock);
+    window.scrollTo(0, keep);
   }
   charger();
 })();
