@@ -268,8 +268,8 @@
       <div class="contact">
         <div class="tt">💬 Une question ? Un souci ?</div>
         <p>Un lieu à corriger, un commerce à ajouter, une idée pour améliorer Nexvia RDC ? Écrivez-nous, votre message nous aide à faire grandir le projet.</p>
-        <div class="lignes"><a class="b wa" target="_blank" rel="noopener" href="https://wa.me/243862675126?text=Bonjour%20l%27%C3%A9quipe%20Nexvia%20RDC%20%F0%9F%91%8B%0A%0AJe%20vous%20%C3%A9cris%20au%20sujet%20de%20%3A%0A%28un%20lieu%20%C3%A0%20corriger%20/%20ajouter%20mon%20commerce%20/%20une%20id%C3%A9e%20/%20un%20probl%C3%A8me%29%0A%0AMon%20message%20%3A%0A">💬 Nous écrire sur WhatsApp</a><a class="b" href="mailto:nexviacongolais@gmail.com?subject=Nexvia%20RDC%20%E2%80%93%20Message&body=Bonjour%20l%27%C3%A9quipe%20Nexvia%20RDC%2C%0A%0AMon%20message%20%3A%0A%0A">✉️ Nous écrire</a><a class="b alt" href="/compte/?mode=inscription&amp;type=commerce">➕ Ajouter mon commerce</a></div>
-        <div class="mail">WhatsApp : <b>+243 862 675 126</b><br>E-mail : <b>nexviacongolais@gmail.com</b></div>
+        <div class="lignes"><a class="b wa" target="_blank" rel="noopener" href="https://wa.me/243862675126?text=Bonjour%20l%27%C3%A9quipe%20Nexvia%20RDC%20%F0%9F%91%8B%0A%0AJe%20vous%20%C3%A9cris%20au%20sujet%20de%20%3A%0A%28un%20lieu%20%C3%A0%20corriger%20/%20ajouter%20mon%20commerce%20/%20une%20id%C3%A9e%20/%20un%20probl%C3%A8me%29%0A%0AMon%20message%20%3A%0A">💬 Nous écrire sur WhatsApp</a><a class="b" href="mailto:contact@nexviardc.com?subject=Nexvia%20RDC%20%E2%80%93%20Message&body=Bonjour%20l%27%C3%A9quipe%20Nexvia%20RDC%2C%0A%0AMon%20message%20%3A%0A%0A">✉️ Nous écrire</a><a class="b alt" href="/compte/?mode=inscription&amp;type=commerce">➕ Ajouter mon commerce</a></div>
+        <div class="mail">WhatsApp : <b>+243 862 675 126</b><br>E-mail : <b>contact@nexviardc.com</b></div>
       </div>
       <div class="demcarte">
         <div class="tt">🗺️ Votre commune n'est pas encore là ?</div>
@@ -278,7 +278,7 @@
       </div>
       <div class="install" id="install">📲 <b>Installer Nexvia RDC sur votre téléphone</b><br><span id="installTxt">Dans le menu de votre navigateur, choisissez « Ajouter à l'écran d'accueil ». Nexvia RDC s'ouvrira alors comme une application.</span></div>
       <p class="note-bas">Lieux « ✔ Vérifiés » : confirmés par l'équipe. « Référencés » : collectés, pas encore confirmés. « OpenStreetMap » : informations de la communauté. Appelez avant de vous déplacer.<br>Carte © contributeurs OpenStreetMap.</p>
-      <div class="pied"><div class="wax"></div>Nexvia RDC · Kinshasa, République démocratique du Congo<br>Contact : nexviacongolais@gmail.com<br><span style="font-size:.9em;opacity:.85">À Gombe : <a href="/pharmacies-gombe/" style="color:inherit">Pharmacies</a> · <a href="/restaurants-gombe/" style="color:inherit">Restaurants</a> · <a href="/banques-gombe/" style="color:inherit">Banques</a> · <a href="/hotels-gombe/" style="color:inherit">Hôtels</a></span><br><a href="confidentialite.html" style="color:inherit">Politique de confidentialité</a></div>
+      <div class="pied"><div class="wax"></div>Nexvia RDC · Kinshasa, République démocratique du Congo<br>Contact : contact@nexviardc.com<br><span style="font-size:.9em;opacity:.85">À Gombe : <a href="/pharmacies-gombe/" style="color:inherit">Pharmacies</a> · <a href="/restaurants-gombe/" style="color:inherit">Restaurants</a> · <a href="/banques-gombe/" style="color:inherit">Banques</a> · <a href="/hotels-gombe/" style="color:inherit">Hôtels</a></span><br><a href="confidentialite.html" style="color:inherit">Politique de confidentialité</a></div>
     </div>
   </section>
 
@@ -823,7 +823,7 @@ const premierNum = t => String(t).split(/[;,\/]|\bou\b/)[0];
 const telHref = t => "tel:" + premierNum(t).replace(/[^\d+]/g, "");
 const waHref = t => { let d = premierNum(t).replace(/\D/g, ""); if (d.length === 9) d = "243" + d; else if (d.charAt(0) === "0") d = "243" + d.slice(1); return "https://wa.me/" + d; };
 const estMobile = t => /^(\+?243|0)?[89]\d{8}$/.test(premierNum(t).replace(/[^\d+]/g, ""));
-const MAIL = "nexviacongolais@gmail.com";
+const MAIL = "contact@nexviardc.com";
 const signalHref = l => "mailto:" + MAIL + "?subject=" + encodeURIComponent("Nexvia RDC – Signalement : " + l.nom) + "&body=" + encodeURIComponent("Bonjour l'équipe Nexvia RDC,\n\nJe signale un problème sur cette fiche :\nLieu : " + l.nom + "\nAdresse : " + (l.adresse || "") + "\n\nCe qui n'est pas correct :\n- Téléphone :\n- Horaires :\n- Position sur la carte :\n- Lieu fermé ou déplacé :\n- Autre :\n\nMerci !\n");
 // ---- Ouvert maintenant (heure de Kinshasa, UTC+1) ----
 const J7 = ["lun", "mar", "mer", "jeu", "ven", "sam", "dim"];
