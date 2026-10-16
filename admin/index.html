@@ -251,6 +251,8 @@
       vider(zone);
       let r; try { r = await api("GET", "admin/wa" + (waFiltre ? "?statut=" + waFiltre : "")); } catch (e) { zone.append(h("div", { class: "alerte bad" }, e.message)); return; }
       const c = r.compte || {};
+      const GENRES = { verif_ok: ["ok", "Meta a vérifié le webhook"], verif_refusee: ["bad", "Meta a essayé de vérifier : refusé"], post_ok: ["ok", "Meta a envoyé des données"], post_signature_invalide: ["bad", "Meta a écrit mais la signature est invalide (clé secrète fausse)"], post_sans_secret: ["bad", "Meta a écrit mais la clé secrète manque dans Cloudflare"], erreur_traitement: ["bad", "Erreur pendant le traitement"], post_trop_gros: ["bad", "Message trop volumineux"] };
+      const jr = (r.journal || []).length ? h("details", { class: "jr", open: !(r.conversations || []).length }, h("summary", {}, "Dernières visites de Meta (" + r.journal.length + ")"), h("div", { class: "lg" }, r.journal.map(j => { const g = GENRES[j.genre] || ["gris", j.genre]; return h("p", {}, heureWa(j.at) + " · " + g[1] + (j.detail ? " · " + j.detail : "")); }))) : h("p", { class: "muted", style: "margin:0 0 12px" }, "Aucune visite de Meta enregistrée pour l'instant : aucun message n'est arrivé jusqu'au site.");
       const onglets = h("div", { class: "wa-tabs" }, [["a_traiter", "À traiter"], ["traite", "Traités"], ["ia", "Robot"], ["", "Tous"]].map(([k, l]) => h("button", { class: waFiltre === k ? "on" : "", onclick: () => { waFiltre = k; waOuverte = null; liste(); } }, l, k && c[k] ? h("span", { class: "cnt" + (k === "a_traiter" ? " r" : "") }, c[k]) : null)));
       const gauche = h("div", { class: "wa-list" }, r.conversations.length ? r.conversations.map(x => h("button", { class: "wa-it" + (waOuverte === x.id ? " on" : ""), onclick: () => ouvrir(x.id) },
         h("div", { class: "av" }, initiales(x.nom || x.phone)),
@@ -258,7 +260,7 @@
           h("span", { class: "ap" }, (x.libelle ? x.libelle + " · " : "") + (x.resume || x.dernier || "")), x.statut !== "ia" ? h("span", { class: "badge " + STATUT_WA[x.statut][1] }, STATUT_WA[x.statut][0]) : null),
         x.non_lu ? h("span", { class: "pt-nl" }) : null)) : [vide(waFiltre === "a_traiter" ? "Rien à traiter pour le moment." : "Aucune conversation.")]);
       const droite = h("div", { class: "wa-thread", id: "wa-thread" }, h("div", { class: "wa-vide" }, ic("msg"), "Choisissez une conversation."));
-      zone.append(onglets, h("div", { class: "wa-cols" + (waOuverte ? " ouvert" : "") }, gauche, droite));
+      zone.append(jr, onglets, h("div", { class: "wa-cols" + (waOuverte ? " ouvert" : "") }, gauche, droite));
       if (waOuverte) ouvrir(waOuverte, true);
     }
     async function ouvrir(id, silencieux) {

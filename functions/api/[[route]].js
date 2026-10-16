@@ -569,7 +569,8 @@ async function waListe({ request, env, url }) {
   const f = url.searchParams.get("statut"), statut = ["a_traiter", "traite", "ia"].includes(f) ? f : null;
   const lignes = (await db.prepare("SELECT c.id, c.phone, c.nom, c.statut, c.categorie, c.resume, c.non_lu, c.dernier_msg_at, c.dernier_client_at, (SELECT texte FROM wa_messages m WHERE m.conv_id = c.id ORDER BY m.id DESC LIMIT 1) AS dernier FROM wa_conversations c" + (statut ? " WHERE c.statut = ?" : "") + " ORDER BY CASE c.statut WHEN 'a_traiter' THEN 0 ELSE 1 END, c.dernier_msg_at DESC LIMIT 80").bind(...(statut ? [statut] : [])).all()).results || [];
   const nb = (await db.prepare("SELECT statut, COUNT(*) AS n FROM wa_conversations GROUP BY statut").all()).results || [];
-  return json({ ok: true, conversations: lignes.map(l => ({ ...l, libelle: WA.CATEGORIES[l.categorie] || null })), compte: Object.fromEntries(nb.map(x => [x.statut, x.n])) });
+  const journal = (await db.prepare("SELECT at, genre, detail FROM wa_journal ORDER BY id DESC LIMIT 8").all()).results || [];
+  return json({ ok: true, journal, conversations: lignes.map(l => ({ ...l, libelle: WA.CATEGORIES[l.categorie] || null })), compte: Object.fromEntries(nb.map(x => [x.statut, x.n])) });
 }
 async function waConversation({ request, env, url }) {
   await exigerAdmin(request, env); const db = await C.base(env), id = ent(url.searchParams.get("id"));
