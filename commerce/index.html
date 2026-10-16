@@ -294,7 +294,7 @@
           a.tel_verifie ? h("p", { class: "muted" }, "Numéro vérifié.") : [h("p", { class: "muted" }, "Envoyez ce code par WhatsApp à Nexvia RDC, depuis le numéro du commerce (" + (a.tel || "") + ") :"), h("p", {}, h("span", { class: "code" }, a.code || "")), h("a", { class: "btn wa small", href: wa(msg), target: "_blank", rel: "noopener" }, "Envoyer mon code par WhatsApp")]),
         payant ? h("li", {}, h("h3", {}, "Payer la formule " + p.nom), h("p", { class: "muted" }, dollars(p.prix) + " par mois (≈ " + dollars(etat.total_avec_frais[fini.plan]) + " avec les frais). Payez, puis saisissez votre numéro de référence."),
           h("p", {}, h("button", { class: "btn gold small", onclick: () => { window.open(CFG.ZOLA_LIEN, "_blank", "noopener"); toast("Saisissez " + dollars(p.prix).replace(",", ".") + " (USD) sur la page de paiement."); } }, "Payer " + dollars(p.prix))), formPaiement(fini.plan)) : null,
-        h("li", {}, h("h3", {}, "Validation sous 24 heures"), h("p", { class: "muted" }, payant ? "Dès que votre paiement et votre fiche sont vérifiés, votre formule " + p.nom + " est activée." : "Nous vérifions votre fiche, puis nous la publions."))),
+        h("li", {}, h("h3", {}, "Validation sous 48 à 72 heures"), h("p", { class: "muted" }, payant ? "Nous vérifions votre commerce et son adresse. Votre formule " + p.nom + " est activée dès que votre paiement est confirmé (sous 24 heures)." : "Nous vérifions votre commerce et son adresse, puis nous les publions."))),
       h("div", { class: "row" }, h("a", { class: "btn gold", href: "/" }, "Retour à l'accueil"), h("button", { class: "btn alt", onclick: () => { vue = "accueil"; fini = null; rendre(); window.scrollTo(0, 0); } }, "Voir mon espace commerce")));
   }
   function panneauAdresses(main) {
@@ -318,7 +318,7 @@
   function rendre() {
     vider(app); app.append(entete(etat.utilisateur));
     const main = h("main", {});
-    if (vue === "fini" && fini && etat.marque) { app.append(hero("Votre demande est partie", "Nous revenons vers vous très vite."), main); ecranFini(main); main.append(piedRdc()); return; }
+    if (vue === "fini" && fini && etat.marque) { app.append(hero("Votre demande est partie", "Nous vérifions votre commerce et son adresse sous 48 à 72 heures."), main); ecranFini(main); main.append(piedRdc()); return; }
     if (vue === "fiche") { app.append(hero("Votre fiche", "Remplissez les informations de votre commerce. Vous pourrez les modifier ensuite."), main); ecranFiche(main); main.append(piedRdc()); return; }
     if (vue === "choix" || !etat.marque) { app.append(hero("Faites-vous trouver à Gombe", "Choisissez la formule qui vous convient."), main); ecranChoix(main); main.append(piedRdc()); return; }
     const m = etat.marque, p = planActuel(), ps = planSaisie(), n = etat.adresses.filter(a => a.statut !== "refusee").length;

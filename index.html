@@ -166,6 +166,9 @@
   .badge.ok { background: #d9f2ec; color: #0e5f55; }
   .badge.ref { background: #fff1cf; color: #7a5200; }
   .badge.osm { background: #e8ebf1; color: #4a5568; }
+  .badge.prem { background: #fff1cf; color: #7a5200; margin-left: 4px; }
+  .fiche .desc { color: #34405a; line-height: 1.4; }
+  .fiche .menu-titre { font-weight: 700; margin: 10px 0 4px; }
   .fiche p { margin: 4px 0; font-size: .88rem; line-height: 1.38; }
   .fiche .note, .item .note { font-size: .75rem; color: var(--muted); }
   .actions { display: flex; gap: 6px; margin-top: 10px; }
@@ -786,7 +789,10 @@ const COULEUR = { restaurant: "#e08a00", bar: "#8e44ad", pharmacie: "#1b998b", c
 const EMOJI = { restaurant: "🍽️", bar: "🍸", pharmacie: "💊", commerce: "🛒", sport: "⚽", culte: "⛪", hotel: "🏨", sante: "🏥", loisirs: "🎭", formation: "🎓", bienetre: "💆", voyage: "✈️", banque: "🏦", atm: "🏧", station: "⛽", transfert: "💸", ecole: "🏫", autre: "📍" };
 const GOMBE = [[-4.328, 15.268], [-4.293, 15.322]];
 const ZONE_LARGE = { s: -4.345, n: -4.28, o: 15.25, e: 15.34 };
-const ORDRE = { verifie: 0, reference: 1, osm: 2 };
+// Mettre true pour afficher publiquement les commerces inscrits et validés (après avoir supprimé les comptes de test dans l'admin).
+const AFFICHAGE_PUBLIC = false;
+const ORDRE = { verifie: 0, inscrit: 1, reference: 2, osm: 3 };
+const ordre = l => l.haut ? -1 : ORDRE[l.source];
 
 function catOSM(t) {
   const a = t.amenity, s = t.shop, to = t.tourism;
@@ -880,9 +886,9 @@ function basculerFav(l) {
 }
 
 function badgeHTML(l) {
-  const pre = l.source === "verifie" ? "✔ Vérifié · " : l.source === "reference" ? "Référencé · " : "OpenStreetMap · ";
-  const cl = l.source === "verifie" ? "ok" : l.source === "reference" ? "ref" : "osm";
-  return '<span class="badge ' + cl + '">' + pre + esc(l.type || CAT_LABEL[l.cat]) + '</span>' + ouvertHTML(l);
+  const pre = l.source === "verifie" ? "✔ Vérifié · " : l.source === "inscrit" ? "Commerce inscrit · " : l.source === "reference" ? "Référencé · " : "OpenStreetMap · ";
+  const cl = l.source === "verifie" || l.source === "inscrit" ? "ok" : l.source === "reference" ? "ref" : "osm";
+  return '<span class="badge ' + cl + '">' + pre + esc(l.type || CAT_LABEL[l.cat]) + '</span>' + (l.haut ? '<span class="badge prem">👑 Premium</span>' : "") + ouvertHTML(l);
 }
 function noteHTML(l) {
   let n = "";
@@ -895,7 +901,7 @@ function noteHTML(l) {
 }
 function actionsHTML(l) {
   return '<div class="actions">' + (l.tel ? '<a class="btn" href="' + esc(telHref(l.tel)) + '">📞 Appeler</a>' : "") +
-    (l.tel && (l.whatsapp || estMobile(l.tel)) ? '<a class="btn wa" target="_blank" rel="noopener" href="' + esc(waHref(l.tel)) + '">WhatsApp</a>' : "") +
+    (l.tel && !l.sansWa && (l.whatsapp || estMobile(l.tel)) ? '<a class="btn wa" target="_blank" rel="noopener" href="' + esc(waHref(l.tel)) + '">WhatsApp</a>' : "") +
     (aPosition(l) ? '<a class="btn alt" target="_blank" rel="noopener" href="https://www.google.com/maps/dir/?api=1&destination=' + l.lat + ',' + l.lng + '">Itinéraire</a>' : "") + '</div>';
 }
 function fiche(l) {
@@ -907,6 +913,8 @@ function fiche(l) {
   if (l.adresse) h += '<p>📍 ' + esc(l.adresse) + '</p>';
   if (l.horaires) h += '<p>🕒 ' + esc(l.horaires) + '</p>';
   if (l.tel) h += '<p>📞 ' + esc(l.tel) + '</p>';
+  if (l.description) h += '<p class="desc">' + esc(l.description) + '</p>';
+  if (l.menuPhotos && l.menuPhotos.length) h += '<p class="menu-titre">🍽️ Menu</p><div class="photos">' + l.menuPhotos.map(src => '<' + 'img src="' + esc(src) + '" alt="Menu de ' + esc(l.nom) + '" loading="lazy" onerror="this.remove()">').join("") + '</div>';
   h += distHTML(l);
   return h + noteHTML(l) + actionsHTML(l) + '<a class="lien-signal" href="' + esc(signalHref(l)) + '">⚠️ Signaler une erreur sur cette fiche</a></div>';
 }
@@ -947,7 +955,7 @@ function setTab(t) {
   document.querySelectorAll(".screen").forEach(s => s.classList.toggle("on", s.id === "s-" + t));
   document.querySelectorAll("#tabs button").forEach(b => b.setAttribute("aria-current", b.dataset.tab === t ? "page" : "false"));
   if (t !== "carte") fermerFiche();
-  if (t === "carte" && window.__carte) window.__carte.invalidateSize();
+  if (t === "carte" && window.__refit) window.__refit();
   if (t === "favoris") rendreFavoris();
   if (t === "compte") rendreCompte();
 }
@@ -1032,7 +1040,7 @@ function corpsResultat(l) {
     (l.adresse ? " · " + esc(l.adresse) : "") + (aPosition(l) ? "" : " · sans position") + '</small>';
 }
 function meilleurs(q, n) {
-  return lieux.filter(l => correspond(texteRecherche(l), q)).sort((a, b) => (correspond(a.nom, q) ? 0 : 1) - (correspond(b.nom, q) ? 0 : 1) || ORDRE[a.source] - ORDRE[b.source]).slice(0, n);
+  return lieux.filter(l => correspond(texteRecherche(l), q)).sort((a, b) => (correspond(a.nom, q) ? 0 : 1) - (correspond(b.nom, q) ? 0 : 1) || ordre(a) - ordre(b)).slice(0, n);
 }
 function majSuggestions(q) {
   const m = q && q.length >= 2 ? meilleurs(q, 6) : [];
@@ -1069,7 +1077,7 @@ function rendreAccueil() {
   lieux.forEach(l => { present[l.cat] = (present[l.cat] || 0) + 1; });
   $("cats").innerHTML = Object.keys(CATS).filter(c => present[c]).map(c =>
     '<button type="button" class="cat" data-c="' + c + '" style="background:linear-gradient(160deg,' + COULEUR[c] + '2e,#ffffff 70%)"><span class="e" style="background:' + COULEUR[c] + '">' + EMOJI[c] + '</span>' + esc(CAT_COURT[c]) + '<small>' + present[c] + '</small></button>').join("");
-  const pops = lieux.filter(l => l.source !== "osm" && aPosition(l)).sort((a, b) => ORDRE[a.source] - ORDRE[b.source] || (b.tel ? 1 : 0) - (a.tel ? 1 : 0)).slice(0, 30);
+  const pops = lieux.filter(l => l.source !== "osm" && aPosition(l)).sort((a, b) => ordre(a) - ordre(b) || (b.tel ? 1 : 0) - (a.tel ? 1 : 0)).slice(0, 30);
   { const jour = Math.floor(Date.now() / 864e5), n = pops.length, dec = n ? jour % n : 0; pops.push(...pops.splice(0, dec)); pops.length = Math.min(pops.length, 10); }
   $("pops").innerHTML = pops.map((l, i) => '<button type="button" class="pop" data-p="' + i + '"><div class="top" style="background:' + (COULEUR[l.cat] || COULEUR.autre) + '">' + emojiDe(l) + '</div><div class="txt"><b>' + esc(l.nom) + '</b><small>' + (l.source === "verifie" ? "✔ Vérifié" : "Référencé") + " · " + esc(l.type || CAT_LABEL[l.cat]) + '</small></div></button>').join("");
   $("pops")._items = pops;
@@ -1139,7 +1147,7 @@ function setMode(m) {
   $("liste").style.display = m === "liste" ? "block" : "none";
   $("btnCarte").setAttribute("aria-pressed", String(m === "carte"));
   $("btnListe").setAttribute("aria-pressed", String(m === "liste"));
-  if (m === "carte" && window.__carte) window.__carte.invalidateSize();
+  if (m === "carte" && window.__refit) window.__refit();
 }
 function construireFiltres() {
   const present = new Set(lieux.map(l => l.cat)), box = $("chips");
@@ -1159,6 +1167,9 @@ if (typeof L === "undefined") {
 } else {
   const map = L.map("map", { zoomControl: true }).setView([-4.308, 15.298], 14);
   window.__carte = map;
+  // La carte se remplit toujours : dès que son conteneur change de taille (onglet affiché, fenêtre redimensionnée), on recalcule et on recadre sur Gombe si elle est restée dézoomée.
+  window.__refit = () => { map.invalidateSize(); if (map.getZoom() < 11) map.fitBounds(GOMBE); };
+  if (window.ResizeObserver) new ResizeObserver(() => window.__refit()).observe($("map"));
   L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 19, attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> (ODbL)' }).addTo(map);
 
   const groupe = L.layerGroup().addTo(map); // lieux vérifiés : toujours visibles
@@ -1225,7 +1236,7 @@ if (typeof L === "undefined") {
   }
   window.afficher = afficher;
   function rendreListe() {
-    const items = visibles.slice().sort((a, b) => { if (maPos) { const da = distance(a), db = distance(b); if (da !== null || db !== null) return (da === null ? 1e12 : da) - (db === null ? 1e12 : db); } return ORDRE[a.source] - ORDRE[b.source] || a.nom.localeCompare(b.nom, "fr"); }).slice(0, 300);
+    const items = visibles.slice().sort((a, b) => { if (maPos) { const da = distance(a), db = distance(b); if (da !== null || db !== null) return (da === null ? 1e12 : da) - (db === null ? 1e12 : db); } return ordre(a) - ordre(b) || a.nom.localeCompare(b.nom, "fr"); }).slice(0, 300);
     $("liste").innerHTML = items.length ? items.map(l => itemHTML(l, "liste")).join("") : '<p class="vide">Aucun lieu à afficher avec ces filtres.</p>';
   }
   $("liste").addEventListener("click", clicItems);
@@ -1280,11 +1291,27 @@ if (typeof L === "undefined") {
       if (!dejaPresent(l) && !horsRDC(l.lat, l.lng, l.adresse, l.tel, l.nom)) lieux.push(l);
     });
   }
+  // Commerces inscrits et validés par l'équipe (comptes commerçants) : placés dans la liste, Premium en tête.
+  function ajouterCommerces(d) {
+    if (!d || !d.ok || !Array.isArray(d.commerces)) return;
+    const CAT_API = { distributeur: "atm", "station-service": "station" };
+    d.commerces.forEach(c => {
+      if (!c || !c.nom) return;
+      const c0 = CAT_API[c.categorie] || c.categorie, cat = CATS[c0] ? c0 : "autre";
+      if (c.lieu_existant) { const n = norm(c.lieu_existant); for (let i = lieux.length - 1; i >= 0; i--) if (!lieux[i].partenaire && norm(lieux[i].nom) === n) lieux.splice(i, 1); }
+      const photo = id => "/api/photo/" + Number(id);
+      lieux.push({ nom: c.nom, cat, type: CAT_LABEL[cat], adresse: c.adresse || "", tel: c.tel || "", horaires: c.horaires || "", description: c.description || "",
+        lat: typeof c.lat === "number" ? c.lat : undefined, lng: typeof c.lng === "number" ? c.lng : undefined,
+        source: c.badge ? "verifie" : "inscrit", partenaire: true, formule: c.formule, haut: !!c.haut, whatsapp: !!c.whatsapp, sansWa: !c.whatsapp,
+        photos: (c.photos || []).map(photo), menuPhotos: (c.menu_photos || []).map(photo) });
+    });
+  }
   const lireJSON = u => fetch(u, { cache: "no-cache" }).then(r => { if (!r.ok) throw new Error("absent"); return r.json(); }).catch(() => null);
 
   construireFiltres(); afficher(true); rendreAccueil();
-  Promise.all([lireJSON("references.json"), lireJSON("osm.json")]).then(([refs, osm]) => {
+  Promise.all([lireJSON("references.json"), lireJSON("osm.json"), lireJSON("/api/public/commerces")]).then(([refs, osm, coms]) => {
     if (refs) ajouterRefs(refs);
+    if (AFFICHAGE_PUBLIC) ajouterCommerces(coms);
     if (osm) ajouterOSM(osm);
     construireFiltres(); afficher(true); rendreAccueil();
     if (!refs && !osm) $("statut").textContent += " (Données supplémentaires pas encore ajoutées.)";
