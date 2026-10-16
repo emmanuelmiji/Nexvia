@@ -1,5 +1,6 @@
 User-agent: *
 Allow: /
+Disallow: /admin/
 Disallow: /api/
 
-Sitemap: https://nexvia-rdc.pages.dev/sitemap.xml
+Sitemap: https://nexviardc.com/sitemap.xml
