@@ -30,8 +30,8 @@ export function savoir() {
   const P = C.PLANS, T = C.TOTAL_AVEC_FRAIS, d = n => Number(n).toFixed(2).replace(".", ",");
   return [
     "NEXVIA RDC",
-    "- Nexvia RDC est une application web (site : nexviardc.com) qui répertorie les restaurants, pharmacies, banques, hôtels, bars, écoles, distributeurs, stations-service et autres services de Kinshasa, sur une carte, avec adresses et téléphones. Plus de 350 lieux.",
-    "- Les communes ouvertes sont : " + C.COMMUNES_OUVERTES.join(", ") + ". Les lieux déjà répertoriés (plus de 350) sont ceux de Gombe ; dans les autres communes ouvertes, les commerces peuvent déjà s'inscrire. Les autres communes viendront plus tard : une personne peut dire quelle commune elle souhaite depuis l'application.",
+    "- Nexvia RDC est une application web (site : nexviardc.com) qui répertorie les restaurants, pharmacies, banques, hôtels, bars, écoles, distributeurs, stations-service et autres services de Kinshasa, sur une carte, avec adresses et téléphones.",
+    "- Les communes ouvertes sont : " + C.COMMUNES_OUVERTES.join(", ") + ". Plus de 850 lieux sont déjà répertoriés dans les quatre communes ; les commerces de ces communes peuvent s'inscrire. Les autres communes viendront plus tard : une personne peut dire quelle commune elle souhaite depuis l'application.",
     "- On peut l'installer comme une application : sur iPhone, ouvrir nexviardc.com dans Safari, toucher Partager puis « Sur l'écran d'accueil ». Sur Android, ouvrir le site dans Chrome, toucher le menu (trois points) puis « Installer l'application » ou « Ajouter à l'écran d'accueil ».",
     "- Contact de l'équipe : WhatsApp +" + C.WHATSAPP.replace(/^(\d{3})(\d{3})(\d{3})(\d{3})$/, "$1 $2 $3 $4") + " (ce numéro), e-mail contact@nexviardc.com.",
     "- L'affichage public des commerces inscrits n'est pas encore ouvert. Ne promets aucune date.",

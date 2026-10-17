@@ -895,7 +895,7 @@ if (typeof L === "undefined") {
     if (recentrer && mode === "carte") {
       const actif = q || communeF !== "toutes" || filtre !== "tous" || seulV || seulO;
       const proches = pts.filter(p => p[0] > ZONE_LARGE.s && p[0] < ZONE_LARGE.n && p[1] > ZONE_LARGE.o && p[1] < ZONE_LARGE.e), base = proches.length ? proches : pts;
-      if (!q && communeF !== "toutes" && !pts.length) map.fitBounds(BORNES_COMMUNE[communeF] || GOMBE); else if (!actif) map.fitBounds(GOMBE); else if (base.length) map.fitBounds(L.latLngBounds(base).pad(0.2), { maxZoom: 16 });
+      if (!q && communeF !== "toutes") { if (pts.length) map.fitBounds(L.latLngBounds(pts).pad(0.08), { maxZoom: 15 }); else map.fitBounds(BORNES_COMMUNE[communeF] || GOMBE); } else if (!actif) map.fitBounds(GOMBE); else if (base.length) map.fitBounds(L.latLngBounds(base).pad(0.2), { maxZoom: 16 });
     }
     if (ouvrir && visibles.length) {
       if (visibles.length === 1 && pts.length === 1) window.ouvrirLieu(visibles[0]);
@@ -942,13 +942,13 @@ if (typeof L === "undefined") {
   const EXCLUS_NOMS = [/^\s*(le\s+)?glad\b/i];
   function horsRDC(lat, lng, adresse, tel, nom) {
     if (EXCLUS_NOMS.some(re => re.test(String(nom || "")))) return true;
-    if (typeof lat === "number" && typeof lng === "number" && (lat > -4.285 || lat < -4.43 || lng < 15.19 || lng > 15.43)) return true;
+    if (typeof lat === "number" && typeof lng === "number" && (lat > -4.285 || lat < -4.46 || lng < 15.17 || lng > 15.43)) return true;
     if (/brazzaville|poto-?poto|bacongo|moungali|ouenz[eé]|talanga[iï]|mfilou|makél?él?é?kélé/i.test([nom, adresse].join(" "))) return true;
     return /^\s*(\+|00)?\s*242/.test(String(tel || "").replace(/[^\d+]/g, "")) ;
   }
   function ajouterRefs(liste) {
     (liste || []).forEach(r => { if (!r.nom || dejaPresent(r) || horsRDC(r.lat, r.lng, r.adresse, r.tel, r.nom)) return;
-      lieux.push({ nom: r.nom, cat: CATS[r.cat] ? r.cat : "autre", type: r.type || "", adresse: r.adresse || "", tel: r.tel || "", horaires: r.horaires || "", lat: r.lat, lng: r.lng, posSource: r.posSource || "", commune: COMMUNES_OUVERTES.includes(r.commune) ? r.commune : "", source: "reference" }); });
+      lieux.push({ nom: r.nom, cat: CATS[r.cat] ? r.cat : "autre", type: r.type || "", adresse: r.adresse || "", tel: r.tel || "", horaires: r.horaires || "", lat: r.lat, lng: r.lng, posSource: r.posSource || "", commune: COMMUNES_OUVERTES.includes(r.commune) ? r.commune : "", remarque: r.remarque || "", source: "reference" }); });
   }
   function ajouterOSM(data) {
     (data.elements || []).forEach(el => {
@@ -981,8 +981,11 @@ if (typeof L === "undefined") {
   const lireJSON = u => fetch(u, { cache: "no-cache" }).then(r => { if (!r.ok) throw new Error("absent"); return r.json(); }).catch(() => null);
 
   construireFiltres(); afficher(true); rendreAccueil();
-  Promise.all([lireJSON("references.json"), lireJSON("osm.json"), lireJSON("/api/public/commerces")]).then(([refs, osm, coms]) => {
+  Promise.all([lireJSON("references.json"), lireJSON("osm.json"), lireJSON("/api/public/commerces"), lireJSON("communes/kintambo.json"), lireJSON("communes/ngaliema.json"), lireJSON("communes/limete.json")]).then(([refs, osm, coms, kin, nga, lim]) => {
     if (refs) ajouterRefs(refs);
+    if (kin) ajouterRefs(kin);   // lieux référencés des autres communes (un fichier par commune)
+    if (nga) ajouterRefs(nga);
+    if (lim) ajouterRefs(lim);
     if (AFFICHAGE_PUBLIC) ajouterCommerces(coms);
     if (osm) ajouterOSM(osm);
     construireFiltres(); afficher(true); rendreAccueil();
