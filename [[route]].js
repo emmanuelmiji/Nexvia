@@ -212,6 +212,7 @@ async function adminTestMail({ request, env }) {
 
 // ---------- espace commerce ----------
 async function marqueDe(db, userId) { return db.prepare("SELECT * FROM marques WHERE owner_id = ?").bind(userId).first(); }
+const STAT_ACTIONS = ["vue", "appel", "wa", "itin", "fav"];
 async function etatCommerce({ request, env }) {
   const user = await exigerUser(request, env), db = await C.base(env);
   const marque = await marqueDe(db, user.id);
@@ -221,6 +222,15 @@ async function etatCommerce({ request, env }) {
   const phs = (await db.prepare("SELECT p.id, p.adresse_id, p.type FROM photos p JOIN adresses a ON a.id = p.adresse_id WHERE a.marque_id = ? ORDER BY p.id").bind(marque.id).all()).results || [];
   for (const a of adresses) { a.photos = phs.filter(p => p.adresse_id === a.id && p.type !== "menu").map(p => p.id); a.menu_photos = phs.filter(p => p.adresse_id === a.id && p.type === "menu").map(p => p.id); }
   const demandes = (await db.prepare("SELECT id, plan, ref, statut, motif, created_at, traite_at FROM demandes_paiement WHERE marque_id = ? ORDER BY id DESC LIMIT 20").bind(marque.id).all()).results || [];
+  if (PLANS[plan].stats && env.DEMANDES) {            // statistiques de vues et d'appels (Premium)
+    const d = new Date(), moisA = d.toISOString().slice(0, 7), moisP = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth() - 1, 1)).toISOString().slice(0, 7);
+    await Promise.all(adresses.filter(a => a.statut === "validee").map(async a => {
+      const lire = async suf => parseInt((await env.DEMANDES.get("lieu:adr-" + a.id + suf)) || "0", 10) || 0;
+      const une = async m => { const o = {}; await Promise.all(STAT_ACTIONS.map(async k => { o[k] = await lire(":" + k + (m ? ":" + m : "")); })); return o; };
+      const [ce, prec] = await Promise.all([une(moisA), une(moisP)]);
+      a.stats = { ce_mois: ce, mois_dernier: prec };
+    }));
+  }
   return json({ ok: true, utilisateur: pub(user), marque: { ...marque, plan_effectif: plan, plan_edition: C.planEdition(marque) }, adresses, demandes, plans: PLANS, total_avec_frais: C.TOTAL_AVEC_FRAIS, whatsapp: C.WHATSAPP });
 }
 async function creerMarque({ request, env }) {

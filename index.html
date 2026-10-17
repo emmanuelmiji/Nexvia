@@ -933,7 +933,7 @@ function itemHTML(l, mode) {
 function compter(l, action) {
   try {
     if (!l) return;
-    const id = cle(l), k = "nx_s_" + id + action;
+    const id = (l.partenaire && l.adrId) ? "adr-" + l.adrId : cle(l), k = "nx_s_" + id + action;
     if (action !== "fav") { if (sessionStorage.getItem(k)) return; sessionStorage.setItem(k, "1"); }
     fetch("/api/vue", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ id, action }), keepalive: true }).catch(() => {});
   } catch (e) {}
@@ -1300,7 +1300,7 @@ if (typeof L === "undefined") {
       const c0 = CAT_API[c.categorie] || c.categorie, cat = CATS[c0] ? c0 : "autre";
       if (c.lieu_existant) { const n = norm(c.lieu_existant); for (let i = lieux.length - 1; i >= 0; i--) if (!lieux[i].partenaire && norm(lieux[i].nom) === n) lieux.splice(i, 1); }
       const photo = id => "/api/photo/" + Number(id);
-      lieux.push({ nom: c.nom, cat, type: CAT_LABEL[cat], adresse: c.adresse || "", tel: c.tel || "", horaires: c.horaires || "", description: c.description || "",
+      lieux.push({ adrId: Number(c.id) || 0, nom: c.nom, cat, type: CAT_LABEL[cat], adresse: c.adresse || "", tel: c.tel || "", horaires: c.horaires || "", description: c.description || "",
         lat: typeof c.lat === "number" ? c.lat : undefined, lng: typeof c.lng === "number" ? c.lng : undefined,
         source: c.badge ? "verifie" : "inscrit", partenaire: true, formule: c.formule, haut: !!c.haut, whatsapp: !!c.whatsapp, sansWa: !c.whatsapp,
         photos: (c.photos || []).map(photo), menuPhotos: (c.menu_photos || []).map(photo) });
