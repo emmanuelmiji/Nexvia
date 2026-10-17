@@ -72,7 +72,7 @@
     a[cle] = a[cle] || [];
     function dessiner() {
       vider(bloc);
-      if (menu && !max) { bloc.append(h("div", { class: "verrou" }, "Le menu en photos est disponible avec la formule Standard (3 photos) ou Premium (10 photos).")); return; }
+      if (menu && !max) { bloc.append(h("div", { class: "verrou" }, "Le menu en photos est disponible avec la formule Standard (2 photos) ou Premium (6 photos).")); return; }
       const utilise = a.menu_mois === mois() ? (a.menu_nb || 0) : 0;
       const liste = h("div", { class: "photos" }, a[cle].map(id => h("div", { class: "ph" },
         h("img", { src: "/api/photo/" + id, alt: (menu ? "Menu de " : "Photo de ") + a.nom, loading: "lazy" }),
@@ -89,6 +89,7 @@
           try { toast("Envoi de la photo…"); const r = await reduirePhoto(f); const d = await api("POST", "commerce/photo", { adresse_id: a.id, type: menu ? "menu" : "lieu", ...r }); a[cle].push(d.id); dessiner(); toast("Photo ajoutée."); } catch (e) { toast(e.message, true); break; }
         }
       } });
+      if (!menu) bloc.append(h("p", { class: "muted" }, "Mettez de vraies photos de votre lieu (façade, intérieur), pas des images prises sur internet : elles nous aident à vérifier et valider votre adresse."));
       bloc.append(liste, fichier, h("button", { type: "button", class: "btn alt small", disabled: a[cle].length >= max && true, onclick: () => fichier.click() }, (menu ? "Ajouter une photo du menu" : "Ajouter une photo") + " (" + a[cle].length + "/" + max + ")"));
       if (menu && p.menu < 9999) bloc.append(h("p", { class: "muted" }, "Changements ce mois-ci : " + utilise + "/" + p.menu + " (retirer une photo compte pour un changement)."));
       if (!menu && a[cle].length >= max && p.nom !== "Premium") bloc.append(h("p", { class: "muted" }, "Limite atteinte avec la formule " + p.nom + ". Une formule supérieure permet plus de photos."));
@@ -270,10 +271,10 @@
       rub("Contact", null, champ("tel", "Téléphone de cette adresse", inp("tel", { type: "tel", required: true, maxlength: 30, placeholder: "+243 …" }), "C'est ce numéro qui sera vérifié par WhatsApp.")),
       rub("Horaires", horLock ? null : "Choisissez vos jours et vos heures d'ouverture.",
         horLock ? h("div", { class: "verrou" }, h("p", {}, "🕘 " + (horairesJolis(a.horaires).join(" · ") || "Non renseignés")), h("p", { class: "muted" }, "Modifier les horaires demande l'abonnement Standard ou Premium.")) : hor.el),
-      rub("Photos du lieu", "Façade, salle, produits… (" + p.photos + " photo" + (p.photos > 1 ? "s" : "") + " maximum avec la formule " + p.nom + ").",
+      rub("Photos du lieu", "Façade, salle, produits… (" + p.photos + " photo" + (p.photos > 1 ? "s" : "") + " maximum avec la formule " + p.nom + "). Mettez de vraies photos de votre lieu, pas des images prises sur internet : elles nous aident à vérifier et valider votre adresse.",
         creation ? photosAvantEnvoi(ficLieu, p.photos) : gestionPhotos(a, "photo")),
       rub("Menu / liste de services", "Photographiez votre menu, votre carte ou votre liste de prix. Pas de texte à écrire.",
-        !p.menu_photos ? h("div", { class: "verrou" }, "Disponible avec la formule Standard (3 photos, 2 changements par mois) ou Premium (10 photos, changements illimités).") : creation ? photosAvantEnvoi(ficMenu, p.menu_photos) : gestionPhotos(a, "menu")),
+        !p.menu_photos ? h("div", { class: "verrou" }, "Disponible avec la formule Standard (2 photos, 2 changements par mois) ou Premium (10 photos, changements illimités).") : creation ? photosAvantEnvoi(ficMenu, p.menu_photos) : gestionPhotos(a, "menu")),
       a && a.statut === "validee" ? h("div", { class: "alerte warn" }, "Si vous changez le nom, l'adresse ou le téléphone, la fiche repassera en validation.") : null,
       dem ? h("p", { class: "muted" }, "En envoyant, vous demandez l'ajout de votre adresse sur Nexvia RDC. Nous vérifions les informations et les photos avant de publier.") : null,
       h("div", { class: "row" },

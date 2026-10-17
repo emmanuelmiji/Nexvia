@@ -2,9 +2,9 @@
 // Aucune donnée secrète ici. Les adresses de l'administrateur viennent de la variable ADMIN_EMAILS (Cloudflare).
 
 export const PLANS = {
-  gratuit:  { nom: "Gratuit",  prix: 0,    adresses: 1, photos: 1,  menu: 0,    menu_photos: 0,  horaires: false, badge: false, whatsapp: false, haut: false, stats: false },
-  standard: { nom: "Standard", prix: 3.30, adresses: 2, photos: 5,  menu: 2,    menu_photos: 3,  horaires: true,  badge: true,  whatsapp: true,  haut: false, stats: false },
-  premium:  { nom: "Premium",  prix: 5.30, adresses: 6, photos: 15, menu: 9999, menu_photos: 10, horaires: true,  badge: true,  whatsapp: true,  haut: true,  stats: true },
+  gratuit:  { nom: "Gratuit",  prix: 0,    adresses: 1, photos: 2,  menu: 0,    menu_photos: 0,  horaires: false, badge: false, whatsapp: false, haut: false, stats: false },
+  standard: { nom: "Standard", prix: 3.30, adresses: 2, photos: 4,  menu: 2,    menu_photos: 2,  horaires: true,  badge: true,  whatsapp: true,  haut: false, stats: false },
+  premium:  { nom: "Premium",  prix: 5.30, adresses: 6, photos: 8,  menu: 9999, menu_photos: 6,  horaires: true,  badge: true,  whatsapp: true,  haut: true,  stats: true },
 };
 // Totaux relevés sur la page de paiement Zola (frais ajoutés au client, environ 9,5 %). À confirmer avec Zola.
 export const TOTAL_AVEC_FRAIS = { standard: 3.61, premium: 5.80 };
