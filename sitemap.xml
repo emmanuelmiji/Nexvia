@@ -1,13 +1,21 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url><loc>https://nexviardc.com/</loc></url>
-  <url><loc>https://nexviardc.com/restaurants-gombe/</loc></url>
-  <url><loc>https://nexviardc.com/pharmacies-gombe/</loc></url>
-  <url><loc>https://nexviardc.com/banques-gombe/</loc></url>
-  <url><loc>https://nexviardc.com/hotels-gombe/</loc></url>
-  <url><loc>https://nexviardc.com/stations-service-gombe/</loc></url>
-  <url><loc>https://nexviardc.com/bars-gombe/</loc></url>
-  <url><loc>https://nexviardc.com/ecoles-gombe/</loc></url>
-  <url><loc>https://nexviardc.com/distributeurs-gombe/</loc></url>
-  <url><loc>https://nexviardc.com/tarifs/</loc></url>
+<url><loc>https://nexviardc.com/</loc></url>
+<url><loc>https://nexviardc.com/tarifs/</loc></url>
+<url><loc>https://nexviardc.com/pharmacies-gombe/</loc></url>
+<url><loc>https://nexviardc.com/restaurants-gombe/</loc></url>
+<url><loc>https://nexviardc.com/hotels-gombe/</loc></url>
+<url><loc>https://nexviardc.com/banques-gombe/</loc></url>
+<url><loc>https://nexviardc.com/pharmacies-ngaliema/</loc></url>
+<url><loc>https://nexviardc.com/restaurants-ngaliema/</loc></url>
+<url><loc>https://nexviardc.com/hotels-ngaliema/</loc></url>
+<url><loc>https://nexviardc.com/banques-ngaliema/</loc></url>
+<url><loc>https://nexviardc.com/pharmacies-kintambo/</loc></url>
+<url><loc>https://nexviardc.com/restaurants-kintambo/</loc></url>
+<url><loc>https://nexviardc.com/hotels-kintambo/</loc></url>
+<url><loc>https://nexviardc.com/banques-kintambo/</loc></url>
+<url><loc>https://nexviardc.com/pharmacies-limete/</loc></url>
+<url><loc>https://nexviardc.com/restaurants-limete/</loc></url>
+<url><loc>https://nexviardc.com/hotels-limete/</loc></url>
+<url><loc>https://nexviardc.com/banques-limete/</loc></url>
 </urlset>

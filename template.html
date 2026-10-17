@@ -95,6 +95,10 @@
   .cat { border: 1px solid var(--line); background: #fff; box-shadow: 0 2px 8px rgba(20,33,61,.06); border-radius: 14px; padding: 10px 2px 8px; display: flex; flex-direction: column; align-items: center; gap: 6px; cursor: pointer; color: var(--ink); font-size: .72rem; font-weight: 700; text-align: center; line-height: 1.15; }
   .cat .e { width: 42px; height: 42px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.3rem; }
   .cat small { color: var(--muted); font-weight: 600; font-size: .68rem; }
+  .comms { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+  .comm { border: 1px solid var(--line); background: linear-gradient(160deg,#14213d,#1d3a8a); box-shadow: 0 2px 8px rgba(20,33,61,.12); border-radius: 14px; padding: 12px 14px; display: flex; flex-direction: column; align-items: flex-start; gap: 2px; cursor: pointer; color: #fff; text-align: left; border-left: 5px solid #f7d618; }
+  .comm b { font-size: .98rem; }
+  .comm small { color: #cdd8f3; font-size: .74rem; font-weight: 600; }
   .sub1 { margin: -4px 0 10px; font-size: .78rem; color: var(--muted, #6b7385); }
   .pops { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 6px; scroll-snap-type: x proximity; margin: 0 -14px; padding-left: 14px; padding-right: 14px; }
   .pop { box-shadow: 0 2px 10px rgba(20,33,61,.08); flex: none; width: 150px; scroll-snap-align: start; background: #fff; border: 1px solid var(--line); border-radius: 14px; overflow: hidden; text-align: left; cursor: pointer; padding: 0; }
@@ -256,6 +260,8 @@
     <div class="corps">
       <div id="resHome"></div>
       <button type="button" id="pres" class="pres">📍 Voir les lieux près de moi</button>
+      <h2>Communes</h2>
+      <div class="comms" id="comms"></div>
       <h2>Catégories</h2>
       <div class="cats" id="cats"></div>
       <div class="sep" aria-hidden="true"></div>
@@ -280,7 +286,7 @@
       </div>
       <div class="install" id="install">📲 <b>Installer Nexvia RDC sur votre téléphone</b><br><span id="installTxt">Dans le menu de votre navigateur, choisissez « Ajouter à l'écran d'accueil ». Nexvia RDC s'ouvrira alors comme une application.</span></div>
       <p class="note-bas">Lieux « ✔ Vérifiés » : adresse, téléphone et horaires renseignés. « Référencés » : adresse connue, informations incomplètes. « OpenStreetMap » : informations de la communauté. Appelez avant de vous déplacer.<br>Carte © contributeurs OpenStreetMap.</p>
-      <div class="pied"><div class="wax"></div>Nexvia RDC · Kinshasa, République démocratique du Congo<br>Contact : contact@nexviardc.com<br><span style="font-size:.9em;opacity:.85">À Gombe : <a href="/pharmacies-gombe/" style="color:inherit">Pharmacies</a> · <a href="/restaurants-gombe/" style="color:inherit">Restaurants</a> · <a href="/banques-gombe/" style="color:inherit">Banques</a> · <a href="/hotels-gombe/" style="color:inherit">Hôtels</a></span><br><a href="confidentialite.html" style="color:inherit">Politique de confidentialité</a></div>
+      <div class="pied"><div class="wax"></div>Nexvia RDC · Kinshasa, République démocratique du Congo<br>Contact : contact@nexviardc.com<br><span style="font-size:.9em;opacity:.85">À Gombe : <a href="/pharmacies-gombe/" style="color:inherit">Pharmacies</a> · <a href="/restaurants-gombe/" style="color:inherit">Restaurants</a> · <a href="/banques-gombe/" style="color:inherit">Banques</a> · <a href="/hotels-gombe/" style="color:inherit">Hôtels</a></span><br><span style="font-size:.9em;opacity:.85">À Ngaliema : <a href="/pharmacies-ngaliema/" style="color:inherit">Pharmacies</a> · <a href="/restaurants-ngaliema/" style="color:inherit">Restaurants</a> · <a href="/banques-ngaliema/" style="color:inherit">Banques</a> · <a href="/hotels-ngaliema/" style="color:inherit">Hôtels</a></span><br><span style="font-size:.9em;opacity:.85">À Kintambo : <a href="/pharmacies-kintambo/" style="color:inherit">Pharmacies</a> · <a href="/restaurants-kintambo/" style="color:inherit">Restaurants</a> · <a href="/banques-kintambo/" style="color:inherit">Banques</a> · <a href="/hotels-kintambo/" style="color:inherit">Hôtels</a></span><br><span style="font-size:.9em;opacity:.85">À Limete : <a href="/pharmacies-limete/" style="color:inherit">Pharmacies</a> · <a href="/restaurants-limete/" style="color:inherit">Restaurants</a> · <a href="/banques-limete/" style="color:inherit">Banques</a> · <a href="/hotels-limete/" style="color:inherit">Hôtels</a></span><br><a href="confidentialite.html" style="color:inherit">Politique de confidentialité</a></div>
     </div>
   </section>
 

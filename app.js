@@ -743,6 +743,7 @@ resHome.addEventListener("click", e => { const b = e.target.closest("button[data
 function rendreAccueil() {
   const present = {};
   lieux.forEach(l => { present[l.cat] = (present[l.cat] || 0) + 1; });
+  $("comms").innerHTML = COMMUNES_OUVERTES.map(c => '<button type="button" class="comm" data-k="' + esc(c) + '"><b>' + esc(c) + '</b><small>' + lieux.filter(l => communeDe(l) === c).length + ' lieux</small></button>').join("");
   $("cats").innerHTML = Object.keys(CATS).filter(c => present[c]).map(c =>
     '<button type="button" class="cat" data-c="' + c + '" style="background:linear-gradient(160deg,' + COULEUR[c] + '2e,#ffffff 70%)"><span class="e" style="background:' + COULEUR[c] + '">' + EMOJI[c] + '</span>' + esc(CAT_COURT[c]) + '<small>' + present[c] + '</small></button>').join("");
   const pops = lieux.filter(l => l.source !== "osm" && aPosition(l)).sort((a, b) => ordre(a) - ordre(b) || (b.tel ? 1 : 0) - (a.tel ? 1 : 0)).slice(0, 30);
@@ -750,6 +751,7 @@ function rendreAccueil() {
   $("pops").innerHTML = pops.map((l, i) => '<button type="button" class="pop" data-p="' + i + '"><div class="top" style="background:' + (COULEUR[l.cat] || COULEUR.autre) + '">' + emojiDe(l) + '</div><div class="txt"><b>' + esc(l.nom) + '</b><small>' + (l.source === "verifie" ? "✔ Vérifié" : "Référencé") + " · " + esc(l.type || CAT_LABEL[l.cat]) + '</small></div></button>').join("");
   $("pops")._items = pops;
 }
+$("comms").addEventListener("click", e => { const b = e.target.closest("[data-k]"); if (!b) return; communeF = b.dataset.k; $("communeSel").value = communeF; filtre = "tous"; $("recherche").value = ""; $("verifies").checked = false; setTab("carte"); construireFiltres(); window.afficher && window.afficher(true); setMode("carte"); });
 $("cats").addEventListener("click", e => { const b = e.target.closest("[data-c]"); if (!b) return; filtre = b.dataset.c; $("recherche").value = ""; $("verifies").checked = false; setTab("carte"); construireFiltres(); window.afficher && window.afficher(true); setMode("carte"); });
 $("pres").addEventListener("click", () => {
   const b = $("pres"), txt = "📍 Voir les lieux près de moi"; b.textContent = "Recherche de votre position…";
