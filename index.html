@@ -279,7 +279,7 @@
         <button type="button" id="btnDem">Demander une commune</button>
       </div>
       <div class="install" id="install">📲 <b>Installer Nexvia RDC sur votre téléphone</b><br><span id="installTxt">Dans le menu de votre navigateur, choisissez « Ajouter à l'écran d'accueil ». Nexvia RDC s'ouvrira alors comme une application.</span></div>
-      <p class="note-bas">Lieux « ✔ Vérifiés » : confirmés par l'équipe. « Référencés » : collectés, pas encore confirmés. « OpenStreetMap » : informations de la communauté. Appelez avant de vous déplacer.<br>Carte © contributeurs OpenStreetMap.</p>
+      <p class="note-bas">Lieux « ✔ Vérifiés » : adresse, téléphone et horaires renseignés. « Référencés » : adresse connue, informations incomplètes. « OpenStreetMap » : informations de la communauté. Appelez avant de vous déplacer.<br>Carte © contributeurs OpenStreetMap.</p>
       <div class="pied"><div class="wax"></div>Nexvia RDC · Kinshasa, République démocratique du Congo<br>Contact : contact@nexviardc.com<br><span style="font-size:.9em;opacity:.85">À Gombe : <a href="/pharmacies-gombe/" style="color:inherit">Pharmacies</a> · <a href="/restaurants-gombe/" style="color:inherit">Restaurants</a> · <a href="/banques-gombe/" style="color:inherit">Banques</a> · <a href="/hotels-gombe/" style="color:inherit">Hôtels</a></span><br><a href="confidentialite.html" style="color:inherit">Politique de confidentialité</a></div>
     </div>
   </section>
@@ -1289,8 +1289,10 @@ if (typeof L === "undefined") {
     return /^\s*(\+|00)?\s*242/.test(String(tel || "").replace(/[^\d+]/g, "")) ;
   }
   function ajouterRefs(liste) {
-    (liste || []).forEach(r => { if (!r.nom || dejaPresent(r) || horsRDC(r.lat, r.lng, r.adresse, r.tel, r.nom)) return;
-      lieux.push({ nom: r.nom, cat: CATS[r.cat] ? r.cat : "autre", type: r.type || "", adresse: r.adresse || "", tel: r.tel || "", horaires: r.horaires || "", lat: r.lat, lng: r.lng, posSource: r.posSource || "", commune: COMMUNES_OUVERTES.includes(r.commune) ? r.commune : "", remarque: r.remarque || "", source: "reference" }); });
+    // Règle d'affichage : sans adresse exploitable (vide, ou juste le nom de la commune), le lieu n'est pas affiché.
+    // « Vérifié » = adresse + téléphone + horaires renseignés ; « Référencé » = adresse seule ou fiche incomplète.
+    (liste || []).forEach(r => { if (!r.nom || !r.adresse || norm(r.adresse) === norm(r.commune || "") || dejaPresent(r) || horsRDC(r.lat, r.lng, r.adresse, r.tel, r.nom)) return;
+      lieux.push({ nom: r.nom, cat: CATS[r.cat] ? r.cat : "autre", type: r.type || "", adresse: r.adresse || "", tel: r.tel || "", horaires: r.horaires || "", lat: r.lat, lng: r.lng, posSource: r.posSource || "", commune: COMMUNES_OUVERTES.includes(r.commune) ? r.commune : "", remarque: r.remarque || "", source: (r.adresse && r.tel && r.horaires) ? "verifie" : "reference" }); });
   }
   function ajouterOSM(data) {
     (data.elements || []).forEach(el => {
@@ -1320,19 +1322,29 @@ if (typeof L === "undefined") {
         photos: (c.photos || []).map(photo), menuPhotos: (c.menu_photos || []).map(photo) });
     });
   }
-  const lireJSON = u => fetch(u, { cache: "no-cache" }).then(r => { if (!r.ok) throw new Error("absent"); return r.json(); }).catch(() => null);
+  // Chargement des données : chaque fichier est lu en parallèle, puis ajouté dans un ordre fixe (références, communes, OpenStreetMap)
+  // dès qu'il est prêt. Un fichier lent, absent ou abîmé ne bloque plus les autres (et la carte se met à jour au fur et à mesure).
+  const lireJSON = (u, delai) => { const ctl = typeof AbortController !== "undefined" ? new AbortController() : null, t = ctl ? setTimeout(() => ctl.abort(), delai || 20000) : null;
+    return fetch(u, { cache: "no-cache", signal: ctl ? ctl.signal : undefined }).then(r => { if (!r.ok) throw new Error("absent"); return r.json(); }).catch(() => null).finally(() => { if (t) clearTimeout(t); }); };
 
   construireFiltres(); afficher(true); rendreAccueil();
-  Promise.all([lireJSON("references.json"), lireJSON("osm.json"), lireJSON("/api/public/commerces"), lireJSON("communes/kintambo.json"), lireJSON("communes/ngaliema.json"), lireJSON("communes/limete.json")]).then(([refs, osm, coms, kin, nga, lim]) => {
-    if (refs) ajouterRefs(refs);
-    if (kin) ajouterRefs(kin);   // lieux référencés des autres communes (un fichier par commune)
-    if (nga) ajouterRefs(nga);
-    if (lim) ajouterRefs(lim);
-    if (AFFICHAGE_PUBLIC) ajouterCommerces(coms);
-    if (osm) ajouterOSM(osm);
+  const sources = [
+    ["references.json", ajouterRefs], ["communes/kintambo.json", ajouterRefs], ["communes/ngaliema.json", ajouterRefs], ["communes/limete.json", ajouterRefs],
+    ["osm.json", ajouterOSM]
+  ].map(([u, fn]) => ({ u, fn, p: lireJSON(u) }));
+  if (AFFICHAGE_PUBLIC) sources.splice(4, 0, { u: "/api/public/commerces", fn: ajouterCommerces, p: lireJSON("/api/public/commerces", 10000) });
+  (async () => {
+    const manque = [], casse = [];
+    for (const src of sources) {
+      const d = await src.p;
+      if (!d) { manque.push(src.u); continue; }
+      try { src.fn(d); } catch (e) { casse.push(src.u); console.error("Nexvia : données ignorées (" + src.u + ")", e); }
+      construireFiltres(); afficher(false); rendreAccueil();
+    }
     construireFiltres(); afficher(true); rendreAccueil();
-    if (!refs && !osm) $("statut").textContent += " (Données supplémentaires pas encore ajoutées.)";
-  });
+    if (casse.length) $("statut").textContent += " (Certaines données n'ont pas pu être lues : " + casse.join(", ") + ".)";
+    else if (manque.indexOf("references.json") >= 0 && manque.indexOf("osm.json") >= 0) $("statut").textContent += " (Données supplémentaires pas encore ajoutées.)";
+  })();
 }
 
 </script>
