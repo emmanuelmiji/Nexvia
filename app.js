@@ -650,7 +650,8 @@ function couronneOnglet(plan) {
 try { couronneOnglet(localStorage.getItem("nx_plan")); } catch (e) {}
 async function chargerCompte() {
   try {
-    const r = await fetch("/api/auth/moi", { credentials: "same-origin" }), d = await r.json();
+    const ctl = new AbortController(), mi = setTimeout(() => ctl.abort(), 12000);
+    const r = await fetch("/api/auth/moi", { credentials: "same-origin", signal: ctl.signal }), d = await r.json(); clearTimeout(mi);
     compteInfo = d && d.utilisateur ? d.utilisateur : null;
     try { localStorage.setItem("nx_plan", compteInfo && compteInfo.plan ? compteInfo.plan : ""); } catch (e) {}
     couronneOnglet(compteInfo && compteInfo.plan);

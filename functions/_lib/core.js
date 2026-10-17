@@ -110,6 +110,8 @@ export async function supprimerComptesTest(env, nom = "suppression_comptes_test_
 }
 const migrer = env => async () => {
   for (const sql of ["ALTER TABLE marques ADD COLUMN plan_souhaite TEXT", "ALTER TABLE photos ADD COLUMN type TEXT NOT NULL DEFAULT 'lieu'", "ALTER TABLE users ADD COLUMN banni INTEGER NOT NULL DEFAULT 0", "ALTER TABLE users ADD COLUMN banni_motif TEXT", "ALTER TABLE users ADD COLUMN banni_at TEXT", "ALTER TABLE users ADD COLUMN banni_jusqua TEXT", "ALTER TABLE users ADD COLUMN identifiant TEXT", "ALTER TABLE marques ADD COLUMN essai_at TEXT", "ALTER TABLE marques ADD COLUMN essai_fin TEXT"]) {
+    const m = /ALTER TABLE (\w+) ADD COLUMN (\w+)/i.exec(sql);
+    if (m) { try { const cols = (await env.DB.prepare("SELECT name FROM pragma_table_info('" + m[1] + "')").all()).results || []; if (cols.some(c => c.name === m[2])) continue; } catch (e) {} }
     try { await env.DB.prepare(sql).run(); }
     catch (e) { if (!/duplicate column/i.test(String(e && (e.message || e)))) throw e; }
   }

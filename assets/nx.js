@@ -9,7 +9,9 @@ window.NX = (function () {
     const opt = { method: methode, headers: { "content-type": "application/json" }, credentials: "same-origin" };
     if (methode === "POST") { opt.headers["x-nx"] = "1"; opt.body = JSON.stringify(corps || {}); }
     let r, d = null;
-    try { r = await fetch("/api/" + chemin, opt); } catch (e) { const er = new Error("Pas de connexion. Vérifiez votre réseau et réessayez."); er.status = 0; throw er; }
+    const ctl = new AbortController(); opt.signal = ctl.signal; const mi = setTimeout(() => ctl.abort(), 20000);
+    try { r = await fetch("/api/" + chemin, opt); } catch (e) { clearTimeout(mi); const er = new Error("Pas de connexion. Vérifiez votre réseau et réessayez."); er.status = 0; throw er; }
+    clearTimeout(mi);
     try { d = await r.json(); } catch (e) {}
     if (!r.ok || !d || d.ok === false) { const er = new Error((d && d.erreur) || "Une erreur est survenue."); er.status = r.status; throw er; }
     return d;

@@ -25,7 +25,7 @@
 
   async function charger() {
     try { etat = await api("GET", "commerce/etat"); }
-    catch (e) { if (e.status === 401) { location.href = "/compte/?suite=/commerce/"; return; } vider(app); app.append(h("main", {}, h("div", { class: "alerte bad" }, e.message))); return; }
+    catch (e) { if (e.status === 401) { location.href = "/compte/?suite=/commerce/"; return; } vider(app); app.append(h("main", {}, h("div", { class: "alerte bad" }, e.message), h("p", {}, h("button", { class: "btn alt small", onclick: () => location.reload() }, "Réessayer")))); return; }
     if (vue === null) vue = (!etat.marque || !etat.adresses.length) ? (etat.marque && etat.marque.attente_paiement ? "paiement" : "choix") : "accueil";
     // paiement confirmé : la fiche s'ouvre automatiquement
     if (vue === "paiement" && etat.marque && !etat.marque.attente_paiement && etat.marque.plan_effectif !== "gratuit" && !etat.adresses.length) { choix = etat.marque.plan_effectif; edition = { demande: true }; vue = "fiche"; toast(etat.marque.en_essai ? "Essai gratuit activé : remplissez votre fiche." : "Paiement confirmé : remplissez votre fiche."); }
