@@ -133,6 +133,16 @@
   const ligneInfo = (nom, ...contenu) => h("div", { class: "ligne" }, ico(nom, 17), h("span", {}, ...contenu));
 
   // ---------- adresses ----------
+  function blocStats(a) {
+    const plan = etat.marque && etat.marque.plan_effectif;
+    if (a.statut !== "validee") return null;
+    if (!a.stats) return h("div", { class: "stats verrou" }, ico("couronne", 16), h("span", {}, "Statistiques de vues et d'appels : disponibles avec la formule Premium."));
+    const ce = a.stats.ce_mois, pr = a.stats.mois_dernier, L = [["vue", "Fiche vue"], ["appel", "Appels"], ["wa", "WhatsApp"], ["itin", "Itinéraires"], ["fav", "Favoris"]];
+    const tend = k => { const d = ce[k] - pr[k]; return pr[k] || ce[k] ? h("small", { class: d > 0 ? "haus" : d < 0 ? "bas" : "" }, (d > 0 ? "+" : "") + d + " (avant : " + pr[k] + ")") : null; };
+    return h("div", { class: "stats" }, h("div", { class: "tete-stats" }, h("b", {}, "Statistiques de ce mois-ci"), h("span", { class: "badge gris" }, "Premium")),
+      h("div", { class: "cases" }, ...L.map(([k, lib]) => h("div", { class: "case" }, h("strong", {}, String(ce[k])), h("span", {}, lib), tend(k)))),
+      h("p", { class: "muted" }, "Les chiffres comptent les personnes qui ouvrent votre fiche ou appuient sur un bouton dans l'application."));
+  }
   function carteAdresse(a) {
     const st = { en_attente: ["En attente de validation", "warn"], validee: ["Validée", "ok"], refusee: ["Refusée", "bad"] }[a.statut] || ["", "gris"];
     const nbPh = a.photos ? a.photos.length : 0, c = completude(a);
@@ -155,6 +165,7 @@
         : h("div", { class: "alerte info" }, "Pour vérifier votre numéro, envoyez ce code par WhatsApp à Nexvia RDC ", h("b", {}, "depuis le numéro de cette adresse (" + a.tel + ")"), " : ", h("span", { class: "code" }, a.code), h("br", {}), h("a", { class: "btn wa small", href: wa(msg), target: "_blank", rel: "noopener" }, "Envoyer mon code par WhatsApp")));
     }
     if (a.statut === "refusee") corps.append(h("div", { class: "alerte bad" }, a.note || "Cette adresse n'a pas pu être validée. Contactez-nous pour en savoir plus."));
+    const bs = blocStats(a); if (bs) corps.append(bs);
     corps.append(
       h("details", {}, h("summary", {}, h("span", { class: "tt" }, ico("photo", 18), "Photos du lieu"), h("span", { class: "cpt" }, nbPh + " / " + planSaisie().photos)), gestionPhotos(a, "photo")),
       h("details", {}, h("summary", {}, h("span", { class: "tt" }, ico("menu", 18), "Menu / services (photos)")), gestionPhotos(a, "menu")),
