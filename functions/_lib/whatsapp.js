@@ -53,7 +53,7 @@ export function savoir() {
     "- Premium : " + d(P.premium.prix) + " $ par mois. " + P.premium.adresses + " adresses, " + P.premium.photos + " photos, horaires, badge, bouton WhatsApp, menu ou liste de services avec " + P.premium.menu_photos + " photos de menu (changements illimités), affichage en haut des résultats et statistiques.",
     "",
     "PAIEMENT",
-    "- Le paiement se fait avec Zola. À la fin du paiement, Zola donne une référence du type ZOLA-QR-123456 (aussi envoyée par e-mail par Zola, penser aux spams). Le commerce saisit cette référence sur sa page « Mon commerce ».",
+    "- Le paiement se fait avec Zola. À la fin du paiement, Zola donne une référence du type ZOLA-QR-123456 (aussi envoyée par e-mail par Zola, penser aux spams). Le commerce saisit cette référence dans « Mon espace ». Avec Standard ou Premium, on paie d'abord : la fiche de l'adresse s'ouvre seulement après la confirmation du paiement. Avec la formule Gratuit, on remplit directement la fiche.",
     "- Zola ajoute des frais d'environ 9,5 % : le total affiché sur la page de paiement est d'environ " + d(T.standard) + " $ (Standard) et " + d(T.premium) + " $ (Premium). Ces montants sont approximatifs.",
     "- L'abonnement est activé sous 24 heures après confirmation du paiement. Si la référence est introuvable, l'équipe vérifie à la main : passe la main à un agent.",
   ].join("\n");

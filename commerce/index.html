@@ -26,7 +26,9 @@
   async function charger() {
     try { etat = await api("GET", "commerce/etat"); }
     catch (e) { if (e.status === 401) { location.href = "/compte/?suite=/commerce/"; return; } vider(app); app.append(h("main", {}, h("div", { class: "alerte bad" }, e.message))); return; }
-    if (vue === null) vue = (!etat.marque || !etat.adresses.length) ? "choix" : "accueil";
+    if (vue === null) vue = (!etat.marque || !etat.adresses.length) ? (etat.marque && etat.marque.attente_paiement ? "paiement" : "choix") : "accueil";
+    // paiement confirmé : la fiche s'ouvre automatiquement
+    if (vue === "paiement" && etat.marque && !etat.marque.attente_paiement && etat.marque.plan_effectif !== "gratuit" && !etat.adresses.length) { choix = etat.marque.plan_effectif; edition = { demande: true }; vue = "fiche"; toast("Paiement confirmé : remplissez votre fiche."); }
     rendre();
   }
   const planActuel = () => etat.plans[etat.marque.plan_effectif];
@@ -240,7 +242,6 @@
       if (er) return toast(er, true);
       if (dem) return action(btn, async () => {
         if (!marqueCree) { await api("POST", "commerce/marque", { nom: f.nom.value, plan: choix }); marqueCree = true; }
-        else if (RANG[choix] > RANG[(etat.marque && etat.marque.plan_edition) || "gratuit"]) await api("POST", "commerce/formule", { plan: choix });
         const r = await api("POST", "commerce/adresse", corps());
         const echecs = await envoyerPhotos(r.id, btn);
         fini = { id: r.id, plan: choix, echecs }; edition = null; vue = "fini";
@@ -294,7 +295,15 @@
   function planCarte(cle, mode) {
     const p = etat.plans[cle], total = etat.total_avec_frais[cle], actif = !!etat.marque && etat.marque.plan_effectif === cle;
     let bouton;
-    if (mode === "choix") bouton = h("button", { class: "btn gold grand", onclick: () => { choix = cle; edition = { demande: true }; vue = "fiche"; rendre(); window.scrollTo(0, 0); } }, cle === "gratuit" ? "Commencer gratuitement" : "Choisir " + p.nom);
+    if (mode === "choix") bouton = h("button", { class: "btn gold grand", onclick: ev => {
+      const btn = ev.currentTarget; choix = cle;
+      if (cle === "gratuit") {
+        if (etat.marque && etat.marque.plan_souhaite !== "gratuit") return action(btn, () => api("POST", "commerce/formule", { plan: "gratuit" })).then(() => { if (!etat.marque || etat.marque.plan_souhaite !== "gratuit") return; edition = { demande: true }; vue = "fiche"; rendre(); window.scrollTo(0, 0); }, () => {});
+        edition = { demande: true }; vue = "fiche"; rendre(); window.scrollTo(0, 0); return;
+      }
+      // Standard / Premium : on paie d'abord, la fiche s'ouvre après la confirmation du paiement
+      action(btn, () => etat.marque ? api("POST", "commerce/formule", { plan: cle }) : api("POST", "commerce/marque", { nom: String((etat.utilisateur && etat.utilisateur.nom) || "").trim() || "Mon espace", plan: cle })).then(() => { if (!etat.marque || etat.marque.plan_souhaite !== cle) return; formule = cle; vue = "paiement"; rendre(); window.scrollTo(0, 0); }, () => {});
+    } }, cle === "gratuit" ? "Commencer gratuitement" : "Choisir " + p.nom);
     else if (cle === "gratuit") {
       const n = etat.adresses.filter(a => a.statut !== "refusee").length, libre = etat.marque.plan_effectif === "gratuit" && n < planSaisie().adresses;
       bouton = h("button", { class: "btn " + (libre ? "gold" : "alt") + " grand", disabled: !libre && true, onclick: () => { edition = {}; onglet = "adresses"; rendre(); window.scrollTo(0, 0); } }, libre ? "Ajouter une adresse" : actif ? "Formule actuelle" : "Incluse");
@@ -330,8 +339,21 @@
     ajoute(main, sections(1), titreSec("Choisissez votre formule"),
       h("p", { class: "muted" }, "Vous pouvez commencer gratuitement et passer à Standard ou Premium quand vous voulez. Dans tous les cas, nous vérifions votre fiche avant de la publier."),
       h("div", { class: "choix" }, planCarte("gratuit", "choix"), planCarte("standard", "choix"), planCarte("premium", "choix")),
-      h("p", { class: "muted" }, "Le paiement des formules payantes se fait après l'envoi de votre fiche. Plus de 6 adresses ? Écrivez-nous pour une offre sur mesure."),
+      h("p", { class: "muted" }, "Avec Standard ou Premium, vous payez d'abord, puis vous remplissez votre fiche. Avec Gratuit, vous remplissez directement votre fiche. Plus de 6 adresses ? Écrivez-nous pour une offre sur mesure."),
       etat.marque ? h("p", {}, h("a", { href: "#", onclick: ev => { ev.preventDefault(); vue = "accueil"; rendre(); } }, "← Retour à mon espace")) : null);
+  }
+  function ecranPaiement(main) {
+    const cle = etat.marque.plan_souhaite, p = etat.plans[cle], enCours = etat.demandes.some(d => d.statut === "en_attente" || d.statut === "a_verifier");
+    ajoute(main, sections(1), titreSec("Payez votre formule " + p.nom),
+      h("div", { class: "alerte info" }, "Formule choisie : ", h("b", {}, couronne(cle, 15), " ", p.nom, " (" + dollars(p.prix) + " / mois)"), ". Dès que votre paiement est confirmé, votre fiche s'ouvre ici."),
+      enCours ? h("div", { class: "alerte warn" }, "Votre paiement est en cours de vérification (sous 24 heures). Dès qu'il est confirmé, vous pourrez remplir votre fiche.") : null,
+      h("ol", { class: "liste-etapes" },
+        h("li", {}, h("h3", {}, "Payez avec Zola"), h("p", { class: "muted" }, dollars(p.prix) + " par mois (≈ " + dollars(etat.total_avec_frais[cle]) + " avec les frais). Sur la page de paiement, saisissez " + dollars(p.prix).replace(",", ".") + " (USD)."),
+          h("p", {}, h("button", { class: "btn gold small", onclick: () => { window.open(CFG.ZOLA_LIEN, "_blank", "noopener"); toast("Saisissez " + dollars(p.prix).replace(",", ".") + " (USD) sur la page de paiement."); } }, "Payer " + dollars(p.prix)))),
+        h("li", {}, h("h3", {}, "Saisissez votre numéro de référence"), h("p", { class: "muted" }, "Elle s'affiche à la fin du paiement et dans l'e-mail envoyé par Zola (pensez à vérifier vos spams)."), formPaiement(cle)),
+        h("li", {}, h("h3", {}, "Remplissez votre fiche"), h("p", { class: "muted" }, "Elle s'ouvre automatiquement quand votre paiement est confirmé."))),
+      historique(),
+      h("p", {}, h("button", { class: "btn alt small", onclick: () => charger() }, "Actualiser"), " ", h("a", { href: "#", onclick: ev => { ev.preventDefault(); vue = "choix"; rendre(); } }, "← Changer de formule")));
   }
   function ecranFiche(main) { ajoute(main, sections(2), formulaire()); }
   function ecranFini(main) {
@@ -395,6 +417,7 @@
     vider(app); app.append(entete(etat.utilisateur)); document.body.classList.remove("espace-large");
     const main = h("main", {});
     if (vue === "fini" && fini && etat.marque) { app.append(hero("Votre demande est partie", "Nous vérifions votre adresse sous 48 à 72 heures."), main); ecranFini(main); main.append(piedRdc()); return; }
+    if (vue === "paiement" && etat.marque && etat.marque.attente_paiement) { app.append(hero("Payez votre formule", "Réglez avec Zola, puis remplissez votre fiche."), main); ecranPaiement(main); main.append(piedRdc()); return; }
     if (vue === "fiche") { app.append(hero("Votre fiche", "Remplissez les informations de votre adresse. Vous pourrez les modifier ensuite."), main); ecranFiche(main); main.append(piedRdc()); return; }
     if (vue === "choix" || !etat.marque) { app.append(hero("Faites-vous trouver à Gombe", "Choisissez la formule qui vous convient."), main); ecranChoix(main); main.append(piedRdc()); return; }
     const m = etat.marque, p = planActuel(), ps = planSaisie(), n = etat.adresses.filter(a => a.statut !== "refusee").length;

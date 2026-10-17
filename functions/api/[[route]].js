@@ -231,7 +231,7 @@ async function etatCommerce({ request, env }) {
       a.stats = { ce_mois: ce, mois_dernier: prec };
     }));
   }
-  return json({ ok: true, utilisateur: pub(user), marque: { ...marque, plan_effectif: plan, plan_edition: C.planEdition(marque) }, adresses, demandes, plans: PLANS, total_avec_frais: C.TOTAL_AVEC_FRAIS, whatsapp: C.WHATSAPP });
+  return json({ ok: true, utilisateur: pub(user), marque: { ...marque, plan_effectif: plan, plan_edition: C.planEdition(marque), attente_paiement: C.attentePaiement(marque) }, adresses, demandes, plans: PLANS, total_avec_frais: C.TOTAL_AVEC_FRAIS, whatsapp: C.WHATSAPP });
 }
 async function creerMarque({ request, env }) {
   const user = await exigerUser(request, env), db = await C.base(env);
@@ -292,12 +292,15 @@ async function sauverAdresse({ request, env }) {
       .bind(champs.nom, champs.categorie, champs.commune, champs.adresse, champs.tel, champs.horaires, champs.description, champs.menu, champs.lat, champs.lng, champs.lieu_existant, statut, code, verif, menuMois, menuNb, a.id).run();
     return json({ ok: true, id: a.id, statut });
   }
+  if (C.attentePaiement(marque)) refuse("Payez d'abord votre formule " + PLANS[marque.plan_souhaite].nom + " pour remplir votre fiche. Vous pouvez aussi choisir la formule Gratuit.", 402);
   const n = (await db.prepare("SELECT COUNT(*) AS n FROM adresses WHERE marque_id = ? AND statut != 'refusee'").bind(marque.id).first()).n;
   if (n >= plan.adresses) refuse("La formule " + plan.nom + " permet " + plan.adresses + " adresse" + (plan.adresses > 1 ? "s" : "") + ". Passez à une formule supérieure pour en ajouter.", 403);
   if (!C.COMMUNES_OUVERTES.includes(champs.commune)) refuse("Cette commune n'est pas encore disponible. Pour le moment, seule la commune de Gombe est ouverte.");
   if (champs.horaires && !C.horairesValides(champs.horaires)) refuse("Horaires non reconnus : utilisez le sélecteur d'horaires.");
   const r = await db.prepare("INSERT INTO adresses (marque_id, nom, categorie, commune, adresse, tel, horaires, description, menu, lat, lng, lieu_existant, code, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
     .bind(marque.id, champs.nom, champs.categorie, champs.commune, champs.adresse, champs.tel, champs.horaires, champs.description, champs.menu, champs.lat, champs.lng, champs.lieu_existant, C.codeVerif(), new Date().toISOString()).run();
+  // nom provisoire (formule payée avant la fiche) : le nom de la première adresse le remplace
+  if (n === 0 && (marque.nom === "Mon espace" || marque.nom === String(user.nom || "").trim())) await db.prepare("UPDATE marques SET nom = ? WHERE id = ?").bind(champs.nom, marque.id).run();
   return json({ ok: true, id: r.meta.last_row_id, statut: "en_attente" });
 }
 async function supprimerAdresse({ request, env }) {
@@ -386,8 +389,8 @@ async function fileAdmin({ request, env }) {
   const db = await C.base(env), tout = async (sql, ...p) => (await db.prepare(sql).bind(...p).all()).results || [];
   const adminsF = C.adminsDe(env);
   const [marques, adresses, averifier, attente, imports, stats] = await Promise.all([
-    tout("SELECT m.id, m.nom, m.plan_souhaite, m.created_at, u.email, u.nom AS user_nom, u.tel AS user_tel FROM marques m JOIN users u ON u.id = m.owner_id WHERE m.statut = 'en_attente' ORDER BY m.id"),
-    tout("SELECT a.id, a.nom, a.categorie, a.commune, a.adresse, a.tel, a.code, a.tel_verifie, a.lieu_existant, a.horaires, a.description, a.menu, a.created_at, m.nom AS marque_nom, m.statut AS marque_statut, m.plan_souhaite, m.plan, m.plan_fin, u.email, u.tel AS user_tel FROM adresses a JOIN marques m ON m.id = a.marque_id JOIN users u ON u.id = m.owner_id WHERE a.statut = 'en_attente' ORDER BY a.id LIMIT 60"),
+    tout("SELECT m.id, m.nom, m.plan_souhaite, m.created_at, u.email, u.nom AS user_nom, u.tel AS user_tel FROM marques m JOIN users u ON u.id = m.owner_id WHERE m.statut = 'en_attente' AND NOT (m.plan_souhaite IN ('standard','premium') AND m.plan = 'gratuit' AND m.plan_fin IS NULL) ORDER BY m.id"),
+    tout("SELECT a.id, a.nom, a.categorie, a.commune, a.adresse, a.tel, a.code, a.tel_verifie, a.lieu_existant, a.horaires, a.description, a.menu, a.created_at, m.nom AS marque_nom, m.statut AS marque_statut, m.plan_souhaite, m.plan, m.plan_fin, u.email, u.tel AS user_tel FROM adresses a JOIN marques m ON m.id = a.marque_id JOIN users u ON u.id = m.owner_id WHERE a.statut = 'en_attente' AND NOT (m.plan_souhaite IN ('standard','premium') AND m.plan = 'gratuit' AND m.plan_fin IS NULL) ORDER BY a.id LIMIT 60"),
     tout("SELECT d.id, d.plan, d.ref, d.motif, d.created_at, d.tentatives, m.nom AS marque_nom, u.email, u.tel AS user_tel FROM demandes_paiement d JOIN marques m ON m.id = d.marque_id JOIN users u ON u.id = d.user_id WHERE d.statut = 'a_verifier' ORDER BY d.id"),
     tout("SELECT d.id, d.plan, d.ref, d.motif, d.created_at, d.tentatives, m.nom AS marque_nom, u.email FROM demandes_paiement d JOIN marques m ON m.id = d.marque_id JOIN users u ON u.id = d.user_id WHERE d.statut = 'en_attente' ORDER BY d.id"),
     tout("SELECT * FROM imports ORDER BY id DESC LIMIT 5"),

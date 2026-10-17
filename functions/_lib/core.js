@@ -183,13 +183,11 @@ export function planEffectif(marque, maintenant = new Date()) {
   if (marque && marque.plan && marque.plan !== "gratuit" && PLANS[marque.plan] && marque.plan_fin && new Date(marque.plan_fin) > maintenant) return marque.plan;
   return "gratuit";
 }
-// Formule utilisée pour remplir la fiche : la plus haute entre l'abonnement actif et la formule choisie à l'inscription.
-// Elle ne sert qu'aux limites de saisie ; l'affichage public suit toujours l'abonnement réellement payé (planEffectif).
-const RANG = { gratuit: 0, standard: 1, premium: 2 };
-export function planEdition(marque, maintenant = new Date()) {
-  const eff = planEffectif(marque, maintenant), voulu = marque && PLANS[marque.plan_souhaite] ? marque.plan_souhaite : "gratuit";
-  return RANG[voulu] > RANG[eff] ? voulu : eff;
-}
+// Formule utilisée pour remplir la fiche : uniquement l'abonnement réellement payé (actif). Standard et Premium se paient avant
+// de remplir la fiche ; sans abonnement actif, ce sont les limites de la formule Gratuit.
+export const attentePaiement = (marque, maintenant = new Date()) =>
+  !!marque && (marque.plan_souhaite === "standard" || marque.plan_souhaite === "premium") && planEffectif(marque, maintenant) === "gratuit" && !marque.plan_fin;
+export function planEdition(marque, maintenant = new Date()) { return planEffectif(marque, maintenant); }
 export function nouvelleFin(marque, plan, maintenant = new Date()) {
   let base = maintenant;
   if (marque.plan === plan && marque.plan_fin && new Date(marque.plan_fin) > maintenant) base = new Date(marque.plan_fin);
