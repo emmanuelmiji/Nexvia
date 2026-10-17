@@ -6,11 +6,11 @@
 <meta name="robots" content="noindex">
 <meta name="theme-color" content="#0a2a6b">
 <title>Mon compte – Nexvia RDC</title>
-<meta name="description" content="Créez votre compte Nexvia RDC ou connectez-vous : inscrivez votre commerce à Gombe, Kinshasa, et gérez votre fiche, vos photos et votre formule.">
+<meta name="description" content="Créez votre compte Nexvia RDC ou connectez-vous : inscrivez votre commerce à Kinshasa (Gombe, Ngaliema, Kintambo, Limete) et gérez votre fiche, vos photos et votre formule.">
 <link rel="stylesheet" href="/assets/nx.css">
 </head>
 <body class="auth">
-<h1 style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap">Mon compte Nexvia RDC – inscrire mon commerce à Gombe</h1>
+<h1 style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap">Mon compte Nexvia RDC – inscrire mon commerce à Kinshasa</h1>
 <div id="app"></div>
 <script src="/assets/nx.js"></script>
 <script>
@@ -155,7 +155,7 @@
       const insc = mode === "inscription";
       if (ban) { app.append(haut("Compte suspendu", "Votre accès à Nexvia RDC est bloqué pour le moment."), h("div", { class: "auth-carte" }, h("div", { class: "boite" }, ecranBan())), h("p", { class: "auth-pied" }, h("a", { href: "/" }, "Retour à la carte"))); return; }
       if (etape) { app.append(haut("Vérifiez votre e-mail", etape.but === "inscription" ? "Dernière étape avant de créer votre compte." : "Pour votre sécurité, confirmez que c'est bien vous."), h("div", { class: "auth-carte" }, h("div", { class: "boite" }, ecranCode())), h("p", { class: "auth-pied" }, h("a", { href: "/" }, "Retour à la carte"))); return; }
-      app.append(haut(insc ? "Faites-vous trouver à Gombe" : "Bon retour !", insc ? "Créez votre compte gratuit et présentez votre adresse aux habitants de Kinshasa." : "Connectez-vous pour gérer vos adresses."),
+      app.append(haut(insc ? "Faites-vous trouver à Kinshasa" : "Bon retour !", insc ? "Créez votre compte gratuit et présentez votre adresse aux habitants de Kinshasa." : "Connectez-vous pour gérer vos adresses."),
         h("div", { class: "auth-carte" }, h("div", { class: "boite" },
           h("div", { class: "onglets" },
             h("button", { class: mode === "connexion" ? "actif" : "", onclick: () => { mode = "connexion"; etape = null; rendre(); } }, "Connexion"),

@@ -10,8 +10,11 @@ export const PLANS = {
 export const TOTAL_AVEC_FRAIS = { standard: 3.61, premium: 5.80 };
 export const WHATSAPP = "243841385686";
 export const DUREE_JOURS = 30;
+// Mois d'essai gratuit : un seul par compte (et par numéro de téléphone), sur Standard ou Premium.
+export const ESSAI_JOURS = 30;
 // Communes ouvertes aux commerces (les autres sont affichées « bientôt »).
-export const COMMUNES_OUVERTES = ["Gombe"];
+export const COMMUNES_OUVERTES = ["Gombe", "Ngaliema", "Kintambo", "Limete"];
+export const MSG_COMMUNE = "Cette commune n'est pas encore disponible. Pour le moment, les communes ouvertes sont : " + COMMUNES_OUVERTES.slice(0, -1).join(", ") + " et " + COMMUNES_OUVERTES[COMMUNES_OUVERTES.length - 1] + ".";
 // Horaires : uniquement le format produit par le sélecteur (« Lun–Sam 08:00–20:00 · Dim fermé » ou « 24h/24 »), jamais du texte libre.
 const J = "(?:Lun|Mar|Mer|Jeu|Ven|Sam|Dim)", T = "(?:(?:[01]\\d|2[0-3]):[0-5]\\d|24:00)", SEG = J + "(?:–" + J + ")? (?:" + T + "–" + T + "|fermé)";
 const RE_HORAIRES = new RegExp("^(?:24h/24|" + SEG + "(?: · " + SEG + "){0,6})$");
@@ -106,7 +109,7 @@ export async function supprimerComptesTest(env, nom = "suppression_comptes_test_
   return true;
 }
 const migrer = env => async () => {
-  for (const sql of ["ALTER TABLE marques ADD COLUMN plan_souhaite TEXT", "ALTER TABLE photos ADD COLUMN type TEXT NOT NULL DEFAULT 'lieu'", "ALTER TABLE users ADD COLUMN banni INTEGER NOT NULL DEFAULT 0", "ALTER TABLE users ADD COLUMN banni_motif TEXT", "ALTER TABLE users ADD COLUMN banni_at TEXT", "ALTER TABLE users ADD COLUMN banni_jusqua TEXT", "ALTER TABLE users ADD COLUMN identifiant TEXT"]) {
+  for (const sql of ["ALTER TABLE marques ADD COLUMN plan_souhaite TEXT", "ALTER TABLE photos ADD COLUMN type TEXT NOT NULL DEFAULT 'lieu'", "ALTER TABLE users ADD COLUMN banni INTEGER NOT NULL DEFAULT 0", "ALTER TABLE users ADD COLUMN banni_motif TEXT", "ALTER TABLE users ADD COLUMN banni_at TEXT", "ALTER TABLE users ADD COLUMN banni_jusqua TEXT", "ALTER TABLE users ADD COLUMN identifiant TEXT", "ALTER TABLE marques ADD COLUMN essai_at TEXT", "ALTER TABLE marques ADD COLUMN essai_fin TEXT"]) {
     try { await env.DB.prepare(sql).run(); }
     catch (e) { if (!/duplicate column/i.test(String(e && (e.message || e)))) throw e; }
   }
@@ -187,6 +190,11 @@ export function planEffectif(marque, maintenant = new Date()) {
 // de remplir la fiche ; sans abonnement actif, ce sont les limites de la formule Gratuit.
 export const attentePaiement = (marque, maintenant = new Date()) =>
   !!marque && (marque.plan_souhaite === "standard" || marque.plan_souhaite === "premium") && planEffectif(marque, maintenant) === "gratuit" && !marque.plan_fin;
+// Essai gratuit en cours : formule active dont la fin est exactement celle de l'essai (un paiement ensuite la fait changer).
+export const enEssai = (marque, maintenant = new Date()) =>
+  !!marque && !!marque.essai_fin && planEffectif(marque, maintenant) !== "gratuit" && marque.plan_fin === marque.essai_fin;
+export const joursRestants = (marque, maintenant = new Date()) =>
+  marque && marque.plan_fin ? Math.max(0, Math.ceil((new Date(marque.plan_fin) - maintenant) / 86400000)) : 0;
 export function planEdition(marque, maintenant = new Date()) { return planEffectif(marque, maintenant); }
 export function nouvelleFin(marque, plan, maintenant = new Date()) {
   let base = maintenant;

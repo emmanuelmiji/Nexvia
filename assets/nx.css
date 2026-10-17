@@ -309,3 +309,9 @@ body.espace-large main.large { max-width: 1092px; }
 .adr .stats .case small.bas { color: #b4232c; }
 .adr .stats p.muted { margin: 8px 0 0; font-size: .78rem; }
 .adr .stats.verrou { display: flex; gap: 8px; align-items: center; font-size: .85rem; color: var(--muted, #5b6478); }
+
+/* Mois d'essai gratuit */
+.plan .essai-ligne { margin: 4px 0 10px; font-weight: 800; color: #0a6b3a; font-size: .9rem; }
+.plan .ou-payer { text-align: center; margin: 8px 0 0; font-size: .88rem; }
+.essai-box { border-left: 4px solid var(--gold); }
+.essai-box .btn { margin-top: 4px; }

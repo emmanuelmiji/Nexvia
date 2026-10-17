@@ -450,6 +450,12 @@ const COULEUR = { restaurant: "#e08a00", bar: "#8e44ad", pharmacie: "#1b998b", c
 const EMOJI = { restaurant: "🍽️", bar: "🍸", pharmacie: "💊", commerce: "🛒", sport: "⚽", culte: "⛪", hotel: "🏨", sante: "🏥", loisirs: "🎭", formation: "🎓", bienetre: "💆", voyage: "✈️", banque: "🏦", atm: "🏧", station: "⛽", transfert: "💸", ecole: "🏫", autre: "📍" };
 const GOMBE = [[-4.328, 15.268], [-4.293, 15.322]];
 const ZONE_LARGE = { s: -4.345, n: -4.28, o: 15.25, e: 15.34 };
+// Mettre true pour afficher publiquement les commerces inscrits et validés (après avoir supprimé les comptes de test dans l'admin).
+const AFFICHAGE_PUBLIC = false;
+const COMMUNES_OUVERTES = ["Gombe", "Ngaliema", "Kintambo", "Limete"];
+// Cadrage approximatif de chaque commune sur la carte (à affiner avec les données de chaque commune).
+const BORNES_COMMUNE = { Gombe: GOMBE, Ngaliema: [[-4.405, 15.20], [-4.32, 15.285]], Kintambo: [[-4.335, 15.255], [-4.31, 15.29]], Limete: [[-4.385, 15.31], [-4.335, 15.38]] };
+const communeDe = l => l.commune || "Gombe";   // les lieux déjà référencés sont tous à Gombe
 const ORDRE = { verifie: 0, inscrit: 1, reference: 2, osm: 3 };
 const ordre = l => l.haut ? -1 : ORDRE[l.source];
 
@@ -477,7 +483,8 @@ function correspond(nom, requete) {
 }
 const aPosition = l => typeof l.lat === "number" && typeof l.lng === "number";
 const emojiDe = l => l.emoji || (l.cat === "culte" && l.religion === "muslim" ? "🕌" : (EMOJI[l.cat] || "📍"));
-const texteRecherche = l => [l.nom, l.adresse, l.type, CATS[l.cat]].filter(Boolean).join(" ");
+const texteRecherche = l => [l.nom, l.adresse, l.type, CATS[l.cat], l.commune].filter(Boolean).join(" ");
+const adresseAff = l => l.adresse + (l.commune && norm(l.adresse).indexOf(norm(l.commune)) < 0 ? ", " + l.commune : "");
 const premierNum = t => String(t).split(/[;,\/]|\bou\b/)[0];
 const telHref = t => "tel:" + premierNum(t).replace(/[^\d+]/g, "");
 const waHref = t => { let d = premierNum(t).replace(/\D/g, ""); if (d.length === 9) d = "243" + d; else if (d.charAt(0) === "0") d = "243" + d.slice(1); return "https://wa.me/" + d; };
@@ -569,7 +576,7 @@ function fiche(l) {
   if (l.photos && l.photos.length) h += '<div class="photos">' + l.photos.map(src => '<' + 'img src="' + esc(src) + '" alt="Photo de ' + esc(l.nom) + '" loading="lazy" onerror="this.remove()">').join("") + '</div>';
   else h += '<div class="banniere" style="background:' + col + '" aria-hidden="true">' + emojiDe(l) + '</div>';
   h += '<h2>' + esc(l.nom) + '</h2>' + badgeHTML(l);
-  if (l.adresse) h += '<p>📍 ' + esc(l.adresse) + '</p>';
+  if (l.adresse) h += '<p>📍 ' + esc(adresseAff(l)) + '</p>';
   if (l.horaires) h += '<p>🕒 ' + esc(l.horaires) + '</p>';
   if (l.tel) h += '<p>📞 ' + esc(l.tel) + '</p>';
   if (l.description) h += '<p class="desc">' + esc(l.description) + '</p>';
@@ -579,7 +586,7 @@ function fiche(l) {
 }
 function itemHTML(l, mode) {
   return '<article class="item" style="border-left-color:' + (COULEUR[l.cat] || COULEUR.autre) + '"><h3>' + emojiDe(l) + ' ' + esc(l.nom) + '</h3>' + badgeHTML(l) +
-    (l.adresse ? '<p>📍 ' + esc(l.adresse) + '</p>' : "") + (l.horaires ? '<p>🕒 ' + esc(l.horaires) + '</p>' : "") + (l.tel ? '<p>📞 ' + esc(l.tel) + '</p>' : "") + distHTML(l) +
+    (l.adresse ? '<p>📍 ' + esc(adresseAff(l)) + '</p>' : "") + (l.horaires ? '<p>🕒 ' + esc(l.horaires) + '</p>' : "") + (l.tel ? '<p>📞 ' + esc(l.tel) + '</p>' : "") + distHTML(l) +
     (aPosition(l) ? "" : '<p class="note">Position exacte non précisée pour l\'instant.</p>') +
     '<div class="actions">' + (l.tel ? '<a class="btn" href="' + esc(telHref(l.tel)) + '">Appeler</a>' : "") +
     (aPosition(l) ? '<button type="button" class="btn alt" data-voir="' + esc(cle(l)) + '">Voir sur la carte</button>' : "") +
@@ -605,6 +612,7 @@ document.addEventListener("click", e => {
 });
 
 let lieux = VERIFIES.map(l => ({ ...l, source: "verifie" }));
+let communeF = "toutes";
 let visibles = [], filtre = "tous", mode = "carte", tab = "decouvrir", courant = null;
 const trouver = k => lieux.find(l => cle(l) === k);
 
@@ -614,7 +622,7 @@ function setTab(t) {
   document.querySelectorAll(".screen").forEach(s => s.classList.toggle("on", s.id === "s-" + t));
   document.querySelectorAll("#tabs button").forEach(b => b.setAttribute("aria-current", b.dataset.tab === t ? "page" : "false"));
   if (t !== "carte") fermerFiche();
-  if (t === "carte" && window.__carte) window.__carte.invalidateSize();
+  if (t === "carte" && window.__refit) window.__refit();
   if (t === "favoris") rendreFavoris();
   if (t === "compte") rendreCompte();
 }
@@ -646,7 +654,7 @@ async function chargerCompte() {
     compteInfo = d && d.utilisateur ? d.utilisateur : null;
     try { localStorage.setItem("nx_plan", compteInfo && compteInfo.plan ? compteInfo.plan : ""); } catch (e) {}
     couronneOnglet(compteInfo && compteInfo.plan);
-  } catch (e) { /* hors ligne : on garde la couronne mémorisée */ }
+  } catch (e) { compteInfo = null; /* hors ligne ou serveur indisponible : on affiche l'écran sans compte plutôt que de rester sur « Chargement… » */ }
 }
 function rendreCompte() {
   const corps = $("compteCorps"), sub = $("compteSub");
@@ -744,19 +752,19 @@ function rendreAccueil() {
 $("cats").addEventListener("click", e => { const b = e.target.closest("[data-c]"); if (!b) return; filtre = b.dataset.c; $("recherche").value = ""; $("verifies").checked = false; setTab("carte"); construireFiltres(); window.afficher && window.afficher(true); setMode("carte"); });
 $("pres").addEventListener("click", () => {
   const b = $("pres"), txt = "📍 Voir les lieux près de moi"; b.textContent = "Recherche de votre position…";
-  localiser(() => { b.textContent = txt; setTab("carte"); setMode("liste"); if (window.afficher) window.afficher(false); if (maPos && loinDeGombe(maPos)) ouvrirDemande("Il semble que vous ne soyez pas à Gombe. Nexvia RDC commence par cette commune : dites-nous où vous êtes pour que nous l'ajoutions."); },
+  localiser(() => { b.textContent = txt; setTab("carte"); setMode("liste"); if (window.afficher) window.afficher(false); if (maPos && loinDeGombe(maPos)) ouvrirDemande("Il semble que vous ne soyez pas dans une commune déjà ouverte (Gombe, Ngaliema, Kintambo, Limete). Dites-nous où vous êtes pour que nous l'ajoutions."); },
     () => { b.textContent = "Position indisponible : autorisez la localisation puis réessayez"; setTimeout(() => { b.textContent = txt; }, 4000); });
 });
 $("partager").addEventListener("click", () => {
-  const texte = "Nexvia RDC : trouvez restaurants, pharmacies et services à Gombe, Kinshasa. Un projet congolais, soutenons-le !";
-  const url = "https://nexvia-rdc.pages.dev/";
+  const texte = "Nexvia RDC : trouvez restaurants, pharmacies et services à Kinshasa. Un projet congolais, soutenons-le !";
+  const url = "https://nexviardc.com/";
   if (navigator.share) { navigator.share({ title: "Nexvia RDC", text: texte, url: url }).catch(() => {}); }
   else { window.open("https://wa.me/?text=" + encodeURIComponent(texte + " " + url), "_blank", "noopener"); }
 });
 $("pops").addEventListener("click", e => { const b = e.target.closest("[data-p]"); if (b) ouvrirLieu($("pops")._items[Number(b.dataset.p)]); });
 
 // ---- demande de commune ----
-const COMMUNES_DEM = ["Bandalungwa","Barumbu","Bumbu","Kalamu","Kasa-Vubu","Kimbanseke","Kinshasa","Kintambo","Kisenso","Lemba","Limete","Lingwala","Makala","Maluku","Masina","Matete","Mont-Ngafula","Ndjili","Ngaba","Ngaliema","Ngiri-Ngiri","Nsele","Selembao","Autre ville du Congo"];
+const COMMUNES_DEM = ["Bandalungwa","Barumbu","Bumbu","Kalamu","Kasa-Vubu","Kimbanseke","Kinshasa","Kisenso","Lemba","Lingwala","Makala","Maluku","Masina","Matete","Mont-Ngafula","Ndjili","Ngaba","Ngiri-Ngiri","Nsele","Selembao","Autre ville du Congo"];
 const CLE_DEM = "nexvia_demandes";
 let communeChoisie = null;
 function demandesFaites() { try { return JSON.parse(localStorage.getItem(CLE_DEM) || "[]"); } catch (e) { return []; } }
@@ -769,7 +777,7 @@ function dessinerDem() {
 }
 function ouvrirDemande(intro) {
   communeChoisie = null; messageDem("");
-  $("demIntro").textContent = intro || "Nexvia RDC commence à Gombe. Choisissez la commune où vous voulez la voir arriver : les plus demandées seront ajoutées en premier.";
+  $("demIntro").textContent = intro || "Nexvia RDC est ouvert à Gombe, Ngaliema, Kintambo et Limete. Choisissez la commune où vous voulez la voir arriver : les plus demandées seront ajoutées en premier.";
   dessinerDem(); $("dem").classList.add("open");
 }
 function fermerDemande() { $("dem").classList.remove("open"); }
@@ -786,7 +794,7 @@ $("demEnvoi").addEventListener("click", () => {
     .catch(() => { messageDem("Impossible d'envoyer votre demande pour le moment. Vérifiez votre connexion puis réessayez.", "err"); dessinerDem(); })
     .finally(() => { bt.textContent = "Envoyer ma demande"; bt.disabled = !communeChoisie; });
 });
-function loinDeGombe(pos) { const R = 6371, r = x => x * Math.PI / 180, la = -4.3050, lo = 15.2915; const a = Math.sin(r(pos[0] - la) / 2) ** 2 + Math.cos(r(la)) * Math.cos(r(pos[0])) * Math.sin(r(pos[1] - lo) / 2) ** 2; return 2 * R * Math.asin(Math.sqrt(a)) > 5; }
+function loinDeGombe(pos) { const R = 6371, r = x => x * Math.PI / 180, la = -4.3050, lo = 15.2915; const a = Math.sin(r(pos[0] - la) / 2) ** 2 + Math.cos(r(la)) * Math.cos(r(pos[0])) * Math.sin(r(pos[1] - lo) / 2) ** 2; return 2 * R * Math.asin(Math.sqrt(a)) > 12; }
 
 // ---- installation ----
 let invite = null;
@@ -806,7 +814,7 @@ function setMode(m) {
   $("liste").style.display = m === "liste" ? "block" : "none";
   $("btnCarte").setAttribute("aria-pressed", String(m === "carte"));
   $("btnListe").setAttribute("aria-pressed", String(m === "liste"));
-  if (m === "carte" && window.__carte) window.__carte.invalidateSize();
+  if (m === "carte" && window.__refit) window.__refit();
 }
 function construireFiltres() {
   const present = new Set(lieux.map(l => l.cat)), box = $("chips");
@@ -826,6 +834,9 @@ if (typeof L === "undefined") {
 } else {
   const map = L.map("map", { zoomControl: true }).setView([-4.308, 15.298], 14);
   window.__carte = map;
+  // La carte se remplit toujours : dès que son conteneur change de taille (onglet affiché, fenêtre redimensionnée), on recalcule et on recadre sur Gombe si elle est restée dézoomée.
+  window.__refit = () => { map.invalidateSize(); if (map.getZoom() < 11) map.fitBounds(GOMBE); };
+  if (window.ResizeObserver) new ResizeObserver(() => window.__refit()).observe($("map"));
   L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 19, attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> (ODbL)' }).addTo(map);
 
   const groupe = L.layerGroup().addTo(map); // lieux vérifiés : toujours visibles
@@ -865,7 +876,7 @@ if (typeof L === "undefined") {
       g.forEach((l, i) => { const ang = (2 * Math.PI * i) / g.length - Math.PI / 2; l._dlat = l.lat + 0.00011 * Math.sin(ang); l._dlng = l.lng + 0.00011 * Math.cos(ang); }); });
     const q = $("recherche").value.trim(), seulV = $("verifies").checked, seulO = $("ouverts").checked;
     groupe.clearLayers(); bulles.clearLayers();
-    visibles = lieux.filter(l => (q || filtre === "tous" || l.cat === filtre) && (q || !seulV || l.source === "verifie") && (q || !seulO || ouvertMaintenant(l.horaires) === true) && (!q || correspond(texteRecherche(l), q)));
+    visibles = lieux.filter(l => (q || communeF === "toutes" || communeDe(l) === communeF) && (q || filtre === "tous" || l.cat === filtre) && (q || !seulV || l.source === "verifie") && (q || !seulO || ouvertMaintenant(l.horaires) === true) && (!q || correspond(texteRecherche(l), q)));
     const pts = [], autres = [];
     visibles.forEach(l => {
       l._m = null;
@@ -879,11 +890,12 @@ if (typeof L === "undefined") {
     let txt = visibles.length + " lieu(x) : " + n("verifie") + " vérifié(s), " + n("reference") + " référencé(s), " + n("osm") + " OpenStreetMap.";
     if (sans) txt += " " + sans + " sans position (voir la Liste).";
     if (q && !visibles.length) txt = "Aucun lieu trouvé pour « " + q + " ». Essayez un autre mot.";
+    else if (!q && !visibles.length && communeF !== "toutes") txt = "Les lieux de " + communeF + " arrivent bientôt.";
     $("statut").textContent = txt;
     if (recentrer && mode === "carte") {
-      const actif = q || filtre !== "tous" || seulV || seulO;
+      const actif = q || communeF !== "toutes" || filtre !== "tous" || seulV || seulO;
       const proches = pts.filter(p => p[0] > ZONE_LARGE.s && p[0] < ZONE_LARGE.n && p[1] > ZONE_LARGE.o && p[1] < ZONE_LARGE.e), base = proches.length ? proches : pts;
-      if (!actif) map.fitBounds(GOMBE); else if (base.length) map.fitBounds(L.latLngBounds(base).pad(0.2), { maxZoom: 16 });
+      if (!q && communeF !== "toutes" && !pts.length) map.fitBounds(BORNES_COMMUNE[communeF] || GOMBE); else if (!actif) map.fitBounds(GOMBE); else if (base.length) map.fitBounds(L.latLngBounds(base).pad(0.2), { maxZoom: 16 });
     }
     if (ouvrir && visibles.length) {
       if (visibles.length === 1 && pts.length === 1) window.ouvrirLieu(visibles[0]);
@@ -893,7 +905,10 @@ if (typeof L === "undefined") {
   window.afficher = afficher;
   function rendreListe() {
     const items = visibles.slice().sort((a, b) => { if (maPos) { const da = distance(a), db = distance(b); if (da !== null || db !== null) return (da === null ? 1e12 : da) - (db === null ? 1e12 : db); } return ordre(a) - ordre(b) || a.nom.localeCompare(b.nom, "fr"); }).slice(0, 300);
-    $("liste").innerHTML = items.length ? items.map(l => itemHTML(l, "liste")).join("") : '<p class="vide">Aucun lieu à afficher avec ces filtres.</p>';
+    const vide = communeF !== "toutes" && !$("recherche").value.trim() && !lieux.some(l => communeDe(l) === communeF)
+      ? '<p class="vide">Les lieux de <b>' + esc(communeF) + '</b> arrivent bientôt.<br>Vous avez un commerce dans cette commune ? <a href="/commerce/">Inscrivez-le sur Nexvia RDC</a>.</p>'
+      : '<p class="vide">Aucun lieu à afficher avec ces filtres.</p>';
+    $("liste").innerHTML = items.length ? items.map(l => itemHTML(l, "liste")).join("") : vide;
   }
   $("liste").addEventListener("click", clicItems);
 
@@ -902,6 +917,7 @@ if (typeof L === "undefined") {
   champ.addEventListener("input", () => { afficher(false); clearTimeout(minuterie); minuterie = setTimeout(() => { if (champ.value.trim().length >= 2) afficher(true); }, 450); });
   champ.addEventListener("blur", () => setTimeout(() => { sugg.style.display = "none"; }, 150));
   champ.addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); clearTimeout(minuterie); afficher(true, true); sugg.style.display = "none"; champ.blur(); } });
+  $("communeSel").addEventListener("change", e => { communeF = COMMUNES_OUVERTES.includes(e.target.value) ? e.target.value : "toutes"; afficher(true); });
   $("verifies").addEventListener("change", () => afficher(true));
   $("ouverts").addEventListener("change", () => afficher(true));
   $("btnCarte").addEventListener("click", () => { setMode("carte"); afficher(true); });
@@ -926,13 +942,13 @@ if (typeof L === "undefined") {
   const EXCLUS_NOMS = [/^\s*(le\s+)?glad\b/i];
   function horsRDC(lat, lng, adresse, tel, nom) {
     if (EXCLUS_NOMS.some(re => re.test(String(nom || "")))) return true;
-    if (typeof lat === "number" && typeof lng === "number" && (lat > -4.285 || lat < -4.36 || lng < 15.24 || lng > 15.36)) return true;
+    if (typeof lat === "number" && typeof lng === "number" && (lat > -4.285 || lat < -4.43 || lng < 15.19 || lng > 15.43)) return true;
     if (/brazzaville|poto-?poto|bacongo|moungali|ouenz[eé]|talanga[iï]|mfilou|makél?él?é?kélé/i.test([nom, adresse].join(" "))) return true;
     return /^\s*(\+|00)?\s*242/.test(String(tel || "").replace(/[^\d+]/g, "")) ;
   }
   function ajouterRefs(liste) {
     (liste || []).forEach(r => { if (!r.nom || dejaPresent(r) || horsRDC(r.lat, r.lng, r.adresse, r.tel, r.nom)) return;
-      lieux.push({ nom: r.nom, cat: CATS[r.cat] ? r.cat : "autre", type: r.type || "", adresse: r.adresse || "", tel: r.tel || "", horaires: r.horaires || "", lat: r.lat, lng: r.lng, posSource: r.posSource || "", source: "reference" }); });
+      lieux.push({ nom: r.nom, cat: CATS[r.cat] ? r.cat : "autre", type: r.type || "", adresse: r.adresse || "", tel: r.tel || "", horaires: r.horaires || "", lat: r.lat, lng: r.lng, posSource: r.posSource || "", commune: COMMUNES_OUVERTES.includes(r.commune) ? r.commune : "", source: "reference" }); });
   }
   function ajouterOSM(data) {
     (data.elements || []).forEach(el => {
@@ -956,7 +972,7 @@ if (typeof L === "undefined") {
       const c0 = CAT_API[c.categorie] || c.categorie, cat = CATS[c0] ? c0 : "autre";
       if (c.lieu_existant) { const n = norm(c.lieu_existant); for (let i = lieux.length - 1; i >= 0; i--) if (!lieux[i].partenaire && norm(lieux[i].nom) === n) lieux.splice(i, 1); }
       const photo = id => "/api/photo/" + Number(id);
-      lieux.push({ adrId: Number(c.id) || 0, nom: c.nom, cat, type: CAT_LABEL[cat], adresse: c.adresse || "", tel: c.tel || "", horaires: c.horaires || "", description: c.description || "",
+      lieux.push({ adrId: Number(c.id) || 0, nom: c.nom, cat, type: CAT_LABEL[cat], adresse: c.adresse || "", commune: c.commune || "Gombe", tel: c.tel || "", horaires: c.horaires || "", description: c.description || "",
         lat: typeof c.lat === "number" ? c.lat : undefined, lng: typeof c.lng === "number" ? c.lng : undefined,
         source: c.badge ? "verifie" : "inscrit", partenaire: true, formule: c.formule, haut: !!c.haut, whatsapp: !!c.whatsapp, sansWa: !c.whatsapp,
         photos: (c.photos || []).map(photo), menuPhotos: (c.menu_photos || []).map(photo) });
@@ -967,9 +983,10 @@ if (typeof L === "undefined") {
   construireFiltres(); afficher(true); rendreAccueil();
   Promise.all([lireJSON("references.json"), lireJSON("osm.json"), lireJSON("/api/public/commerces")]).then(([refs, osm, coms]) => {
     if (refs) ajouterRefs(refs);
-    ajouterCommerces(coms);
+    if (AFFICHAGE_PUBLIC) ajouterCommerces(coms);
     if (osm) ajouterOSM(osm);
     construireFiltres(); afficher(true); rendreAccueil();
     if (!refs && !osm) $("statut").textContent += " (Données supplémentaires pas encore ajoutées.)";
   });
 }
+

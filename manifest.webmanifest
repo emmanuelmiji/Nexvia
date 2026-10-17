@@ -1,7 +1,7 @@
 {
-  "name": "Nexvia RDC – Gombe",
+  "name": "Nexvia RDC",
   "short_name": "Nexvia RDC",
-  "description": "Restaurants, pharmacies et services à Gombe, Kinshasa",
+  "description": "Restaurants, pharmacies et services à Kinshasa",
   "lang": "fr",
   "start_url": "./",
   "scope": "./",

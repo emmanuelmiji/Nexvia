@@ -57,6 +57,7 @@ const ROUTES = {
   "GET commerce/etat": etatCommerce,
   "POST commerce/marque": creerMarque,
   "POST commerce/formule": choisirFormule,
+  "POST commerce/essai": demarrerEssai,
   "POST commerce/adresse": sauverAdresse,
   "POST commerce/adresse/supprimer": supprimerAdresse,
   "POST commerce/photo": ajouterPhoto,
@@ -216,7 +217,7 @@ const STAT_ACTIONS = ["vue", "appel", "wa", "itin", "fav"];
 async function etatCommerce({ request, env }) {
   const user = await exigerUser(request, env), db = await C.base(env);
   const marque = await marqueDe(db, user.id);
-  if (!marque) return json({ ok: true, utilisateur: pub(user), marque: null, adresses: [], demandes: [], plans: PLANS, total_avec_frais: C.TOTAL_AVEC_FRAIS, whatsapp: C.WHATSAPP });
+  if (!marque) return json({ ok: true, utilisateur: pub(user), marque: null, adresses: [], demandes: [], plans: PLANS, essai_jours: C.ESSAI_JOURS, total_avec_frais: C.TOTAL_AVEC_FRAIS, whatsapp: C.WHATSAPP });
   const plan = C.planEffectif(marque);
   const adresses = (await db.prepare("SELECT * FROM adresses WHERE marque_id = ? ORDER BY id").bind(marque.id).all()).results || [];
   const phs = (await db.prepare("SELECT p.id, p.adresse_id, p.type FROM photos p JOIN adresses a ON a.id = p.adresse_id WHERE a.marque_id = ? ORDER BY p.id").bind(marque.id).all()).results || [];
@@ -231,7 +232,7 @@ async function etatCommerce({ request, env }) {
       a.stats = { ce_mois: ce, mois_dernier: prec };
     }));
   }
-  return json({ ok: true, utilisateur: pub(user), marque: { ...marque, plan_effectif: plan, plan_edition: C.planEdition(marque), attente_paiement: C.attentePaiement(marque) }, adresses, demandes, plans: PLANS, total_avec_frais: C.TOTAL_AVEC_FRAIS, whatsapp: C.WHATSAPP });
+  return json({ ok: true, utilisateur: pub(user), marque: { ...marque, plan_effectif: plan, plan_edition: C.planEdition(marque), attente_paiement: C.attentePaiement(marque), en_essai: C.enEssai(marque), essai_disponible: !marque.essai_at, jours_restants: C.joursRestants(marque) }, adresses, demandes, plans: PLANS, essai_jours: C.ESSAI_JOURS, total_avec_frais: C.TOTAL_AVEC_FRAIS, whatsapp: C.WHATSAPP });
 }
 async function creerMarque({ request, env }) {
   const user = await exigerUser(request, env), db = await C.base(env);
@@ -250,6 +251,23 @@ async function choisirFormule({ request, env }) {
   const b = await lireJson(request); if (!PLANS[b.plan]) refuse("Choisissez une formule.");
   await db.prepare("UPDATE marques SET plan_souhaite = ? WHERE id = ?").bind(b.plan, marque.id).run();
   return json({ ok: true });
+}
+// Mois d'essai gratuit : active Standard ou Premium pendant ESSAI_JOURS jours, une seule fois par compte et par numéro de téléphone.
+async function demarrerEssai({ request, env }) {
+  const user = await exigerUser(request, env), db = await C.base(env), marque = await marqueDe(db, user.id);
+  if (!marque) refuse("Ajoutez d'abord votre adresse.", 409);
+  const b = await lireJson(request);
+  if (b.plan !== "standard" && b.plan !== "premium") refuse("L'essai gratuit est disponible pour Standard et Premium.");
+  if (marque.essai_at) refuse("Vous avez déjà profité de votre mois d'essai.", 409);
+  if (C.planEffectif(marque) !== "gratuit") refuse("Vous avez déjà une formule active.", 409);
+  const fin3 = String(user.tel || "").replace(/\D/g, "").slice(-9);
+  if (fin3.length === 9) {
+    const autres = (await db.prepare("SELECT u.tel FROM marques m JOIN users u ON u.id = m.owner_id WHERE m.essai_at IS NOT NULL AND m.id != ?").bind(marque.id).all()).results || [];
+    if (autres.some(x => String(x.tel || "").replace(/\D/g, "").slice(-9) === fin3)) refuse("Un essai gratuit a déjà été utilisé avec ce numéro de téléphone.", 409);
+  }
+  const now = new Date(), fin = new Date(now.getTime() + C.ESSAI_JOURS * 86400000).toISOString();
+  await db.prepare("UPDATE marques SET plan = ?, plan_fin = ?, plan_souhaite = ?, essai_at = ?, essai_fin = ? WHERE id = ? AND essai_at IS NULL").bind(b.plan, fin, b.plan, now.toISOString(), fin, marque.id).run();
+  return json({ ok: true, plan: b.plan, fin });
 }
 const nombreOuNull = (v, min, max) => { if (v === "" || v == null) return null; const n = Number(v); return Number.isFinite(n) && n >= min && n <= max ? n : null; };
 async function sauverAdresse({ request, env }) {
@@ -275,7 +293,7 @@ async function sauverAdresse({ request, env }) {
     const a = await db.prepare("SELECT * FROM adresses WHERE id = ? AND marque_id = ?").bind(ent(b.id), marque.id).first();
     if (!a) refuse("Adresse introuvable.", 404);
     champs.menu = a.menu || "";
-    if (champs.commune !== (a.commune || "") && !C.COMMUNES_OUVERTES.includes(champs.commune)) refuse("Cette commune n'est pas encore disponible. Pour le moment, seule la commune de Gombe est ouverte.");
+    if (champs.commune !== (a.commune || "") && !C.COMMUNES_OUVERTES.includes(champs.commune)) refuse(champs.commune ? C.MSG_COMMUNE : "Choisissez la commune de votre adresse.");
     if (champs.horaires !== (a.horaires || "") && champs.horaires && !C.horairesValides(champs.horaires)) refuse("Horaires non reconnus : utilisez le sélecteur d'horaires.");
     if (champs.horaires !== (a.horaires || "") && !plan.horaires) refuse("Modifier les horaires demande l'abonnement Standard ou Premium.", 403);
     let menuNb = a.menu_nb, menuMois = a.menu_mois;
@@ -295,7 +313,7 @@ async function sauverAdresse({ request, env }) {
   if (C.attentePaiement(marque)) refuse("Payez d'abord votre formule " + PLANS[marque.plan_souhaite].nom + " pour remplir votre fiche. Vous pouvez aussi choisir la formule Gratuit.", 402);
   const n = (await db.prepare("SELECT COUNT(*) AS n FROM adresses WHERE marque_id = ? AND statut != 'refusee'").bind(marque.id).first()).n;
   if (n >= plan.adresses) refuse("La formule " + plan.nom + " permet " + plan.adresses + " adresse" + (plan.adresses > 1 ? "s" : "") + ". Passez à une formule supérieure pour en ajouter.", 403);
-  if (!C.COMMUNES_OUVERTES.includes(champs.commune)) refuse("Cette commune n'est pas encore disponible. Pour le moment, seule la commune de Gombe est ouverte.");
+  if (!C.COMMUNES_OUVERTES.includes(champs.commune)) refuse(champs.commune ? C.MSG_COMMUNE : "Choisissez la commune de votre adresse.");
   if (champs.horaires && !C.horairesValides(champs.horaires)) refuse("Horaires non reconnus : utilisez le sélecteur d'horaires.");
   const r = await db.prepare("INSERT INTO adresses (marque_id, nom, categorie, commune, adresse, tel, horaires, description, menu, lat, lng, lieu_existant, code, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
     .bind(marque.id, champs.nom, champs.categorie, champs.commune, champs.adresse, champs.tel, champs.horaires, champs.description, champs.menu, champs.lat, champs.lng, champs.lieu_existant, C.codeVerif(), new Date().toISOString()).run();
@@ -390,20 +408,20 @@ async function fileAdmin({ request, env }) {
   const adminsF = C.adminsDe(env);
   const [marques, adresses, averifier, attente, imports, stats] = await Promise.all([
     tout("SELECT m.id, m.nom, m.plan_souhaite, m.created_at, u.email, u.nom AS user_nom, u.tel AS user_tel FROM marques m JOIN users u ON u.id = m.owner_id WHERE m.statut = 'en_attente' AND NOT (m.plan_souhaite IN ('standard','premium') AND m.plan = 'gratuit' AND m.plan_fin IS NULL) ORDER BY m.id"),
-    tout("SELECT a.id, a.nom, a.categorie, a.commune, a.adresse, a.tel, a.code, a.tel_verifie, a.lieu_existant, a.horaires, a.description, a.menu, a.created_at, m.nom AS marque_nom, m.statut AS marque_statut, m.plan_souhaite, m.plan, m.plan_fin, u.email, u.tel AS user_tel FROM adresses a JOIN marques m ON m.id = a.marque_id JOIN users u ON u.id = m.owner_id WHERE a.statut = 'en_attente' AND NOT (m.plan_souhaite IN ('standard','premium') AND m.plan = 'gratuit' AND m.plan_fin IS NULL) ORDER BY a.id LIMIT 60"),
+    tout("SELECT a.id, a.nom, a.categorie, a.commune, a.adresse, a.tel, a.code, a.tel_verifie, a.lieu_existant, a.horaires, a.description, a.menu, a.created_at, m.nom AS marque_nom, m.statut AS marque_statut, m.plan_souhaite, m.plan, m.plan_fin, m.essai_fin, u.email, u.tel AS user_tel FROM adresses a JOIN marques m ON m.id = a.marque_id JOIN users u ON u.id = m.owner_id WHERE a.statut = 'en_attente' AND NOT (m.plan_souhaite IN ('standard','premium') AND m.plan = 'gratuit' AND m.plan_fin IS NULL) ORDER BY a.id LIMIT 60"),
     tout("SELECT d.id, d.plan, d.ref, d.motif, d.created_at, d.tentatives, m.nom AS marque_nom, u.email, u.tel AS user_tel FROM demandes_paiement d JOIN marques m ON m.id = d.marque_id JOIN users u ON u.id = d.user_id WHERE d.statut = 'a_verifier' ORDER BY d.id"),
     tout("SELECT d.id, d.plan, d.ref, d.motif, d.created_at, d.tentatives, m.nom AS marque_nom, u.email FROM demandes_paiement d JOIN marques m ON m.id = d.marque_id JOIN users u ON u.id = d.user_id WHERE d.statut = 'en_attente' ORDER BY d.id"),
     tout("SELECT * FROM imports ORDER BY id DESC LIMIT 5"),
-    db.prepare("SELECT (SELECT COUNT(*) FROM users WHERE 1 = 1" + (adminsF.length ? " AND lower(email) NOT IN (" + adminsF.map(() => "?").join(",") + ")" : "") + ") AS comptes, (SELECT COUNT(*) FROM reclamations WHERE statut = 'en_attente') AS reclamations, (SELECT COUNT(*) FROM marques) AS marques, (SELECT COUNT(*) FROM adresses WHERE statut = 'validee') AS adresses_validees, (SELECT COUNT(*) FROM marques WHERE plan != 'gratuit' AND plan_fin > ?) AS abonnes").bind(...adminsF, new Date().toISOString()).first(),
+    db.prepare("SELECT (SELECT COUNT(*) FROM users WHERE 1 = 1" + (adminsF.length ? " AND lower(email) NOT IN (" + adminsF.map(() => "?").join(",") + ")" : "") + ") AS comptes, (SELECT COUNT(*) FROM reclamations WHERE statut = 'en_attente') AS reclamations, (SELECT COUNT(*) FROM marques) AS marques, (SELECT COUNT(*) FROM adresses WHERE statut = 'validee') AS adresses_validees, (SELECT COUNT(*) FROM marques WHERE plan != 'gratuit' AND plan_fin > ? AND (essai_fin IS NULL OR plan_fin != essai_fin)) AS abonnes, (SELECT COUNT(*) FROM marques WHERE essai_fin IS NOT NULL AND plan_fin = essai_fin AND plan_fin > ?) AS essais_en_cours").bind(...adminsF, new Date().toISOString(), new Date().toISOString()).first(),
   ]);
   if (adresses.length) {
     const ph = await tout("SELECT id, adresse_id, type FROM photos WHERE adresse_id IN (" + adresses.map(() => "?").join(",") + ") ORDER BY id", ...adresses.map(a => a.id));
-    for (const a of adresses) { a.photos = ph.filter(p => p.adresse_id === a.id && p.type !== "menu").map(p => p.id); a.menu_photos = ph.filter(p => p.adresse_id === a.id && p.type === "menu").map(p => p.id); a.plan_effectif = C.planEffectif(a); }
+    for (const a of adresses) { a.photos = ph.filter(p => p.adresse_id === a.id && p.type !== "menu").map(p => p.id); a.menu_photos = ph.filter(p => p.adresse_id === a.id && p.type === "menu").map(p => p.id); a.plan_effectif = C.planEffectif(a); a.en_essai = C.enEssai(a); }
   }
   const waN = (await db.prepare("SELECT COUNT(*) AS n FROM wa_conversations WHERE statut = 'a_traiter'").first()).n;
   // Abonnements actifs et revenu mensuel estimé (prix des formules × abonnés actifs, hors frais de transaction)
   const abos = { standard: 0, premium: 0 };
-  for (const m of await tout("SELECT plan, plan_fin FROM marques WHERE plan != 'gratuit'")) { const pe = C.planEffectif(m); if (abos[pe] !== undefined) abos[pe]++; }
+  for (const m of await tout("SELECT plan, plan_fin, essai_fin FROM marques WHERE plan != 'gratuit'")) { if (C.enEssai(m)) continue; const pe = C.planEffectif(m); if (abos[pe] !== undefined) abos[pe]++; }
   const revenu = Math.round((abos.standard * PLANS.standard.prix + abos.premium * PLANS.premium.prix) * 100) / 100;
   const debutJour = new Date(); debutJour.setUTCHours(0, 0, 0, 0);
   const waJour = { ia: (await db.prepare("SELECT COUNT(*) AS n FROM wa_messages WHERE role = 'ia' AND created_at >= ?").bind(debutJour.toISOString()).first()).n, clients: (await db.prepare("SELECT COUNT(*) AS n FROM wa_messages WHERE role = 'client' AND created_at >= ?").bind(debutJour.toISOString()).first()).n, plafond: Number(env.WA_MAX_IA_JOUR) || 300 };

@@ -7,12 +7,12 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Nexvia RDC">
-<title>Nexvia RDC – Lieux et services à Gombe, Kinshasa</title>
-<meta name="description" content="Nexvia RDC : l'application pour trouver restaurants, pharmacies, banques, hôtels et services à Gombe, Kinshasa. Plus de 350 lieux sur une carte.">
+<title>Nexvia RDC – Lieux et services à Kinshasa</title>
+<meta name="description" content="Nexvia RDC : l'application pour trouver restaurants, pharmacies, banques, hôtels et services à Kinshasa : Gombe, Ngaliema, Kintambo et Limete. Plus de 350 lieux sur une carte.">
 <link rel="canonical" href="https://nexvia-rdc.pages.dev/">
 <meta property="og:type" content="website"><meta property="og:site_name" content="Nexvia RDC">
-<meta property="og:title" content="Nexvia RDC – Les lieux de Gombe dans votre poche">
-<meta property="og:description" content="Restaurants, pharmacies, banques, hôtels et services à Gombe, Kinshasa, réunis sur une seule carte.">
+<meta property="og:title" content="Nexvia RDC – Les lieux de Kinshasa dans votre poche">
+<meta property="og:description" content="Restaurants, pharmacies, banques, hôtels et services à Kinshasa (Gombe, Ngaliema, Kintambo, Limete), réunis sur une seule carte.">
 <meta property="og:url" content="https://nexvia-rdc.pages.dev/"><meta property="og:locale" content="fr_CD">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icon-192.png">
@@ -125,6 +125,8 @@
   .chips { display: flex; gap: 6px; overflow-x: auto; padding: 8px 0 2px; -webkit-overflow-scrolling: touch; }
   .chips button { flex: none; border: 1.5px solid var(--nav); background: #fff; color: var(--nav); padding: 7px 12px; border-radius: 999px; font-size: .82rem; font-weight: 700; cursor: pointer; white-space: nowrap; }
   .chips button[aria-pressed="true"] { background: var(--nav); color: #fff; }
+  .ligne3 { display: flex; align-items: center; gap: 8px; padding-top: 6px; font-size: .8rem; color: var(--muted); }
+  .ligne3 select { flex: 1; min-width: 0; border: 1.5px solid var(--nav); background: #fff; color: var(--nav); padding: 6px 10px; border-radius: 10px; font: inherit; font-weight: 700; }
   .ligne2 { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 4px 8px; padding-top: 6px; }
   .seg { flex: none; display: flex; border: 1.5px solid var(--nav); border-radius: 9px; overflow: hidden; }
   .seg button { border: 0; background: #fff; color: var(--nav); padding: 7px 14px; font-size: .84rem; font-weight: 700; cursor: pointer; }
@@ -247,7 +249,7 @@
       <div class="marque">{{LOGO}}<span>Nexvia RDC</span></div>
       <div class="salut"><svg class="flag " width="30" height="20" viewBox="0 0 60 40" aria-hidden="true"><rect width="60" height="40" fill="#0a8fe8"/><line x1="-4" y1="44" x2="64" y2="-4" stroke="#f7d618" stroke-width="13"/><line x1="-4" y1="44" x2="64" y2="-4" stroke="#ce1021" stroke-width="8"/><g transform="translate(11,11) scale(.62)"><polygon points="0,-10 2.25,-3.09 9.51,-3.09 3.63,1.18 5.88,8.09 0,3.82 -5.88,8.09 -3.63,1.18 -9.51,-3.09 -2.25,-3.09" fill="#f7d618"/></g></svg><span>Mbote ! Bienvenue à Kinshasa</span></div>
       <h1>Que cherchez-vous&nbsp;?</h1>
-      <p>Restaurants, pharmacies et services à Gombe, Kinshasa</p>
+      <p>Restaurants, pharmacies et services à Kinshasa<br><span style="font-size:.85em;opacity:.9">Gombe · Ngaliema · Kintambo · Limete</span></p>
     </div>
     <div class="wax"></div>
     <div class="rech"><input type="search" id="rechercheHome" placeholder="Un lieu, une avenue, un type…" aria-label="Rechercher un lieu" autocomplete="off"></div>
@@ -273,7 +275,7 @@
       </div>
       <div class="demcarte">
         <div class="tt">🗺️ Votre commune n'est pas encore là ?</div>
-        <p>Nexvia RDC commence à Gombe. Dites-nous dans quelle commune vous voulez la voir arriver.</p>
+        <p>Nexvia RDC est ouvert à Gombe, Ngaliema, Kintambo et Limete. Dites-nous dans quelle autre commune vous voulez la voir arriver.</p>
         <button type="button" id="btnDem">Demander une commune</button>
       </div>
       <div class="install" id="install">📲 <b>Installer Nexvia RDC sur votre téléphone</b><br><span id="installTxt">Dans le menu de votre navigateur, choisissez « Ajouter à l'écran d'accueil ». Nexvia RDC s'ouvrira alors comme une application.</span></div>
@@ -288,6 +290,7 @@
       <input type="search" id="recherche" placeholder="Rechercher un lieu (nom, avenue, type)" aria-label="Rechercher un lieu" autocomplete="off">
       <div id="sugg" role="listbox"></div>
       <div class="chips" id="chips" role="group" aria-label="Catégories"></div>
+      <div class="ligne3"><label for="communeSel">📍 Commune</label><select id="communeSel" aria-label="Filtrer par commune"><option value="toutes">Toutes les communes</option><option value="Gombe">Gombe</option><option value="Ngaliema">Ngaliema</option><option value="Kintambo">Kintambo</option><option value="Limete">Limete</option></select></div>
       <div class="ligne2">
         <div class="seg"><button type="button" id="btnCarte" aria-pressed="true">🗺️ Carte</button><button type="button" id="btnListe" aria-pressed="false">📋 Liste</button></div>
         <label class="opt"><input type="checkbox" id="verifies"> Vérifiés seulement</label>
@@ -328,7 +331,7 @@
 <div id="dem" role="dialog" aria-modal="true" aria-labelledby="demT">
   <div class="boite">
     <h3 id="demT">Demander une commune</h3>
-    <p class="intro" id="demIntro">Nexvia RDC commence à Gombe. Choisissez la commune où vous voulez la voir arriver : les plus demandées seront ajoutées en premier.</p>
+    <p class="intro" id="demIntro">Nexvia RDC est ouvert à Gombe, Ngaliema, Kintambo et Limete. Choisissez la commune où vous voulez la voir arriver : les plus demandées seront ajoutées en premier.</p>
     <div class="grille" id="demGrille"></div>
     <p id="demMsg" hidden></p>
     <div class="act"><button type="button" id="demFerme">Fermer</button><button type="button" id="demEnvoi" disabled>Envoyer ma demande</button></div>

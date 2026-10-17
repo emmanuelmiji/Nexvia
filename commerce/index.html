@@ -16,9 +16,9 @@
   const { h, api, toast, entete, vider, wa, date, dollars, reduirePhoto, couronne, drapeau, etoile, horaires, horairesJolis, CFG } = NX, app = document.getElementById("app");
   const CAT = { restaurant: "Restaurant", pharmacie: "Pharmacie", banque: "Banque", hotel: "Hôtel", bar: "Bar / loisirs", ecole: "École", distributeur: "Distributeur", "station-service": "Station-service", autre: "Autre" };
   const EMO = { restaurant: "🍽️", pharmacie: "💊", banque: "🏦", hotel: "🏨", bar: "🍹", ecole: "🎓", distributeur: "🏧", "station-service": "⛽", autre: "🏪" };
-  // Seule la commune de Gombe est ouverte ; les autres arrivent bientôt.
-  const OUVERTES = ["Gombe"];
-  const COMMUNES = ["Gombe", "Bandalungwa", "Barumbu", "Bumbu", "Kalamu", "Kasa-Vubu", "Kimbanseke", "Kinshasa", "Kintambo", "Kisenso", "Lemba", "Limete", "Lingwala", "Makala", "Maluku", "Masina", "Matete", "Mont-Ngafula", "Ndjili", "Ngaba", "Ngaliema", "Ngiri-Ngiri", "Nsele", "Selembao"];
+  // Communes ouvertes ; les autres arrivent bientôt (même liste que COMMUNES_OUVERTES dans functions/_lib/core.js).
+  const OUVERTES = ["Gombe", "Ngaliema", "Kintambo", "Limete"];
+  const COMMUNES = ["Gombe", "Ngaliema", "Kintambo", "Limete", "Bandalungwa", "Barumbu", "Bumbu", "Kalamu", "Kasa-Vubu", "Kimbanseke", "Kinshasa", "Kisenso", "Lemba", "Lingwala", "Makala", "Maluku", "Masina", "Matete", "Mont-Ngafula", "Ndjili", "Ngaba", "Ngiri-Ngiri", "Nsele", "Selembao"];
   const LIB_DEM = { en_attente: ["En vérification", "warn"], a_verifier: ["À vérifier", "bad"], active: ["Activé", "ok"], rejetee: ["Rejeté", "gris"] };
   const RANG = { gratuit: 0, standard: 1, premium: 2 };
   let etat = null, edition = null, lieux = null, formule = "standard", vue = null, choix = "gratuit", fini = null, onglet = "adresses";
@@ -28,7 +28,7 @@
     catch (e) { if (e.status === 401) { location.href = "/compte/?suite=/commerce/"; return; } vider(app); app.append(h("main", {}, h("div", { class: "alerte bad" }, e.message))); return; }
     if (vue === null) vue = (!etat.marque || !etat.adresses.length) ? (etat.marque && etat.marque.attente_paiement ? "paiement" : "choix") : "accueil";
     // paiement confirmé : la fiche s'ouvre automatiquement
-    if (vue === "paiement" && etat.marque && !etat.marque.attente_paiement && etat.marque.plan_effectif !== "gratuit" && !etat.adresses.length) { choix = etat.marque.plan_effectif; edition = { demande: true }; vue = "fiche"; toast("Paiement confirmé : remplissez votre fiche."); }
+    if (vue === "paiement" && etat.marque && !etat.marque.attente_paiement && etat.marque.plan_effectif !== "gratuit" && !etat.adresses.length) { choix = etat.marque.plan_effectif; edition = { demande: true }; vue = "fiche"; toast(etat.marque.en_essai ? "Essai gratuit activé : remplissez votre fiche." : "Paiement confirmé : remplissez votre fiche."); }
     rendre();
   }
   const planActuel = () => etat.plans[etat.marque.plan_effectif];
@@ -55,6 +55,14 @@
   // ---------- alertes liées aux paiements ----------
   function bannieres() {
     const out = [], m = etat.marque, pl = etat.plans;
+    if (m.en_essai) {
+      const j = m.jours_restants, urgent = j <= 5;
+      out.push(h("div", { class: "alerte " + (urgent ? "warn" : "ok") }, h("b", {}, "🎁 Essai gratuit " + pl[m.plan_effectif].nom + " : "), j + " jour" + (j > 1 ? "s" : "") + " restant" + (j > 1 ? "s" : "") + " (jusqu'au " + date(m.plan_fin) + "). Pour garder votre formule après l'essai, payez avant cette date : les jours de l'essai ne sont pas perdus.", " ",
+        h("button", { class: "btn gold small", onclick: () => { onglet = "abo"; rendre(); window.scrollTo(0, 0); } }, "Continuer avec " + pl[m.plan_effectif].nom)));
+    } else if (m.essai_fin && m.plan_fin === m.essai_fin && m.plan_effectif === "gratuit") {
+      out.push(h("div", { class: "alerte warn" }, h("b", {}, "Votre mois d'essai est terminé."), " Vous êtes revenu à la formule Gratuit : les photos en trop sont masquées (pas supprimées). Payez pour retrouver votre formule " + pl[m.plan].nom + ".", " ",
+        h("button", { class: "btn gold small", onclick: () => { onglet = "abo"; rendre(); window.scrollTo(0, 0); } }, "Voir les formules")));
+    }
     for (const d of etat.demandes) {
       const nomPlan = pl[d.plan].nom;
       if (d.statut === "en_attente") out.push(h("div", { class: "alerte info" }, h("b", {}, "Merci !"), " Votre paiement (référence ", h("span", { class: "code" }, d.ref), ") est enregistré. Votre abonnement ", nomPlan, " sera vérifié et activé sous 24 heures."));
@@ -208,7 +216,7 @@
     const inp = (cle, attrs) => f[cle] = h("input", { id: "f_" + cle, value: a ? a[cle] || "" : "", ...attrs });
     const rub = (titre, aide, ...contenu) => h("section", { class: "rubrique" }, h("h3", {}, h("span", { class: "num" }, ++n), titre), aide ? h("p", { class: "aide" }, aide) : null, ...contenu);
     f.categorie = h("select", { id: "f_categorie" }, Object.keys(CAT).map(k => h("option", { value: k, selected: (a ? a.categorie : "restaurant") === k }, EMO[k] + " " + CAT[k])));
-    f.commune = h("select", { id: "f_commune" }, COMMUNES.map(c => OUVERTES.includes(c) ? h("option", { value: c, selected: (a && a.commune ? a.commune : "Gombe") === c }, c) : h("option", { value: c, disabled: true }, c + " — bientôt")));
+    f.commune = h("select", { id: "f_commune" }, a ? null : h("option", { value: "", selected: true }, "Choisissez votre commune"), COMMUNES.map(c => OUVERTES.includes(c) ? h("option", { value: c, selected: !!a && (a.commune ? a.commune : "Gombe") === c }, c) : h("option", { value: c, disabled: true }, c + " — bientôt")));
     f.description = h("textarea", { id: "f_description", maxlength: 600, placeholder: "Ce qui vous distingue : spécialités, ambiance, services…" }); f.description.value = a ? a.description || "" : "";
     const sugg = h("div", {}), posInfo = h("p", { class: "muted" }, lat != null ? "Position enregistrée ✓" : "");
     const chercher = h("input", { id: "f_lieu", placeholder: "Tapez le nom pour la retrouver…", value: lieu, autocomplete: "off" });
@@ -259,8 +267,8 @@
         champ("nom", "Nom de cette adresse", inp("nom", { required: true, maxlength: 100, placeholder: "Ex. Pizza Inn Gombe" })),
         champ("categorie", "Catégorie", f.categorie),
         champ("description", "Description", f.description)),
-      rub("Où vous trouver", "Nexvia RDC ouvre commune par commune. Pour l'instant, seule la commune de Gombe est disponible.",
-        champ("commune", "Commune", f.commune, "Les autres communes arrivent bientôt."),
+      rub("Où vous trouver", "Nexvia RDC ouvre commune par commune. Pour l'instant : Gombe, Ngaliema, Kintambo et Limete.",
+        champ("commune", "Commune", f.commune, "Choisissez la commune où se trouve cette adresse. Les autres communes arrivent bientôt."),
         champ("adresse", "Adresse", inp("adresse", { required: true, maxlength: 200, placeholder: "Avenue, numéro, repère" })),
         h("label", {}, "Position sur la carte"),
         h("div", { class: "row" }, h("button", { type: "button", class: "btn alt small", onclick: () => {
@@ -274,7 +282,7 @@
       rub("Photos du lieu", "Façade, salle, produits… (" + p.photos + " photo" + (p.photos > 1 ? "s" : "") + " maximum avec la formule " + p.nom + "). Mettez de vraies photos de votre lieu, pas des images prises sur internet : elles nous aident à vérifier et valider votre adresse.",
         creation ? photosAvantEnvoi(ficLieu, p.photos) : gestionPhotos(a, "photo")),
       rub("Menu / liste de services", "Photographiez votre menu, votre carte ou votre liste de prix. Pas de texte à écrire.",
-        !p.menu_photos ? h("div", { class: "verrou" }, "Disponible avec la formule Standard (2 photos, 2 changements par mois) ou Premium (10 photos, changements illimités).") : creation ? photosAvantEnvoi(ficMenu, p.menu_photos) : gestionPhotos(a, "menu")),
+        !p.menu_photos ? h("div", { class: "verrou" }, "Disponible avec la formule Standard (2 photos, 2 changements par mois) ou Premium (6 photos, changements illimités).") : creation ? photosAvantEnvoi(ficMenu, p.menu_photos) : gestionPhotos(a, "menu")),
       a && a.statut === "validee" ? h("div", { class: "alerte warn" }, "Si vous changez le nom, l'adresse ou le téléphone, la fiche repassera en validation.") : null,
       dem ? h("p", { class: "muted" }, "En envoyant, vous demandez l'ajout de votre adresse sur Nexvia RDC. Nous vérifions les informations et les photos avant de publier.") : null,
       h("div", { class: "row" },
@@ -295,8 +303,26 @@
   // mode "choix" : première demande. mode "tableau" : espace d'un commerce qui a déjà des adresses.
   function planCarte(cle, mode) {
     const p = etat.plans[cle], total = etat.total_avec_frais[cle], actif = !!etat.marque && etat.marque.plan_effectif === cle;
+    const essaiOk = cle !== "gratuit" && (!etat.marque || (etat.marque.essai_disponible && etat.marque.plan_effectif === "gratuit")), nbj = etat.essai_jours || 30;
+    // Essai gratuit : crée l'espace si besoin, active l'essai, puis ouvre la fiche (mode « choix ») ou rafraîchit l'espace (mode « tableau »).
+    const lancerEssai = ev => {
+      const btn = ev.currentTarget;
+      action(btn, async () => {
+        if (!etat.marque) await api("POST", "commerce/marque", { nom: String((etat.utilisateur && etat.utilisateur.nom) || "").trim() || "Mon espace", plan: cle });
+        else if (etat.marque.plan_souhaite !== cle) await api("POST", "commerce/formule", { plan: cle });
+        await api("POST", "commerce/essai", { plan: cle });
+      }).then(() => {
+        if (!etat.marque || !etat.marque.en_essai) return;
+        if (mode === "choix" && !etat.adresses.length) { choix = cle; edition = { demande: true }; vue = "fiche"; toast("Essai gratuit activé : remplissez votre fiche."); rendre(); window.scrollTo(0, 0); }
+        else { toast("Essai gratuit activé pour " + nbj + " jours !"); onglet = "adresses"; rendre(); window.scrollTo(0, 0); }
+      }, () => {});
+    };
     let bouton;
-    if (mode === "choix") bouton = h("button", { class: "btn gold grand", onclick: ev => {
+    if (essaiOk) {
+      bouton = [h("button", { class: "btn gold grand", onclick: lancerEssai }, "Essayer " + nbj + " jours gratuits"), h("p", { class: "ou-payer" }, mode === "choix"
+        ? h("a", { href: "#", onclick: ev => { ev.preventDefault(); choix = cle; const btn = ev.currentTarget; action(null, () => etat.marque ? api("POST", "commerce/formule", { plan: cle }) : api("POST", "commerce/marque", { nom: String((etat.utilisateur && etat.utilisateur.nom) || "").trim() || "Mon espace", plan: cle })).then(() => { if (!etat.marque || etat.marque.plan_souhaite !== cle) return; formule = cle; vue = "paiement"; rendre(); window.scrollTo(0, 0); }, () => {}); } }, "Ou payer tout de suite")
+        : h("a", { href: "#", onclick: ev => { ev.preventDefault(); formule = cle; api("POST", "commerce/formule", { plan: cle }).then(charger, () => {}); window.open(CFG.ZOLA_LIEN, "_blank", "noopener"); toast("Saisissez " + dollars(p.prix).replace(",", ".") + " (USD) sur la page de paiement."); } }, "Ou payer tout de suite"))];
+    } else if (mode === "choix") bouton = h("button", { class: "btn gold grand", onclick: ev => {
       const btn = ev.currentTarget; choix = cle;
       if (cle === "gratuit") {
         if (etat.marque && etat.marque.plan_souhaite !== "gratuit") return action(btn, () => api("POST", "commerce/formule", { plan: "gratuit" })).then(() => { if (!etat.marque || etat.marque.plan_souhaite !== "gratuit") return; edition = { demande: true }; vue = "fiche"; rendre(); window.scrollTo(0, 0); }, () => {});
@@ -308,12 +334,13 @@
     else if (cle === "gratuit") {
       const n = etat.adresses.filter(a => a.statut !== "refusee").length, libre = etat.marque.plan_effectif === "gratuit" && n < planSaisie().adresses;
       bouton = h("button", { class: "btn " + (libre ? "gold" : "alt") + " grand", disabled: !libre && true, onclick: () => { edition = {}; onglet = "adresses"; rendre(); window.scrollTo(0, 0); } }, libre ? "Ajouter une adresse" : actif ? "Formule actuelle" : "Incluse");
-    } else bouton = h("button", { class: "btn gold grand", onclick: () => { formule = cle; api("POST", "commerce/formule", { plan: cle }).then(charger, () => {}); window.open(CFG.ZOLA_LIEN, "_blank", "noopener"); toast("Saisissez " + dollars(p.prix).replace(",", ".") + " (USD) sur la page de paiement."); } }, actif ? "Renouveler" : "Payer " + dollars(p.prix));
+    } else bouton = h("button", { class: "btn gold grand", onclick: () => { formule = cle; api("POST", "commerce/formule", { plan: cle }).then(charger, () => {}); window.open(CFG.ZOLA_LIEN, "_blank", "noopener"); toast("Saisissez " + dollars(p.prix).replace(",", ".") + " (USD) sur la page de paiement."); } }, actif ? (etat.marque.en_essai ? "Payer pour continuer" : "Renouveler") : "Payer " + dollars(p.prix));
     return h("div", { class: "plan " + cle + (cle === "standard" ? " vedette" : "") },
       cle === "standard" ? h("span", { class: "ruban" }, "Le plus choisi") : null,
       h("h3", {}, couronne(cle, 18), cle !== "gratuit" ? " " : "", p.nom, actif ? h("span", { class: "badge ok", style: "margin-left:6px" }, "Actuelle") : null),
       h("div", { class: "prix" + (cle === "gratuit" ? " zero" : "") }, dollars(p.prix), h("small", {}, cle === "gratuit" ? "" : " / mois")),
       h("p", { class: "muted" }, cle === "gratuit" ? "Sans paiement" : "≈ " + dollars(total) + " avec les frais de transaction"),
+      essaiOk ? h("p", { class: "essai-ligne" }, "🎁 1er mois d'essai gratuit") : null,
       h("ul", {}, lignesPlan(p)), bouton);
   }
   function formPaiement(fixe) {
@@ -340,7 +367,7 @@
     ajoute(main, sections(1), titreSec("Choisissez votre formule"),
       h("p", { class: "muted" }, "Vous pouvez commencer gratuitement et passer à Standard ou Premium quand vous voulez. Dans tous les cas, nous vérifions votre fiche avant de la publier."),
       h("div", { class: "choix" }, planCarte("gratuit", "choix"), planCarte("standard", "choix"), planCarte("premium", "choix")),
-      h("p", { class: "muted" }, "Avec Standard ou Premium, vous payez d'abord, puis vous remplissez votre fiche. Avec Gratuit, vous remplissez directement votre fiche. Plus de 6 adresses ? Écrivez-nous pour une offre sur mesure."),
+      h("p", { class: "muted" }, "Standard et Premium : le premier mois est offert (une seule fois par compte), vous remplissez votre fiche tout de suite. Vous pouvez aussi payer d'abord. Avec Gratuit, vous remplissez directement votre fiche. Plus de 6 adresses ? Écrivez-nous pour une offre sur mesure."),
       etat.marque ? h("p", {}, h("a", { href: "#", onclick: ev => { ev.preventDefault(); vue = "accueil"; rendre(); } }, "← Retour à mon espace")) : null);
   }
   function ecranPaiement(main) {
@@ -348,6 +375,8 @@
     ajoute(main, sections(1), titreSec("Payez votre formule " + p.nom),
       h("div", { class: "alerte info" }, "Formule choisie : ", h("b", {}, couronne(cle, 15), " ", p.nom, " (" + dollars(p.prix) + " / mois)"), ". Dès que votre paiement est confirmé, votre fiche s'ouvre ici."),
       enCours ? h("div", { class: "alerte warn" }, "Votre paiement est en cours de vérification (sous 24 heures). Dès qu'il est confirmé, vous pourrez remplir votre fiche.") : null,
+      etat.marque.essai_disponible && !enCours ? h("div", { class: "alerte ok essai-box" }, h("b", {}, "🎁 Premier mois offert."), " Essayez " + p.nom + " gratuitement pendant " + (etat.essai_jours || 30) + " jours, sans payer. Vous remplissez votre fiche tout de suite ; à la fin de l'essai, vous choisissez de continuer ou non.",
+        h("p", {}, h("button", { class: "btn gold", onclick: ev => action(ev.currentTarget, () => api("POST", "commerce/essai", { plan: cle })).then(() => {}, () => {}) }, "Commencer mon essai gratuit"))) : null,
       h("ol", { class: "liste-etapes" },
         h("li", {}, h("h3", {}, "Payez avec Zola"), h("p", { class: "muted" }, dollars(p.prix) + " par mois (≈ " + dollars(etat.total_avec_frais[cle]) + " avec les frais). Sur la page de paiement, saisissez " + dollars(p.prix).replace(",", ".") + " (USD)."),
           h("p", {}, h("button", { class: "btn gold small", onclick: () => { window.open(CFG.ZOLA_LIEN, "_blank", "noopener"); toast("Saisissez " + dollars(p.prix).replace(",", ".") + " (USD) sur la page de paiement."); } }, "Payer " + dollars(p.prix)))),
@@ -381,7 +410,7 @@
     else if (n >= ps.adresses) main.append(h("div", { class: "alerte info" }, "Vous avez atteint la limite de la formule " + ps.nom + ". Passez à une formule supérieure pour ajouter des adresses. Plus de 6 adresses : écrivez-nous pour une offre sur mesure."));
     if (!edition) {
       main.append(...etat.adresses.map(carteAdresse));
-      if (!etat.adresses.length) main.append(h("div", { class: "vide-adr" }, ico("pin", 40), h("h3", {}, "Aucune adresse pour l'instant"), h("p", { class: "muted" }, "Ajoutez votre première adresse pour apparaître sur la carte de Gombe.")));
+      if (!etat.adresses.length) main.append(h("div", { class: "vide-adr" }, ico("pin", 40), h("h3", {}, "Aucune adresse pour l'instant"), h("p", { class: "muted" }, "Ajoutez votre première adresse pour apparaître sur la carte de Nexvia RDC.")));
     }
   }
   // Colonne de droite (sous la liste sur téléphone) : abonnement, conseils, aide.
@@ -390,10 +419,10 @@
     const jours = m.plan_fin ? Math.max(0, Math.ceil((new Date(m.plan_fin) - new Date()) / 86400000)) : 0, pct = gratuit ? 0 : Math.min(100, Math.round(jours * 100 / 30));
     const abo = h("section", { class: "lat abo " + m.plan_effectif },
       h("div", { class: "lat-t" }, ico("couronne", 18), "Mon abonnement"),
-      h("div", { class: "grosse" }, couronne(m.plan_effectif, 20), " ", p.nom),
-      gratuit ? h("p", { class: "muted" }, "Formule gratuite : 1 adresse et 1 photo. Passez à Standard ou Premium pour plus de visibilité.")
+      h("div", { class: "grosse" }, couronne(m.plan_effectif, 20), " ", p.nom, m.en_essai ? h("span", { class: "badge ok", style: "margin-left:8px" }, "Essai gratuit") : null),
+      gratuit ? h("p", { class: "muted" }, "Formule gratuite : " + p.adresses + " adresse et " + p.photos + " photos. " + (m.essai_disponible ? "Essayez Standard ou Premium gratuitement pendant " + (etat.essai_jours || 30) + " jours." : "Passez à Standard ou Premium pour plus de visibilité."))
         : [h("div", { class: "barre" }, h("i", { style: "width:" + pct + "%" })), h("p", { class: "muted" }, jours + " jour" + (jours > 1 ? "s" : "") + " restant" + (jours > 1 ? "s" : "") + (m.plan_fin ? " · jusqu'au " + date(m.plan_fin) : ""))],
-      h("button", { class: "btn " + (gratuit ? "gold" : "alt") + " grand", onclick: () => { onglet = "abo"; rendre(); window.scrollTo(0, 0); } }, gratuit ? "Voir les formules" : "Gérer mon abonnement"));
+      h("button", { class: "btn " + (gratuit ? "gold" : "alt") + " grand", onclick: () => { onglet = "abo"; rendre(); window.scrollTo(0, 0); } }, gratuit ? (m.essai_disponible ? "Essayer gratuitement" : "Voir les formules") : m.en_essai ? "Payer pour continuer" : "Gérer mon abonnement"));
     const valides = etat.adresses.filter(a => a.statut !== "refusee"), conseils = [];
     for (const a of valides) { const c = completude(a); if (c.manque.length) conseils.push([a, c]); }
     const cons = h("section", { class: "lat" }, h("div", { class: "lat-t" }, ico("cible", 18), "Pour mieux vous faire trouver"),
@@ -407,7 +436,7 @@
   }
   function panneauAbonnement(main) {
     const m = etat.marque;
-    if (m.plan !== "gratuit" && m.plan_effectif === "gratuit") main.append(h("div", { class: "alerte warn" }, "Votre abonnement " + etat.plans[m.plan].nom + " a expiré : vous êtes revenu à la formule Gratuit. Renouvelez-le ci-dessous."));
+    if (m.plan !== "gratuit" && m.plan_effectif === "gratuit" && !(m.essai_fin && m.plan_fin === m.essai_fin)) main.append(h("div", { class: "alerte warn" }, "Votre abonnement " + etat.plans[m.plan].nom + " a expiré : vous êtes revenu à la formule Gratuit. Renouvelez-le ci-dessous."));
     if (m.plan_souhaite && m.plan_souhaite !== "gratuit" && m.plan_effectif === "gratuit" && !etat.demandes.some(d => d.statut === "en_attente" || d.statut === "a_verifier"))
       main.append(h("div", { class: "alerte info" }, "Vous avez choisi la formule ", h("b", {}, etat.plans[m.plan_souhaite].nom), ". Elle sera active après votre paiement."));
     ajoute(main, ...bannieres());
@@ -420,12 +449,12 @@
     if (vue === "fini" && fini && etat.marque) { app.append(hero("Votre demande est partie", "Nous vérifions votre adresse sous 48 à 72 heures."), main); ecranFini(main); main.append(piedRdc()); return; }
     if (vue === "paiement" && etat.marque && etat.marque.attente_paiement) { app.append(hero("Payez votre formule", "Réglez avec Zola, puis remplissez votre fiche."), main); ecranPaiement(main); main.append(piedRdc()); return; }
     if (vue === "fiche") { app.append(hero("Votre fiche", "Remplissez les informations de votre adresse. Vous pourrez les modifier ensuite."), main); ecranFiche(main); main.append(piedRdc()); return; }
-    if (vue === "choix" || !etat.marque) { app.append(hero("Faites-vous trouver à Gombe", "Choisissez la formule qui vous convient."), main); ecranChoix(main); main.append(piedRdc()); return; }
+    if (vue === "choix" || !etat.marque) { app.append(hero("Faites-vous trouver à Kinshasa", "Choisissez la formule qui vous convient."), main); ecranChoix(main); main.append(piedRdc()); return; }
     const m = etat.marque, p = planActuel(), ps = planSaisie(), n = etat.adresses.filter(a => a.statut !== "refusee").length;
     const sm = { en_attente: ["En vérification", "warn"], validee: ["Compte validé", "ok"], refusee: ["Refusé", "bad"] }[m.statut];
     const jours = m.plan_fin ? Math.max(0, Math.ceil((new Date(m.plan_fin) - new Date()) / 86400000)) : 0;
     app.append(hero(m.nom, null, h("div", {},
-      h("div", { class: "pastilles" }, h("span", { class: "badge " + sm[1] }, sm[0]), h("span", { class: "pastille-formule " + m.plan_effectif }, couronne(m.plan_effectif, 15), p.nom)),
+      h("div", { class: "pastilles" }, h("span", { class: "badge " + sm[1] }, sm[0]), h("span", { class: "pastille-formule " + m.plan_effectif }, couronne(m.plan_effectif, 15), p.nom + (m.en_essai ? " · essai" : ""))),
       h("div", { class: "tuiles" },
         h("div", { class: "tuile" }, h("b", {}, n + " / " + ps.adresses), h("span", {}, "Adresses")),
         h("div", { class: "tuile" }, h("b", {}, p.nom), h("span", {}, "Formule")),

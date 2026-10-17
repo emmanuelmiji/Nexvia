@@ -5,13 +5,13 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#14213d">
 <title>Tarifs commerces – Nexvia RDC</title>
-<meta name="description" content="Nexvia RDC : faites-vous trouver à Gombe, Kinshasa. Formules Gratuit, Standard (3,30 $/mois) et Premium (5,30 $/mois) pour les restaurants, pharmacies, hôtels et commerces.">
+<meta name="description" content="Nexvia RDC : faites-vous trouver à Kinshasa (Gombe, Ngaliema, Kintambo, Limete). Formules Gratuit, Standard (3,30 $/mois) et Premium (5,30 $/mois), avec 1 mois d'essai gratuit, pour les restaurants, pharmacies, hôtels et commerces.">
 <link rel="canonical" href="https://nexviardc.com/tarifs/">
 <link rel="stylesheet" href="/assets/nx.css">
 </head>
 <body>
 <div id="app"></div>
-<noscript><main><h1>Tarifs commerces</h1><p>Gratuit : 1 adresse. Standard : 3,30 $ par mois, 2 adresses. Premium : 5,30 $ par mois, 6 adresses. Activez JavaScript pour voir le détail.</p></main></noscript>
+<noscript><main><h1>Tarifs commerces</h1><p>Gratuit : 1 adresse. Standard : 3,30 $ par mois, 2 adresses. Premium : 5,30 $ par mois, 6 adresses. Premier mois d'essai gratuit. Activez JavaScript pour voir le détail.</p></main></noscript>
 <script src="/assets/nx.js"></script>
 <script>
 (async function () {
@@ -23,8 +23,9 @@
     h("h3", {}, nom), h("div", { class: "prix" }, prixTxt, h("small", {}, sous || "")), h("ul", {}, lignes), cta);
   const cta = h("a", { class: "btn gold", href: u ? "/commerce/" : "/compte/?mode=inscription&type=commerce" }, u ? "Ouvrir mon espace" : "Créer mon compte");
   app.append(entete(u), h("main", {},
-    h("h1", {}, "Faites-vous trouver à Gombe"),
-    h("p", {}, "Nexvia RDC est gratuit pour tous ceux qui cherchent un lieu. Les commerces choisissent une formule pour mieux apparaître et garder leur fiche à jour."),
+    h("h1", {}, "Faites-vous trouver à Kinshasa"),
+    h("div", { class: "card gold" }, h("h3", {}, "🎁 Le premier mois est offert"), h("p", {}, "Essayez Standard ou Premium gratuitement pendant 30 jours, sans payer : une fois par compte. À la fin de l'essai, vous décidez de continuer ou de revenir à la formule Gratuit.")),
+    h("p", {}, "Nexvia RDC est gratuit pour tous ceux qui cherchent un lieu. Les commerces de Gombe, Ngaliema, Kintambo et Limete choisissent une formule pour mieux apparaître et garder leur fiche à jour."),
     h("div", { class: "plans" },
       plan("", "Gratuit", "0 $", "", [L(1, "1 adresse"), L(1, "2 photos par adresse"), L(1, "Horaires saisis à la création"), L(0, "Menu / services en photos"), L(0, "Badge « Vérifié »"), L(0, "Bouton WhatsApp direct")], cta.cloneNode(true)),
       plan("vedette", "Standard", dollars(3.3), " / mois", [L(1, "2 adresses"), L(1, "4 photos par adresse"), L(1, "Horaires modifiables"), L(1, "Menu en photos : 2 photos, 2 changements par mois"), L(1, "Badge « Vérifié »"), L(1, "Bouton WhatsApp direct")], cta.cloneNode(true)),
@@ -35,7 +36,7 @@
       h("p", { class: "muted" }, "Un abonnement dure 30 jours. Plus de 6 adresses (une chaîne, par exemple) : écrivez-nous pour une offre sur mesure.")),
     h("div", { class: "card" },
       h("h3", {}, "Comment ça marche ?"),
-      h("ol", {}, h("li", {}, "Créez votre compte et choisissez votre formule."), h("li", {}, "Standard ou Premium : payez, puis saisissez votre référence de paiement ; l'abonnement est activé sous 24 heures. Gratuit : passez directement à la fiche."), h("li", {}, "Remplissez la fiche de votre adresse. Nous vérifions votre numéro par WhatsApp, puis validons votre adresse sous 48 à 72 heures."))),
+      h("ol", {}, h("li", {}, "Créez votre compte et choisissez votre formule."), h("li", {}, "Standard ou Premium : démarrez votre mois d'essai gratuit et remplissez votre fiche tout de suite, ou payez d'abord (référence de paiement, activation sous 24 heures). Gratuit : passez directement à la fiche."), h("li", {}, "Remplissez la fiche de votre adresse. Nous vérifions votre numéro par WhatsApp, puis validons votre adresse sous 48 à 72 heures."))),
     h("p", { class: "muted" }, "Une question ? ", h("a", { href: NX.wa("Bonjour Nexvia RDC, j'ai une question sur les abonnements pour les commerces.") }, "Écrivez-nous sur WhatsApp"), "."),
     h("p", { class: "muted" }, h("a", { href: "/confidentialite.html" }, "Politique de confidentialité"))));
 })();
