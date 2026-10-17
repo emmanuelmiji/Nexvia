@@ -840,7 +840,7 @@ if (typeof L === "undefined") {
   // La carte se remplit toujours : dès que son conteneur change de taille (onglet affiché, fenêtre redimensionnée), on recalcule et on recadre sur Gombe si elle est restée dézoomée.
   window.__refit = () => { map.invalidateSize(); if (map.getZoom() < 11) map.fitBounds(GOMBE); };
   if (window.ResizeObserver) new ResizeObserver(() => window.__refit()).observe($("map"));
-  L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 19, attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> (ODbL)' }).addTo(map);
+  L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 19, updateWhenIdle: false, keepBuffer: 4, attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> (ODbL)' }).addTo(map);
 
   const groupe = L.layerGroup().addTo(map); // lieux vérifiés : toujours visibles
   const bulles = L.markerClusterGroup({

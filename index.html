@@ -158,8 +158,8 @@
   .mine { width: 100%; height: 100%; border-radius: 50%; background: #2f6fed; border: 3px solid #fff; box-shadow: 0 0 0 6px rgba(47,111,237,.25); }
 
   /* ---------- fiche du bas ---------- */
-  #sheet { position: absolute; left: 0; right: 0; bottom: 0; z-index: 1800; background: #fff; border-radius: 20px 20px 0 0; box-shadow: 0 -6px 24px rgba(20,33,61,.25); max-height: 56%; overflow-y: auto; transform: translateY(105%); transition: transform .22s ease; padding: 14px 14px 16px; }
-  #sheet.open { transform: translateY(0); }
+  #sheet { position: absolute; left: 0; right: 0; bottom: 0; z-index: 1800; background: #fff; border-radius: 20px 20px 0 0; box-shadow: 0 -6px 24px rgba(20,33,61,.25); max-height: 56%; overflow-y: auto; transform: translateY(105%); visibility: hidden; pointer-events: none; transition: transform .22s ease, visibility 0s linear .22s; padding: 14px 14px 16px; }
+  #sheet.open { transform: translateY(0); visibility: visible; pointer-events: auto; transition: transform .22s ease, visibility 0s; }
   #sheet::before { content: ""; display: block; width: 40px; height: 4px; border-radius: 4px; background: #cfd6e2; margin: -4px auto 10px; }
   #sheet .x, #sheet .fav { position: absolute; top: 10px; width: 36px; height: 36px; border-radius: 50%; border: 0; background: rgba(255,255,255,.92); box-shadow: 0 1px 5px rgba(0,0,0,.3); font-size: 1.05rem; cursor: pointer; z-index: 2; }
   #sheet .x { right: 12px; }
@@ -1188,7 +1188,7 @@ if (typeof L === "undefined") {
   // La carte se remplit toujours : dès que son conteneur change de taille (onglet affiché, fenêtre redimensionnée), on recalcule et on recadre sur Gombe si elle est restée dézoomée.
   window.__refit = () => { map.invalidateSize(); if (map.getZoom() < 11) map.fitBounds(GOMBE); };
   if (window.ResizeObserver) new ResizeObserver(() => window.__refit()).observe($("map"));
-  L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 19, attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> (ODbL)' }).addTo(map);
+  L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 19, updateWhenIdle: false, keepBuffer: 4, attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> (ODbL)' }).addTo(map);
 
   const groupe = L.layerGroup().addTo(map); // lieux vérifiés : toujours visibles
   const bulles = L.markerClusterGroup({
