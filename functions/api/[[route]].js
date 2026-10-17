@@ -225,12 +225,14 @@ async function etatCommerce({ request, env }) {
   const demandes = (await db.prepare("SELECT id, plan, ref, statut, motif, created_at, traite_at FROM demandes_paiement WHERE marque_id = ? ORDER BY id DESC LIMIT 20").bind(marque.id).all()).results || [];
   if (PLANS[plan].stats && env.DEMANDES) {            // statistiques de vues et d'appels (Premium)
     const d = new Date(), moisA = d.toISOString().slice(0, 7), moisP = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth() - 1, 1)).toISOString().slice(0, 7);
+    try {   // les statistiques sont un bonus : si le stockage ne répond pas, la page du compte s'affiche quand même
     await Promise.all(adresses.filter(a => a.statut === "validee").map(async a => {
       const lire = async suf => parseInt((await env.DEMANDES.get("lieu:adr-" + a.id + suf)) || "0", 10) || 0;
       const une = async m => { const o = {}; await Promise.all(STAT_ACTIONS.map(async k => { o[k] = await lire(":" + k + (m ? ":" + m : "")); })); return o; };
       const [ce, prec] = await Promise.all([une(moisA), une(moisP)]);
       a.stats = { ce_mois: ce, mois_dernier: prec };
     }));
+    } catch (e) { adresses.forEach(a => { delete a.stats; }); }
   }
   return json({ ok: true, utilisateur: pub(user), marque: { ...marque, plan_effectif: plan, plan_edition: C.planEdition(marque), attente_paiement: C.attentePaiement(marque), en_essai: C.enEssai(marque), essai_disponible: !marque.essai_at, jours_restants: C.joursRestants(marque) }, adresses, demandes, plans: PLANS, essai_jours: C.ESSAI_JOURS, total_avec_frais: C.TOTAL_AVEC_FRAIS, whatsapp: C.WHATSAPP });
 }

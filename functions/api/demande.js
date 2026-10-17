@@ -9,8 +9,11 @@ export async function onRequestPost({ request, env }) {
   const commune = corps && corps.commune;
   if (typeof commune !== "string" || !COMMUNES.includes(commune)) return rep({ ok: false }, 400);
   const cle = "commune:" + commune;
-  const n = parseInt((await env.DEMANDES.get(cle)) || "0", 10) + 1;
-  await env.DEMANDES.put(cle, String(n));
+  // Si le stockage refuse l'écriture (quota atteint, panne passagère), on remercie quand même le visiteur : il ne doit pas voir d'erreur.
+  try {
+    const n = parseInt((await env.DEMANDES.get(cle)) || "0", 10) + 1;
+    await env.DEMANDES.put(cle, String(n));
+  } catch (e) { return rep({ ok: true, compte: false }); }
   return rep({ ok: true });
 }
 export const onRequest = () => rep({ ok: false }, 405);
