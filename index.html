@@ -987,7 +987,7 @@ async function chargerCompte() {
     compteInfo = d && d.utilisateur ? d.utilisateur : null;
     try { localStorage.setItem("nx_plan", compteInfo && compteInfo.plan ? compteInfo.plan : ""); } catch (e) {}
     couronneOnglet(compteInfo && compteInfo.plan);
-  } catch (e) { /* hors ligne : on garde la couronne mémorisée */ }
+  } catch (e) { compteInfo = null; /* hors ligne ou serveur indisponible : on affiche l'écran sans compte plutôt que de rester sur « Chargement… » */ }
 }
 function rendreCompte() {
   const corps = $("compteCorps"), sub = $("compteSub");

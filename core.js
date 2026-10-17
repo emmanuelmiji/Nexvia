@@ -116,8 +116,9 @@ const migrer = env => async () => {
     if (!sans.length) break;
     await env.DB.batch(sans.map(u => env.DB.prepare("UPDATE users SET identifiant = ? WHERE id = ?").bind(nouvelIdentifiant(), u.id)));
   }
-  await remiseAZero(env);
-  await supprimerComptesTest(env);
+  // Les nettoyages uniques ne doivent jamais empêcher le site de démarrer : en cas d'erreur, on réessaiera au prochain démarrage.
+  try { await remiseAZero(env); } catch (e) { console.error("remiseAZero", e && e.message); }
+  try { await supprimerComptesTest(env); } catch (e) { console.error("supprimerComptesTest", e && e.message); }
 };
 // Identifiant public d'un compte (ex. NX-4F7K2M) : sans lettres ambiguës, à donner à l'équipe pour être aidé.
 export function nouvelIdentifiant() {
