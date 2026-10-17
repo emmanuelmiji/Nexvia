@@ -21,7 +21,7 @@
   const L = (ok, t) => h("li", { class: ok ? "" : "non" }, t);
   const plan = (cls, nom, prixTxt, sous, lignes, cta) => h("div", { class: "plan " + cls },
     h("h3", {}, nom), h("div", { class: "prix" }, prixTxt, h("small", {}, sous || "")), h("ul", {}, lignes), cta);
-  const cta = h("a", { class: "btn gold", href: u ? "/commerce/" : "/compte/?mode=inscription&type=commerce" }, u ? "Ouvrir mon espace commerce" : "Créer mon compte commerce");
+  const cta = h("a", { class: "btn gold", href: u ? "/commerce/" : "/compte/?mode=inscription&type=commerce" }, u ? "Ouvrir mon espace" : "Créer mon compte");
   app.append(entete(u), h("main", {},
     h("h1", {}, "Faites-vous trouver à Gombe"),
     h("p", {}, "Nexvia RDC est gratuit pour tous ceux qui cherchent un lieu. Les commerces choisissent une formule pour mieux apparaître et garder leur fiche à jour."),
@@ -35,7 +35,7 @@
       h("p", { class: "muted" }, "Un abonnement dure 30 jours. Plus de 6 adresses (une chaîne, par exemple) : écrivez-nous pour une offre sur mesure.")),
     h("div", { class: "card" },
       h("h3", {}, "Comment ça marche ?"),
-      h("ol", {}, h("li", {}, "Créez votre compte commerce et ajoutez votre adresse."), h("li", {}, "Nous vérifions votre numéro de téléphone par WhatsApp, puis validons votre commerce et son adresse sous 48 à 72 heures."), h("li", {}, "Choisissez une formule, payez, puis saisissez votre référence de paiement : l'abonnement est activé sous 24 heures."))),
+      h("ol", {}, h("li", {}, "Créez votre compte et ajoutez votre adresse."), h("li", {}, "Nous vérifions votre numéro de téléphone par WhatsApp, puis validons votre adresse sous 48 à 72 heures."), h("li", {}, "Choisissez une formule, payez, puis saisissez votre référence de paiement : l'abonnement est activé sous 24 heures."))),
     h("p", { class: "muted" }, "Une question ? ", h("a", { href: NX.wa("Bonjour Nexvia RDC, j'ai une question sur les abonnements pour les commerces.") }, "Écrivez-nous sur WhatsApp"), "."),
     h("p", { class: "muted" }, h("a", { href: "/confidentialite.html" }, "Politique de confidentialité"))));
 })();

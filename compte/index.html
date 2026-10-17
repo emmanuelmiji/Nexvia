@@ -63,8 +63,8 @@
       insc ? [
         h("label", {}, "Vous êtes"),
         h("div", { class: "onglets" },
-          h("button", { type: "button", class: type === "commerce" ? "actif" : "", onclick: () => { type = "commerce"; rendre(); } }, "Un commerce"),
-          h("button", { type: "button", class: type === "utilisateur" ? "actif" : "", onclick: () => { type = "utilisateur"; rendre(); } }, "Un utilisateur")),
+          h("button", { type: "button", class: type === "commerce" ? "actif" : "", onclick: () => { type = "commerce"; rendre(); } }, "Commerçant"),
+          h("button", { type: "button", class: type === "utilisateur" ? "actif" : "", onclick: () => { type = "utilisateur"; rendre(); } }, "Visiteur")),
         champ("nom", type === "commerce" ? "Votre nom" : "Votre nom ou pseudo", { autocomplete: "name", required: true, maxlength: 80 }),
         champ("tel", "Téléphone (WhatsApp de préférence)", { type: "tel", autocomplete: "tel", maxlength: 30 }),
       ] : null,
@@ -145,8 +145,8 @@
             h("b", {}, u.commerce || "Mon compte"),
             h("span", { class: "pastille-formule " + (plan || "gratuit") }, couronne(plan, 16), NOM[plan || "gratuit"])),
           u.identifiant ? h("div", { class: "alerte info" }, "Votre identifiant Nexvia : ", h("b", { style: "letter-spacing:.06em" }, u.identifiant), h("br"), h("span", { class: "muted" }, "Donnez-le à l'équipe si vous avez un jour besoin d'aide pour retrouver votre compte.")) : null,
-          h("p", { class: "muted" }, u.commerce ? "Votre espace commerce : fiche, photos, abonnement." : "Votre compte est prêt. Créez votre commerce pour apparaître sur la carte."),
-          h("p", {}, h("a", { class: "btn gold grand", href: "/commerce/" }, u.commerce ? "Ouvrir mon espace commerce" : "Créer mon commerce")),
+          h("p", { class: "muted" }, u.commerce ? "Votre espace : adresses, photos, abonnement." : "Votre compte est prêt. Ajoutez votre adresse pour apparaître sur la carte."),
+          h("p", {}, h("a", { class: "btn gold grand", href: "/commerce/" }, u.commerce ? "Ouvrir mon espace" : "Ajouter mon adresse")),
           u.admin ? h("p", {}, h("a", { class: "btn teal grand", href: "/admin/" }, "Administration")) : null,
           changerMdp(),
           h("p", {}, h("a", { class: "btn fantome grand", href: "/" }, "Retour à l'accueil")),
@@ -155,7 +155,7 @@
       const insc = mode === "inscription";
       if (ban) { app.append(haut("Compte suspendu", "Votre accès à Nexvia RDC est bloqué pour le moment."), h("div", { class: "auth-carte" }, h("div", { class: "boite" }, ecranBan())), h("p", { class: "auth-pied" }, h("a", { href: "/" }, "Retour à la carte"))); return; }
       if (etape) { app.append(haut("Vérifiez votre e-mail", etape.but === "inscription" ? "Dernière étape avant de créer votre compte." : "Pour votre sécurité, confirmez que c'est bien vous."), h("div", { class: "auth-carte" }, h("div", { class: "boite" }, ecranCode())), h("p", { class: "auth-pied" }, h("a", { href: "/" }, "Retour à la carte"))); return; }
-      app.append(haut(insc ? "Faites-vous trouver à Gombe" : "Bon retour !", insc ? "Créez votre compte gratuit et présentez votre commerce aux habitants de Kinshasa." : "Connectez-vous pour gérer votre commerce."),
+      app.append(haut(insc ? "Faites-vous trouver à Gombe" : "Bon retour !", insc ? "Créez votre compte gratuit et présentez votre adresse aux habitants de Kinshasa." : "Connectez-vous pour gérer vos adresses."),
         h("div", { class: "auth-carte" }, h("div", { class: "boite" },
           h("div", { class: "onglets" },
             h("button", { class: mode === "connexion" ? "actif" : "", onclick: () => { mode = "connexion"; etape = null; rendre(); } }, "Connexion"),

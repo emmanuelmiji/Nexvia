@@ -16,7 +16,7 @@ export function construireMessage({ de, nomDe, a, sujet, texte }) {
     "To: <" + a + ">",
     "Subject: =?UTF-8?B?" + b64(sujet) + "?=",
     "Date: " + new Date().toUTCString(),
-    "Message-ID: <" + crypto.randomUUID() + "@nexvia-rdc.pages.dev>",
+    "Message-ID: <" + crypto.randomUUID() + "@" + (String(de).split("@")[1] || "gmail.com") + ">",
     "MIME-Version: 1.0",
     "Content-Type: text/plain; charset=UTF-8",
     "Content-Transfer-Encoding: base64",

@@ -80,6 +80,31 @@ export async function remiseAZero(env, nom = "remise_a_zero_2026_10_16") {
   ]);
   return true;
 }
+// Suppression unique des comptes de test (17 oct. 2026, avant le lancement) : tous les comptes sauf les administrateurs
+// (variable ADMIN_EMAILS), avec leurs adresses, photos, demandes de paiement, réclamations et sessions.
+// Sans administrateur configuré, on ne fait rien (et rien n'est marqué). Ne se rejoue jamais.
+export async function supprimerComptesTest(env, nom = "suppression_comptes_test_2026_10_17") {
+  await env.DB.prepare("CREATE TABLE IF NOT EXISTS nettoyages (nom TEXT PRIMARY KEY, at TEXT NOT NULL)").run();
+  if (await env.DB.prepare("SELECT nom FROM nettoyages WHERE nom = ?").bind(nom).first()) return false;
+  const admins = adminsDe(env); if (!admins.length) return false;
+  const ph = admins.map(() => "?").join(",");
+  const cible = "(SELECT id FROM users WHERE lower(email) NOT IN (" + ph + "))";
+  const marq = "(SELECT id FROM marques WHERE owner_id IN " + cible + ")";
+  const adr = "(SELECT id FROM adresses WHERE marque_id IN " + marq + ")";
+  await env.DB.batch([
+    env.DB.prepare("DELETE FROM photos WHERE adresse_id IN " + adr).bind(...admins),
+    env.DB.prepare("DELETE FROM adresses WHERE marque_id IN " + marq).bind(...admins),
+    env.DB.prepare("DELETE FROM demandes_paiement WHERE marque_id IN " + marq + " OR user_id IN " + cible).bind(...admins, ...admins),
+    env.DB.prepare("DELETE FROM marques WHERE owner_id IN " + cible).bind(...admins),
+    env.DB.prepare("DELETE FROM reclamations WHERE user_id IN " + cible).bind(...admins),
+    env.DB.prepare("DELETE FROM sessions WHERE user_id IN " + cible).bind(...admins),
+    env.DB.prepare("DELETE FROM sanctions"),
+    env.DB.prepare("DELETE FROM verifs"), env.DB.prepare("DELETE FROM essais"),
+    env.DB.prepare("DELETE FROM users WHERE lower(email) NOT IN (" + ph + ")").bind(...admins),
+    env.DB.prepare("INSERT INTO nettoyages (nom, at) VALUES (?, ?)").bind(nom, new Date().toISOString()),
+  ]);
+  return true;
+}
 const migrer = env => async () => {
   for (const sql of ["ALTER TABLE marques ADD COLUMN plan_souhaite TEXT", "ALTER TABLE photos ADD COLUMN type TEXT NOT NULL DEFAULT 'lieu'", "ALTER TABLE users ADD COLUMN banni INTEGER NOT NULL DEFAULT 0", "ALTER TABLE users ADD COLUMN banni_motif TEXT", "ALTER TABLE users ADD COLUMN banni_at TEXT", "ALTER TABLE users ADD COLUMN banni_jusqua TEXT", "ALTER TABLE users ADD COLUMN identifiant TEXT"]) {
     try { await env.DB.prepare(sql).run(); }
@@ -91,7 +116,9 @@ const migrer = env => async () => {
     if (!sans.length) break;
     await env.DB.batch(sans.map(u => env.DB.prepare("UPDATE users SET identifiant = ? WHERE id = ?").bind(nouvelIdentifiant(), u.id)));
   }
-  await remiseAZero(env);
+  // Les nettoyages uniques ne doivent jamais empêcher le site de démarrer : en cas d'erreur, on réessaiera au prochain démarrage.
+  try { await remiseAZero(env); } catch (e) { console.error("remiseAZero", e && e.message); }
+  try { await supprimerComptesTest(env); } catch (e) { console.error("supprimerComptesTest", e && e.message); }
 };
 // Identifiant public d'un compte (ex. NX-4F7K2M) : sans lettres ambiguës, à donner à l'équipe pour être aidé.
 export function nouvelIdentifiant() {

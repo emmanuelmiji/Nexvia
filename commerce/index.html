@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex">
 <meta name="theme-color" content="#0a2a6b">
-<title>Mon commerce – Nexvia RDC</title>
+<title>Mon espace – Nexvia RDC</title>
 <link rel="stylesheet" href="/assets/nx.css">
 </head>
 <body>
@@ -133,6 +133,16 @@
   const ligneInfo = (nom, ...contenu) => h("div", { class: "ligne" }, ico(nom, 17), h("span", {}, ...contenu));
 
   // ---------- adresses ----------
+  function blocStats(a) {
+    const plan = etat.marque && etat.marque.plan_effectif;
+    if (a.statut !== "validee") return null;
+    if (!a.stats) return h("div", { class: "stats verrou" }, ico("couronne", 16), h("span", {}, "Statistiques de vues et d'appels : disponibles avec la formule Premium."));
+    const ce = a.stats.ce_mois, pr = a.stats.mois_dernier, L = [["vue", "Fiche vue"], ["appel", "Appels"], ["wa", "WhatsApp"], ["itin", "Itinéraires"], ["fav", "Favoris"]];
+    const tend = k => { const d = ce[k] - pr[k]; return pr[k] || ce[k] ? h("small", { class: d > 0 ? "haus" : d < 0 ? "bas" : "" }, (d > 0 ? "+" : "") + d + " (avant : " + pr[k] + ")") : null; };
+    return h("div", { class: "stats" }, h("div", { class: "tete-stats" }, h("b", {}, "Statistiques de ce mois-ci"), h("span", { class: "badge gris" }, "Premium")),
+      h("div", { class: "cases" }, ...L.map(([k, lib]) => h("div", { class: "case" }, h("strong", {}, String(ce[k])), h("span", {}, lib), tend(k)))),
+      h("p", { class: "muted" }, "Les chiffres comptent les personnes qui ouvrent votre fiche ou appuient sur un bouton dans l'application."));
+  }
   function carteAdresse(a) {
     const st = { en_attente: ["En attente de validation", "warn"], validee: ["Validée", "ok"], refusee: ["Refusée", "bad"] }[a.statut] || ["", "gris"];
     const nbPh = a.photos ? a.photos.length : 0, c = completude(a);
@@ -152,9 +162,10 @@
       const msg = "Bonjour Nexvia RDC, je veux vérifier mon adresse « " + a.nom + " » (" + etat.marque.nom + "). Mon code : " + a.code;
       corps.append(a.tel_verifie
         ? h("div", { class: "alerte ok" }, "Votre numéro est vérifié. Votre fiche est en cours de validation.")
-        : h("div", { class: "alerte info" }, "Pour vérifier votre numéro, envoyez ce code par WhatsApp à Nexvia RDC ", h("b", {}, "depuis le numéro de votre commerce (" + a.tel + ")"), " : ", h("span", { class: "code" }, a.code), h("br", {}), h("a", { class: "btn wa small", href: wa(msg), target: "_blank", rel: "noopener" }, "Envoyer mon code par WhatsApp")));
+        : h("div", { class: "alerte info" }, "Pour vérifier votre numéro, envoyez ce code par WhatsApp à Nexvia RDC ", h("b", {}, "depuis le numéro de cette adresse (" + a.tel + ")"), " : ", h("span", { class: "code" }, a.code), h("br", {}), h("a", { class: "btn wa small", href: wa(msg), target: "_blank", rel: "noopener" }, "Envoyer mon code par WhatsApp")));
     }
     if (a.statut === "refusee") corps.append(h("div", { class: "alerte bad" }, a.note || "Cette adresse n'a pas pu être validée. Contactez-nous pour en savoir plus."));
+    const bs = blocStats(a); if (bs) corps.append(bs);
     corps.append(
       h("details", {}, h("summary", {}, h("span", { class: "tt" }, ico("photo", 18), "Photos du lieu"), h("span", { class: "cpt" }, nbPh + " / " + planSaisie().photos)), gestionPhotos(a, "photo")),
       h("details", {}, h("summary", {}, h("span", { class: "tt" }, ico("menu", 18), "Menu / services (photos)")), gestionPhotos(a, "menu")),
@@ -215,20 +226,20 @@
     }
     // « Mon commerce existe déjà sur Nexvia RDC » : bouton à côté du titre ; la fiche réclamée subit une vérification approfondie.
     const panneauReclame = h("div", { class: "reclame", hidden: true },
-      h("div", { class: "alerte warn" }, h("b", {}, "Vérification approfondie."), " Votre commerce figure déjà sur Nexvia RDC. Pour éviter qu'on profite de la fiche ou de l'abonnement d'un autre, nous contrôlons que vous en êtes bien le propriétaire (appel au numéro officiel, document de l'entreprise) avant de vous l'attribuer."),
-      h("label", { for: "f_lieu" }, "Retrouvez votre commerce"), chercher, sugg);
+      h("div", { class: "alerte warn" }, h("b", {}, "Vérification approfondie."), " Cette adresse figure déjà sur Nexvia RDC. Pour éviter qu'on profite de la fiche ou de l'abonnement d'un autre, nous contrôlons que vous en êtes bien le propriétaire (appel au numéro officiel, document de l'entreprise) avant de vous l'attribuer."),
+      h("label", { for: "f_lieu" }, "Retrouvez votre adresse"), chercher, sugg);
     let identite;
     const bouton = h("button", { type: "button", class: "btn alt small bouton-reclame", onclick: () => {
       panneauReclame.hidden = !panneauReclame.hidden;
       if (panneauReclame.hidden) { lieu = ""; chercher.value = ""; vider(sugg); }
-      bouton.textContent = panneauReclame.hidden ? "🔎 Mon commerce existe déjà sur Nexvia" : "✕ Fermer";
+      bouton.textContent = panneauReclame.hidden ? "🔎 J'ai déjà une adresse sur Nexvia" : "✕ Fermer";
       if (!panneauReclame.hidden) chercher.focus();
-    } }, "🔎 Mon commerce existe déjà sur Nexvia");
+    } }, "🔎 J'ai déjà une adresse sur Nexvia");
     const form = h("form", { novalidate: true, onsubmit: ev => {
       ev.preventDefault(); const btn = form.querySelector("button[type=submit]"), er = hor && hor.erreur();
       if (er) return toast(er, true);
       if (dem) return action(btn, async () => {
-        if (!marqueCree) { await api("POST", "commerce/marque", { nom: f.marque.value, plan: choix }); marqueCree = true; }
+        if (!marqueCree) { await api("POST", "commerce/marque", { nom: f.nom.value, plan: choix }); marqueCree = true; }
         else if (RANG[choix] > RANG[(etat.marque && etat.marque.plan_edition) || "gratuit"]) await api("POST", "commerce/formule", { plan: choix });
         const r = await api("POST", "commerce/adresse", corps());
         const echecs = await envoyerPhotos(r.id, btn);
@@ -241,8 +252,6 @@
       action(btn, async () => { await api("POST", "commerce/adresse", { id: a.id, ...corps() }); edition = null; }, "Modifications enregistrées.").then(() => {}, () => {});
     } },
       dem ? h("div", { class: "alerte info" }, "Formule choisie : ", h("b", {}, couronne(choix, 15), " ", p.nom, " (" + dollars(p.prix) + (p.prix ? " / mois" : "") + ")"), " · les limites de saisie ci-dessous suivent cette formule.") : null,
-      dem && !etat.marque ? rub("Votre commerce", "Le nom de votre commerce ou de votre marque. Plusieurs adresses (restaurants, agences…) seront regroupées sous ce nom.",
-        champ("marque", "Nom du commerce ou de la marque", f.marque = h("input", { id: "f_marque", required: true, maxlength: 100, placeholder: "Ex. Pizza Inn" }))) : null,
       identite = rub("Identité", null,
         creation ? panneauReclame : null,
         champ("nom", "Nom de cette adresse", inp("nom", { required: true, maxlength: 100, placeholder: "Ex. Pizza Inn Gombe" })),
@@ -256,8 +265,8 @@
           if (!navigator.geolocation) return toast("La position n'est pas disponible sur cet appareil.", true);
           navigator.geolocation.getCurrentPosition(pos => { lat = +pos.coords.latitude.toFixed(6); lng = +pos.coords.longitude.toFixed(6); posInfo.textContent = "Position enregistrée ✓"; }, () => toast("Position refusée ou indisponible.", true), { enableHighAccuracy: true, timeout: 15000 });
         } }, "📍 Utiliser ma position actuelle"), posInfo),
-        h("p", { class: "muted" }, "Faites-le depuis votre commerce pour une position exacte.")),
-      rub("Contact", null, champ("tel", "Téléphone du commerce", inp("tel", { type: "tel", required: true, maxlength: 30, placeholder: "+243 …" }), "C'est ce numéro qui sera vérifié par WhatsApp.")),
+        h("p", { class: "muted" }, "Faites-le depuis l'adresse elle-même pour une position exacte.")),
+      rub("Contact", null, champ("tel", "Téléphone de cette adresse", inp("tel", { type: "tel", required: true, maxlength: 30, placeholder: "+243 …" }), "C'est ce numéro qui sera vérifié par WhatsApp.")),
       rub("Horaires", horLock ? null : "Choisissez vos jours et vos heures d'ouverture.",
         horLock ? h("div", { class: "verrou" }, h("p", {}, "🕘 " + (horairesJolis(a.horaires).join(" · ") || "Non renseignés")), h("p", { class: "muted" }, "Modifier les horaires demande l'abonnement Standard ou Premium.")) : hor.el),
       rub("Photos du lieu", "Façade, salle, produits… (" + p.photos + " photo" + (p.photos > 1 ? "s" : "") + " maximum avec la formule " + p.nom + ").",
@@ -265,7 +274,7 @@
       rub("Menu / liste de services", "Photographiez votre menu, votre carte ou votre liste de prix. Pas de texte à écrire.",
         !p.menu_photos ? h("div", { class: "verrou" }, "Disponible avec la formule Standard (3 photos, 2 changements par mois) ou Premium (10 photos, changements illimités).") : creation ? photosAvantEnvoi(ficMenu, p.menu_photos) : gestionPhotos(a, "menu")),
       a && a.statut === "validee" ? h("div", { class: "alerte warn" }, "Si vous changez le nom, l'adresse ou le téléphone, la fiche repassera en validation.") : null,
-      dem ? h("p", { class: "muted" }, "En envoyant, vous demandez l'ajout de votre commerce dans Nexvia RDC. Nous vérifions les informations et les photos avant de publier.") : null,
+      dem ? h("p", { class: "muted" }, "En envoyant, vous demandez l'ajout de votre adresse sur Nexvia RDC. Nous vérifions les informations et les photos avant de publier.") : null,
       h("div", { class: "row" },
         h("button", { type: "submit", class: "btn gold grand" }, dem ? "Envoyer ma demande" : creation ? "Envoyer pour vérification" : "Enregistrer les modifications"),
         h("button", { type: "button", class: "btn alt", onclick: () => { edition = null; if (dem) vue = "choix"; rendre(); } }, dem ? "← Changer de formule" : "Annuler")));
@@ -330,14 +339,14 @@
     const msg = "Bonjour Nexvia RDC, je veux vérifier mon adresse « " + a.nom + " » (" + etat.marque.nom + "). Mon code : " + a.code;
     ajoute(main, sections(4), h("div", { class: "succes" }, h("div", { class: "rond" }, "✓"), h("h1", {}, "Demande envoyée !"),
       h("p", {}, "Votre fiche « " + (a.nom || "") + " » est en cours de vérification. Elle apparaîtra dans l'application dès qu'elle sera validée.")),
-      fini.echecs ? h("div", { class: "alerte warn" }, fini.echecs + " photo(s) n'ont pas pu être envoyées. Vous pourrez les ajouter depuis votre espace commerce.") : null,
+      fini.echecs ? h("div", { class: "alerte warn" }, fini.echecs + " photo(s) n'ont pas pu être envoyées. Vous pourrez les ajouter depuis votre espace.") : null,
       h("ol", { class: "liste-etapes" },
         h("li", { class: "fait" }, h("h3", {}, "Demande envoyée"), h("p", { class: "muted" }, "Nous la recevons dans notre espace de vérification.")),
         h("li", { class: a.tel_verifie ? "fait" : "" }, h("h3", {}, "Vérifier votre numéro"),
-          a.tel_verifie ? h("p", { class: "muted" }, "Numéro vérifié.") : [h("p", { class: "muted" }, "Envoyez ce code par WhatsApp à Nexvia RDC, depuis le numéro du commerce (" + (a.tel || "") + ") :"), h("p", {}, h("span", { class: "code" }, a.code || "")), h("a", { class: "btn wa small", href: wa(msg), target: "_blank", rel: "noopener" }, "Envoyer mon code par WhatsApp")]),
+          a.tel_verifie ? h("p", { class: "muted" }, "Numéro vérifié.") : [h("p", { class: "muted" }, "Envoyez ce code par WhatsApp à Nexvia RDC, depuis le numéro de cette adresse (" + (a.tel || "") + ") :"), h("p", {}, h("span", { class: "code" }, a.code || "")), h("a", { class: "btn wa small", href: wa(msg), target: "_blank", rel: "noopener" }, "Envoyer mon code par WhatsApp")]),
         payant ? h("li", {}, h("h3", {}, "Payer la formule " + p.nom), h("p", { class: "muted" }, dollars(p.prix) + " par mois (≈ " + dollars(etat.total_avec_frais[fini.plan]) + " avec les frais). Payez, puis saisissez votre numéro de référence."),
           h("p", {}, h("button", { class: "btn gold small", onclick: () => { window.open(CFG.ZOLA_LIEN, "_blank", "noopener"); toast("Saisissez " + dollars(p.prix).replace(",", ".") + " (USD) sur la page de paiement."); } }, "Payer " + dollars(p.prix))), formPaiement(fini.plan)) : null,
-        h("li", {}, h("h3", {}, "Validation sous 48 à 72 heures"), h("p", { class: "muted" }, payant ? "Nous vérifions votre commerce et son adresse. Votre formule " + p.nom + " est activée dès que votre paiement est confirmé (sous 24 heures)." : "Nous vérifions votre commerce et son adresse, puis nous les publions."))),
+        h("li", {}, h("h3", {}, "Validation sous 48 à 72 heures"), h("p", { class: "muted" }, payant ? "Nous vérifions votre adresse. Votre formule " + p.nom + " est activée dès que votre paiement est confirmé (sous 24 heures)." : "Nous vérifions votre commerce et son adresse, puis nous les publions."))),
       h("div", { class: "row" }, h("a", { class: "btn gold", href: "/" }, "Retour à l'accueil"), h("button", { class: "btn alt", onclick: () => { vue = "accueil"; fini = null; rendre(); window.scrollTo(0, 0); } }, "Voir mon espace commerce")));
   }
   function panneauAdresses(main) {
@@ -370,7 +379,7 @@
         : h("ul", { class: "conseils" }, conseils.slice(0, 3).map(([a, c]) => h("li", {}, h("b", {}, a.nom), h("span", {}, c.manque.slice(0, 3).join(" · ").toLowerCase() + (c.manque.length > 3 ? "…" : ""))))));
     const aide = h("section", { class: "lat" }, h("div", { class: "lat-t" }, ico("aide", 18), "Besoin d'aide ?"),
       h("p", { class: "muted" }, "Notre équipe répond sur WhatsApp : question sur votre fiche, un paiement, ou une modification."),
-      h("a", { class: "btn wa grand", href: wa("Bonjour Nexvia RDC, j'ai une question sur mon compte commerce « " + m.nom + " »."), target: "_blank", rel: "noopener" }, "Écrire sur WhatsApp"));
+      h("a", { class: "btn wa grand", href: wa("Bonjour Nexvia RDC, j'ai une question sur mon espace Nexvia « " + m.nom + " »."), target: "_blank", rel: "noopener" }, "Écrire sur WhatsApp"));
     return h("aside", { class: "lateral" }, abo, cons, aide);
   }
   function panneauAbonnement(main) {
@@ -385,11 +394,11 @@
   function rendre() {
     vider(app); app.append(entete(etat.utilisateur)); document.body.classList.remove("espace-large");
     const main = h("main", {});
-    if (vue === "fini" && fini && etat.marque) { app.append(hero("Votre demande est partie", "Nous vérifions votre commerce et son adresse sous 48 à 72 heures."), main); ecranFini(main); main.append(piedRdc()); return; }
-    if (vue === "fiche") { app.append(hero("Votre fiche", "Remplissez les informations de votre commerce. Vous pourrez les modifier ensuite."), main); ecranFiche(main); main.append(piedRdc()); return; }
+    if (vue === "fini" && fini && etat.marque) { app.append(hero("Votre demande est partie", "Nous vérifions votre adresse sous 48 à 72 heures."), main); ecranFini(main); main.append(piedRdc()); return; }
+    if (vue === "fiche") { app.append(hero("Votre fiche", "Remplissez les informations de votre adresse. Vous pourrez les modifier ensuite."), main); ecranFiche(main); main.append(piedRdc()); return; }
     if (vue === "choix" || !etat.marque) { app.append(hero("Faites-vous trouver à Gombe", "Choisissez la formule qui vous convient."), main); ecranChoix(main); main.append(piedRdc()); return; }
     const m = etat.marque, p = planActuel(), ps = planSaisie(), n = etat.adresses.filter(a => a.statut !== "refusee").length;
-    const sm = { en_attente: ["En vérification", "warn"], validee: ["Commerce validé", "ok"], refusee: ["Refusé", "bad"] }[m.statut];
+    const sm = { en_attente: ["En vérification", "warn"], validee: ["Compte validé", "ok"], refusee: ["Refusé", "bad"] }[m.statut];
     const jours = m.plan_fin ? Math.max(0, Math.ceil((new Date(m.plan_fin) - new Date()) / 86400000)) : 0;
     app.append(hero(m.nom, null, h("div", {},
       h("div", { class: "pastilles" }, h("span", { class: "badge " + sm[1] }, sm[0]), h("span", { class: "pastille-formule " + m.plan_effectif }, couronne(m.plan_effectif, 15), p.nom)),
@@ -398,8 +407,8 @@
         h("div", { class: "tuile" }, h("b", {}, p.nom), h("span", {}, "Formule")),
         h("div", { class: "tuile" }, h("b", {}, m.plan_effectif === "gratuit" ? "Sans limite" : jours + " j"), h("span", {}, m.plan_effectif === "gratuit" ? "Durée" : "Jours restants"))))));
     app.append(h("div", { class: "sections" }, h("div", { class: "in" }, h("button", { class: onglet === "adresses" ? "on" : "", onclick: () => { onglet = "adresses"; rendre(); } }, ico("pin", 18), "Mes adresses"), h("button", { class: onglet === "abo" ? "on" : "", onclick: () => { onglet = "abo"; rendre(); } }, ico("couronne", 18), "Abonnement"))));
-    if (m.statut === "en_attente") main.append(h("div", { class: "alerte info" }, "Nous vérifions votre commerce. Vous pouvez déjà préparer vos adresses."));
-    if (m.statut === "refusee") main.append(h("div", { class: "alerte bad" }, m.note || "Votre commerce n'a pas pu être validé. Contactez-nous."));
+    if (m.statut === "en_attente") main.append(h("div", { class: "alerte info" }, "Nous vérifions votre compte. Vous pouvez déjà préparer vos adresses."));
+    if (m.statut === "refusee") main.append(h("div", { class: "alerte bad" }, m.note || "Votre compte n'a pas pu être validé. Contactez-nous."));
     main.classList.add("large"); document.body.classList.add("espace-large");
     const pied = h("p", { class: "pied-lien" }, h("a", { href: "#", onclick: async ev => { ev.preventDefault(); try { await api("POST", "auth/deconnexion"); } catch (e) {} location.href = "/compte/"; } }, "Me déconnecter"));
     if (onglet === "abo") { panneauAbonnement(main); main.append(pied, piedRdc()); app.append(main); return; }

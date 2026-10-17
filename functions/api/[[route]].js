@@ -212,6 +212,7 @@ async function adminTestMail({ request, env }) {
 
 // ---------- espace commerce ----------
 async function marqueDe(db, userId) { return db.prepare("SELECT * FROM marques WHERE owner_id = ?").bind(userId).first(); }
+const STAT_ACTIONS = ["vue", "appel", "wa", "itin", "fav"];
 async function etatCommerce({ request, env }) {
   const user = await exigerUser(request, env), db = await C.base(env);
   const marque = await marqueDe(db, user.id);
@@ -221,12 +222,21 @@ async function etatCommerce({ request, env }) {
   const phs = (await db.prepare("SELECT p.id, p.adresse_id, p.type FROM photos p JOIN adresses a ON a.id = p.adresse_id WHERE a.marque_id = ? ORDER BY p.id").bind(marque.id).all()).results || [];
   for (const a of adresses) { a.photos = phs.filter(p => p.adresse_id === a.id && p.type !== "menu").map(p => p.id); a.menu_photos = phs.filter(p => p.adresse_id === a.id && p.type === "menu").map(p => p.id); }
   const demandes = (await db.prepare("SELECT id, plan, ref, statut, motif, created_at, traite_at FROM demandes_paiement WHERE marque_id = ? ORDER BY id DESC LIMIT 20").bind(marque.id).all()).results || [];
+  if (PLANS[plan].stats && env.DEMANDES) {            // statistiques de vues et d'appels (Premium)
+    const d = new Date(), moisA = d.toISOString().slice(0, 7), moisP = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth() - 1, 1)).toISOString().slice(0, 7);
+    await Promise.all(adresses.filter(a => a.statut === "validee").map(async a => {
+      const lire = async suf => parseInt((await env.DEMANDES.get("lieu:adr-" + a.id + suf)) || "0", 10) || 0;
+      const une = async m => { const o = {}; await Promise.all(STAT_ACTIONS.map(async k => { o[k] = await lire(":" + k + (m ? ":" + m : "")); })); return o; };
+      const [ce, prec] = await Promise.all([une(moisA), une(moisP)]);
+      a.stats = { ce_mois: ce, mois_dernier: prec };
+    }));
+  }
   return json({ ok: true, utilisateur: pub(user), marque: { ...marque, plan_effectif: plan, plan_edition: C.planEdition(marque) }, adresses, demandes, plans: PLANS, total_avec_frais: C.TOTAL_AVEC_FRAIS, whatsapp: C.WHATSAPP });
 }
 async function creerMarque({ request, env }) {
   const user = await exigerUser(request, env), db = await C.base(env);
-  const b = await lireJson(request), nom = texte(b.nom, 100, true, "nom du commerce ou de la marque");
-  if (await marqueDe(db, user.id)) refuse("Vous avez déjà un commerce enregistré sur ce compte.", 409);
+  const b = await lireJson(request), nom = texte(b.nom, 100, true, "nom de l'adresse");
+  if (await marqueDe(db, user.id)) refuse("Vous avez déjà un espace enregistré sur ce compte.", 409);
   const voulu = PLANS[b.plan] ? b.plan : "gratuit";
   await db.batch([
     db.prepare("INSERT INTO marques (owner_id, nom, plan_souhaite, created_at) VALUES (?, ?, ?, ?)").bind(user.id, nom, voulu, new Date().toISOString()),
@@ -236,7 +246,7 @@ async function creerMarque({ request, env }) {
 }
 async function choisirFormule({ request, env }) {
   const user = await exigerUser(request, env), db = await C.base(env), marque = await marqueDe(db, user.id);
-  if (!marque) refuse("Créez d'abord votre commerce.", 409);
+  if (!marque) refuse("Ajoutez d'abord votre adresse.", 409);
   const b = await lireJson(request); if (!PLANS[b.plan]) refuse("Choisissez une formule.");
   await db.prepare("UPDATE marques SET plan_souhaite = ? WHERE id = ?").bind(b.plan, marque.id).run();
   return json({ ok: true });
@@ -244,7 +254,7 @@ async function choisirFormule({ request, env }) {
 const nombreOuNull = (v, min, max) => { if (v === "" || v == null) return null; const n = Number(v); return Number.isFinite(n) && n >= min && n <= max ? n : null; };
 async function sauverAdresse({ request, env }) {
   const user = await exigerUser(request, env), db = await C.base(env);
-  const marque = await marqueDe(db, user.id); if (!marque) refuse("Créez d'abord votre commerce.", 409);
+  const marque = await marqueDe(db, user.id); if (!marque) refuse("Ajoutez d'abord votre adresse.", 409);
   const plan = PLANS[C.planEdition(marque)];
   const b = await lireJson(request);
   const champs = {
@@ -303,7 +313,7 @@ async function supprimerAdresse({ request, env }) {
 const MIMES = { "image/jpeg": "/9j/", "image/png": "iVBOR", "image/webp": "UklGR" };
 async function ajouterPhoto({ request, env }) {
   const user = await exigerUser(request, env), db = await C.base(env), marque = await marqueDe(db, user.id);
-  if (!marque) refuse("Créez d'abord votre commerce.", 409);
+  if (!marque) refuse("Ajoutez d'abord votre adresse.", 409);
   const b = await lireJson(request, 330000);
   const a = await db.prepare("SELECT id FROM adresses WHERE id = ? AND marque_id = ?").bind(ent(b.adresse_id), marque.id).first();
   if (!a) refuse("Adresse introuvable.", 404);
@@ -355,7 +365,7 @@ async function lirePhoto({ request, env }, id) {
 // ---------- paiement : le commerce saisit sa référence ----------
 async function demanderPaiement({ request, env }) {
   const user = await exigerUser(request, env), db = await C.base(env), marque = await marqueDe(db, user.id);
-  if (!marque) refuse("Créez d'abord votre commerce.", 409);
+  if (!marque) refuse("Ajoutez d'abord votre adresse.", 409);
   const b = await lireJson(request);
   const plan = b.plan === "premium" ? "premium" : b.plan === "standard" ? "standard" : refuse("Choisissez une formule.");
   const ref = C.normaliserRef(b.ref);

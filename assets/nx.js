@@ -41,7 +41,7 @@ window.NX = (function () {
   function entete(utilisateur) {
     const nav = h("nav", {}, h("a", { href: "/" }, "Carte"), h("a", { href: "/tarifs/" }, "Tarifs"));
     if (utilisateur) {
-      nav.append(h("a", { href: "/commerce/" }, "Mon commerce", utilisateur.plan ? [" ", couronne(utilisateur.plan, 14)] : null));
+      nav.append(h("a", { href: "/commerce/" }, "Mon espace", utilisateur.plan ? [" ", couronne(utilisateur.plan, 14)] : null));
       if (utilisateur.admin) nav.append(h("a", { href: "/admin/" }, "Admin"));
       nav.append(h("a", { href: "/compte/" }, "Mon compte"));
     } else nav.append(h("a", { href: "/compte/" }, "Connexion"));

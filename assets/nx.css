@@ -296,3 +296,16 @@ body.espace-large main.large { max-width: 1092px; }
 .sections button { white-space: nowrap; }
 @media (min-width: 900px) { .espace.seul { grid-template-columns: minmax(0, 760px); justify-content: center; } }
 .oeil button { min-height: 38px; }
+
+/* statistiques Premium d'une adresse */
+.adr .stats { margin: 12px 0 2px; padding: 12px; background: #f6f8fc; border: 1px solid var(--line); border-radius: 12px; }
+.adr .stats .tete-stats { display: flex; align-items: center; justify-content: space-between; font-size: .92rem; margin-bottom: 8px; }
+.adr .stats .cases { display: grid; grid-template-columns: repeat(auto-fit, minmax(92px, 1fr)); gap: 8px; }
+.adr .stats .case { background: #fff; border: 1px solid var(--line); border-radius: 10px; padding: 9px 10px; display: flex; flex-direction: column; gap: 1px; }
+.adr .stats .case strong { font-size: 1.35rem; line-height: 1.1; color: var(--navy, #0b2a6b); }
+.adr .stats .case span { font-size: .8rem; color: var(--muted, #5b6478); }
+.adr .stats .case small { font-size: .72rem; color: var(--muted, #5b6478); }
+.adr .stats .case small.haus { color: #0a7d4f; }
+.adr .stats .case small.bas { color: #b4232c; }
+.adr .stats p.muted { margin: 8px 0 0; font-size: .78rem; }
+.adr .stats.verrou { display: flex; gap: 8px; align-items: center; font-size: .85rem; color: var(--muted, #5b6478); }
