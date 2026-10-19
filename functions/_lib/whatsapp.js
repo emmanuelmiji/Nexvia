@@ -35,6 +35,7 @@ export function savoir() {
     "- On peut l'installer comme une application : sur iPhone, ouvrir nexviardc.com dans Safari, toucher Partager puis « Sur l'écran d'accueil ». Sur Android, ouvrir le site dans Chrome, toucher le menu (trois points) puis « Installer l'application » ou « Ajouter à l'écran d'accueil ».",
     "- Contact de l'équipe : WhatsApp +" + C.WHATSAPP.replace(/^(\d{3})(\d{3})(\d{3})(\d{3})$/, "$1 $2 $3 $4") + " (ce numéro), e-mail contact@nexviardc.com.",
     "- L'affichage public des commerces inscrits n'est pas encore ouvert. Ne promets aucune date.",
+    "- Horaires du service client (heure de Kinshasa) : du lundi au vendredi de 9h à 16h30, le samedi de 9h à 15h30, fermé le dimanche. Les agents répondent pendant ces horaires ; en dehors, la demande est enregistrée et traitée à la réouverture.",
     "",
     "COMPTE ET CODE DE VÉRIFICATION",
     "- Pour créer un compte il faut une vraie adresse e-mail (Gmail, Yahoo, Outlook…). Nexvia envoie un code à 6 chiffres par e-mail (pas par SMS ni WhatsApp). Le code est valable 10 minutes, avec 5 essais. On peut demander un nouveau code après 60 secondes. Si le code n'arrive pas : regarder dans les courriers indésirables (spam), vérifier que l'adresse est bien écrite, puis redemander un code.",
@@ -60,6 +61,15 @@ export function savoir() {
   ].join("\n");
 }
 
+// ---------- horaires du service client (heure de Kinshasa, UTC+1) ----------
+export function etatService(date = new Date()) {
+  const k = new Date(date.getTime() + 3600e3), j = k.getUTCDay(), m = k.getUTCHours() * 60 + k.getUTCMinutes();
+  const h = String(k.getUTCHours()).padStart(2, "0") + "h" + String(k.getUTCMinutes()).padStart(2, "0");
+  const fin = j >= 1 && j <= 5 ? 16 * 60 + 30 : j === 6 ? 15 * 60 + 30 : 0;
+  const ouvert = fin > 0 && m >= 9 * 60 && m < fin;
+  return "Il est " + h + " à Kinshasa : le service client est " + (ouvert ? "OUVERT actuellement." : "FERMÉ actuellement (les agents répondront à la réouverture, selon les horaires).");
+}
+
 export function consigne() {
   return [
     "Tu es l'assistant WhatsApp de Nexvia RDC, une application congolaise (Kinshasa). Tu réponds aux visiteurs et aux commerces.",
@@ -80,6 +90,9 @@ export function consigne() {
     "- Pour un code de vérification non reçu, donne d'abord les conseils (spam, orthographe de l'adresse, attendre 60 secondes pour redemander). Passe la main seulement si cela ne règle pas le problème.",
     "- Quand tu appelles l'outil, n'écris aucun texte : un message de confirmation avec la référence du dossier est envoyé automatiquement. Ne donne jamais de numéro de téléphone d'agent.",
     "- Pour les questions simples dont la réponse est dans les informations, réponds toi-même, sans agent.",
+    "",
+    "MOMENT PRÉSENT",
+    "- " + etatService(),
     "",
     "INFORMATIONS",
     savoir(),
@@ -237,6 +250,64 @@ async function iaDisponible(env, db) {
   return n < plafond;
 }
 
+
+// ---------- mode administrateur (lecture seule) : l'admin écrit au robot depuis son numéro ----------
+export function numerosAdmin(env) { return String(env.WA_ADMIN_NUMBERS || "").split(/[,;]+/).map(x => x.replace(/\D/g, "")).filter(Boolean); }
+
+async function nb(db, sql, ...p) { try { const r = await db.prepare(sql).bind(...p).first(); return Number(r && r.n) || 0; } catch (e) { return 0; } }
+
+export async function rapportAdmin(env, db, texte) {
+  const k = new Date(Date.now() + 3600e3); k.setUTCHours(0, 0, 0, 0);
+  const jour = new Date(k.getTime() - 3600e3).toISOString();                // minuit à Kinshasa
+  const t = String(texte || "").toLowerCase();
+  if (/aide|menu|help|\?/.test(t) && t.length < 25) return ["Mode administrateur (lecture seule). Écrivez :", "- « stats » : le résumé du jour", "- « à traiter » : les dossiers WhatsApp en attente", "Tout autre message donne aussi le résumé."].join("\n");
+  if (/traiter|attente|dossier/.test(t)) {
+    const l = (await db.prepare("SELECT id, phone, nom, categorie FROM wa_conversations WHERE statut = 'a_traiter' ORDER BY dernier_msg_at DESC LIMIT 8").all()).results || [];
+    if (!l.length) return "Aucun dossier WhatsApp en attente. 👌";
+    return ["Dossiers WhatsApp à traiter (" + l.length + " affiché(s)) :"].concat(l.map(c => "- " + refConv(c) + " · " + (CATEGORIES[c.categorie] || "Autre") + " · +" + c.phone + (c.nom ? " (" + c.nom + ")" : ""))).join("\n") + "\nRépondez depuis nexviardc.com/admin/";
+  }
+  const [recus, ia, convs, aTraiter, traitesJour, users, marques, adrAtt, payAtt, recl] = await Promise.all([
+    nb(db, "SELECT COUNT(*) AS n FROM wa_messages WHERE role = 'client' AND created_at >= ?", jour),
+    nb(db, "SELECT COUNT(*) AS n FROM wa_messages WHERE role = 'ia' AND created_at >= ?", jour),
+    nb(db, "SELECT COUNT(*) AS n FROM wa_conversations"),
+    nb(db, "SELECT COUNT(*) AS n FROM wa_conversations WHERE statut = 'a_traiter'"),
+    nb(db, "SELECT COUNT(*) AS n FROM wa_conversations WHERE statut = 'traite' AND traite_at >= ?", jour),
+    nb(db, "SELECT COUNT(*) AS n FROM users"),
+    nb(db, "SELECT COUNT(*) AS n FROM marques"),
+    nb(db, "SELECT COUNT(*) AS n FROM adresses WHERE statut = 'en_attente'"),
+    nb(db, "SELECT COUNT(*) AS n FROM demandes_paiement WHERE statut = 'en_attente'"),
+    nb(db, "SELECT COUNT(*) AS n FROM reclamations WHERE statut = 'en_attente'"),
+  ]);
+  const plafond = Number(env.WA_MAX_IA_JOUR) || 300, iaOn = String(env.WA_IA_ACTIVE) !== "0" && !!env.ANTHROPIC_API_KEY;
+  return [
+    "📊 Nexvia RDC – aujourd'hui (heure de Kinshasa)",
+    "",
+    "WhatsApp",
+    "- Messages reçus : " + recus,
+    "- Réponses de l'IA : " + ia + " sur " + plafond + " (IA " + (iaOn ? "active" : "coupée") + ")",
+    "- Dossiers traités par l'équipe aujourd'hui : " + traitesJour,
+    "- Dossiers à traiter : " + aTraiter + " (conversations au total : " + convs + ")",
+    "",
+    "Site",
+    "- Comptes : " + users + " · Commerces : " + marques,
+    "- Adresses à valider : " + adrAtt,
+    "- Paiements à vérifier : " + payAtt,
+    "- Réclamations en attente : " + recl,
+    "",
+    etatService(),
+  ].join("\n");
+}
+
+async function traiterAdmin(env, db, msg) {
+  try { await db.prepare("INSERT INTO wa_messages (conv_id, role, texte, wamid, created_at) VALUES (0, 'admin', '[admin]', ?, ?)").bind(msg.wamid, maintenant()).run(); }
+  catch (e) { return "doublon"; }                                           // déjà traité (Meta renvoie parfois deux fois)
+  let texte;
+  if (msg.type !== "text" || !msg.texte) texte = "Mode administrateur : envoyez « stats » ou « à traiter ».";
+  else texte = await rapportAdmin(env, db, msg.texte);
+  try { await envoyerWhatsApp(env, msg.de, texte); } catch (e) { await journaliser(env, "envoi_echec", String(e && e.message || e)); }
+  return "admin";
+}
+
 const RE_CODE_ADRESSE = /^\W*NX[\s-]?(\d{6})\W*$/i;
 
 export async function traiterMessage(env, msg) {
@@ -244,6 +315,7 @@ export async function traiterMessage(env, msg) {
   if (!msg.de || !msg.wamid) return "ignore";
   if (await db.prepare("SELECT id FROM wa_messages WHERE wamid = ?").bind(msg.wamid).first()) return "doublon";
   if (msg.type === "reaction" || msg.type === "system" || msg.type === "unsupported" && !msg.texte) return "ignore";
+  if (numerosAdmin(env).includes(msg.de)) return traiterAdmin(env, db, msg);   // l'administrateur n'est jamais traité comme un client
 
   let conv = await conversation(db, msg.de, msg.nom);
   const texteNote = msg.type === "text" || msg.texte ? msg.texte : "[" + msg.type + "]";
