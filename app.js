@@ -443,11 +443,11 @@ const VERIFIES = [
   {"nom": "FPM – Fonds pour l'inclusion financière", "cat": "banque", "type": "Institution financière", "adresse": "2, Av. Kasa-Vubu", "tel": "+243 992 006 139", "horaires": "Lun–Ven 8h00–17h00; Sam–Dim fermé", "lat": -4.3047017, "lng": 15.3066812, "remarque": "Bureau (pas de guichet)."}
 ];
 
-const CATS = { restaurant: "Restaurants et cafés", bar: "Bars et lounges", pharmacie: "Pharmacies", commerce: "Commerces", sport: "Terrains et sport", culte: "Lieux de culte", hotel: "Hôtels", sante: "Santé", loisirs: "Loisirs et sorties", formation: "Formation et cours", bienetre: "Bien-être et spa", voyage: "Voyages et tourisme", banque: "Banques", atm: "Distributeurs (ATM)", station: "Stations-service", transfert: "Transfert d'argent", ecole: "Écoles", autre: "Autres" };
-const CAT_COURT = { restaurant: "Restos", bar: "Bars", pharmacie: "Pharmacies", commerce: "Commerces", sport: "Sport", culte: "Culte", hotel: "Hôtels", sante: "Santé", loisirs: "Loisirs", formation: "Formation", bienetre: "Bien-être", voyage: "Voyages", banque: "Banques", atm: "ATM", station: "Stations", transfert: "Transferts", ecole: "Écoles", autre: "Autres" };
-const CAT_LABEL = { restaurant: "Restaurant", bar: "Bar", pharmacie: "Pharmacie", commerce: "Commerce", sport: "Sport", culte: "Lieu de culte", hotel: "Hôtel", sante: "Santé", loisirs: "Loisirs", formation: "Formation", bienetre: "Bien-être", voyage: "Voyage", banque: "Banque", atm: "Distributeur (ATM)", station: "Station-service", transfert: "Transfert d'argent", ecole: "École", autre: "Autre lieu" };
-const COULEUR = { restaurant: "#e08a00", bar: "#8e44ad", pharmacie: "#1b998b", commerce: "#2f6fed", sport: "#2e9b4f", culte: "#7a5c3e", hotel: "#d6336c", sante: "#e03c31", loisirs: "#c026d3", formation: "#4f46e5", bienetre: "#0891b2", voyage: "#475569", banque: "#374151", atm: "#0f766e", station: "#ea580c", transfert: "#ca8a04", ecole: "#3b82f6", autre: "#6b7a90" };
-const EMOJI = { restaurant: "🍽️", bar: "🍸", pharmacie: "💊", commerce: "🛒", sport: "⚽", culte: "⛪", hotel: "🏨", sante: "🏥", loisirs: "🎭", formation: "🎓", bienetre: "💆", voyage: "✈️", banque: "🏦", atm: "🏧", station: "⛽", transfert: "💸", ecole: "🏫", autre: "📍" };
+const CATS = { restaurant: "Restaurants et cafés", bar: "Bars et lounges", pharmacie: "Pharmacies", commerce: "Commerces", sport: "Terrains et sport", culte: "Lieux de culte", hotel: "Hôtels", sante: "Santé", loisirs: "Loisirs et sorties", formation: "Formation et cours", bienetre: "Bien-être et spa", beaute: "Coiffure et beauté", voyage: "Voyages et tourisme", banque: "Banques", atm: "Distributeurs (ATM)", station: "Stations-service", transfert: "Transfert d'argent", ecole: "Écoles", autre: "Autres" };
+const CAT_COURT = { restaurant: "Restos", bar: "Bars", pharmacie: "Pharmacies", commerce: "Commerces", sport: "Sport", culte: "Culte", hotel: "Hôtels", sante: "Santé", loisirs: "Loisirs", formation: "Formation", bienetre: "Bien-être", beaute: "Coiffure", voyage: "Voyages", banque: "Banques", atm: "ATM", station: "Stations", transfert: "Transferts", ecole: "Écoles", autre: "Autres" };
+const CAT_LABEL = { restaurant: "Restaurant", bar: "Bar", pharmacie: "Pharmacie", commerce: "Commerce", sport: "Sport", culte: "Lieu de culte", hotel: "Hôtel", sante: "Santé", loisirs: "Loisirs", formation: "Formation", bienetre: "Bien-être", beaute: "Coiffure et beauté", voyage: "Voyage", banque: "Banque", atm: "Distributeur (ATM)", station: "Station-service", transfert: "Transfert d'argent", ecole: "École", autre: "Autre lieu" };
+const COULEUR = { restaurant: "#e08a00", bar: "#8e44ad", pharmacie: "#1b998b", commerce: "#2f6fed", sport: "#2e9b4f", culte: "#7a5c3e", hotel: "#d6336c", sante: "#e03c31", loisirs: "#c026d3", formation: "#4f46e5", bienetre: "#0891b2", beaute: "#db2777", voyage: "#475569", banque: "#374151", atm: "#0f766e", station: "#ea580c", transfert: "#ca8a04", ecole: "#3b82f6", autre: "#6b7a90" };
+const EMOJI = { restaurant: "🍽️", bar: "🍸", pharmacie: "💊", commerce: "🛒", sport: "⚽", culte: "⛪", hotel: "🏨", sante: "🏥", loisirs: "🎭", formation: "🎓", bienetre: "💆", beaute: "💇", voyage: "✈️", banque: "🏦", atm: "🏧", station: "⛽", transfert: "💸", ecole: "🏫", autre: "📍" };
 const GOMBE = [[-4.328, 15.268], [-4.293, 15.322]];
 const ZONE_LARGE = { s: -4.345, n: -4.28, o: 15.25, e: 15.34 };
 // Mettre true pour afficher publiquement les commerces inscrits et validés (après avoir supprimé les comptes de test dans l'admin).
@@ -990,10 +990,10 @@ if (typeof L === "undefined") {
 
   construireFiltres(); afficher(true); rendreAccueil();
   const sources = [
-    ["references.json", ajouterRefs], ["communes/kintambo.json", ajouterRefs], ["communes/ngaliema.json", ajouterRefs], ["communes/limete.json", ajouterRefs],
+    ["references.json", ajouterRefs], ["communes/kintambo.json", ajouterRefs], ["communes/ngaliema.json", ajouterRefs], ["communes/limete.json", ajouterRefs], ["communes/beaute.json", ajouterRefs],
     ["osm.json", ajouterOSM]
   ].map(([u, fn]) => ({ u, fn, p: lireJSON(u) }));
-  if (AFFICHAGE_PUBLIC) sources.splice(4, 0, { u: "/api/public/commerces", fn: ajouterCommerces, p: lireJSON("/api/public/commerces", 10000) });
+  if (AFFICHAGE_PUBLIC) sources.splice(5, 0, { u: "/api/public/commerces", fn: ajouterCommerces, p: lireJSON("/api/public/commerces", 10000) });
   (async () => {
     const manque = [], casse = [];
     for (const src of sources) {
