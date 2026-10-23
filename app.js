@@ -448,6 +448,11 @@ const CAT_COURT = { restaurant: "Restos", bar: "Bars", pharmacie: "Pharmacies", 
 const CAT_LABEL = { restaurant: "Restaurant", bar: "Bar", pharmacie: "Pharmacie", commerce: "Commerce", sport: "Sport", culte: "Lieu de culte", hotel: "Hôtel", sante: "Santé", loisirs: "Loisirs", formation: "Formation", bienetre: "Bien-être", beaute: "Coiffure et beauté", voyage: "Voyage", banque: "Banque", atm: "Distributeur (ATM)", station: "Station-service", transfert: "Transfert d'argent", ecole: "École", autre: "Autre lieu" };
 const COULEUR = { restaurant: "#e08a00", bar: "#8e44ad", pharmacie: "#1b998b", commerce: "#2f6fed", sport: "#2e9b4f", culte: "#7a5c3e", hotel: "#d6336c", sante: "#e03c31", loisirs: "#c026d3", formation: "#4f46e5", bienetre: "#0891b2", beaute: "#db2777", voyage: "#475569", banque: "#374151", atm: "#0f766e", station: "#ea580c", transfert: "#ca8a04", ecole: "#3b82f6", autre: "#6b7a90" };
 const EMOJI = { restaurant: "🍽️", bar: "🍸", pharmacie: "💊", commerce: "🛒", sport: "⚽", culte: "⛪", hotel: "🏨", sante: "🏥", loisirs: "🎭", formation: "🎓", bienetre: "💆", beaute: "💇", voyage: "✈️", banque: "🏦", atm: "🏧", station: "⛽", transfert: "💸", ecole: "🏫", autre: "📍" };
+const ICONS = {"restaurant": "<path d=\"M5 3v6a2 2 0 0 0 4 0V3M7 3v18\"/><path d=\"M17 21V3c-2.2 1.2-3.5 3.8-3.5 7 0 1.5.8 2.8 3.5 3\"/>", "bar": "<path d=\"M4 4h16l-8 9z\"/><path d=\"M12 13v7M8 20h8\"/>", "pharmacie": "<rect x=\"2.5\" y=\"8.5\" width=\"19\" height=\"7\" rx=\"3.5\" transform=\"rotate(-45 12 12)\"/><path d=\"M9.2 9.2l5.6 5.6\"/>", "commerce": "<circle cx=\"9\" cy=\"20\" r=\"1.5\"/><circle cx=\"18\" cy=\"20\" r=\"1.5\"/><path d=\"M2 3h3l2.5 12h11l2-8H6\"/>", "sport": "<circle cx=\"12\" cy=\"12\" r=\"9\"/><path d=\"M12 3v18M3 12h18M5.6 5.6c3 2.5 3 10.3 0 12.8M18.4 5.6c-3 2.5-3 10.3 0 12.8\"/>", "culte": "<path d=\"M12 2v5M10 4h4\"/><path d=\"M12 7l-6 4v10h12V11z\"/><path d=\"M10 21v-5a2 2 0 0 1 4 0v5\"/>", "mosque": "<path d=\"M5 21V11h14v10M3 21h18\"/><path d=\"M7.5 11a4.5 4.5 0 0 1 9 0\"/><path d=\"M12 3v2M10 21v-4a2 2 0 0 1 4 0v4\"/>", "hotel": "<path d=\"M3 20V6M3 16h18v4M21 16v-3a3 3 0 0 0-3-3h-7v6\"/><circle cx=\"7\" cy=\"12\" r=\"2\"/>", "sante": "<rect x=\"4\" y=\"3\" width=\"16\" height=\"18\" rx=\"2\"/><path d=\"M12 8v6M9 11h6\"/><path d=\"M9 21v-3h6v3\"/>", "loisirs": "<path d=\"M3 7h18v3a2 2 0 0 0 0 4v3H3v-3a2 2 0 0 0 0-4z\"/><path d=\"M14 7v10\" stroke-dasharray=\"2 2\"/>", "formation": "<path d=\"M2 9l10-5 10 5-10 5z\"/><path d=\"M6 11.5V16c0 1.5 3 3 6 3s6-1.5 6-3v-4.5M22 9v6\"/>", "bienetre": "<path d=\"M12 20c-4 0-8-3-9-8 4 0 7 2 9 5 2-3 5-5 9-5-1 5-5 8-9 8z\"/><path d=\"M12 17c-2-3-2-8 0-12 2 4 2 9 0 12z\"/>", "beaute": "<circle cx=\"6\" cy=\"6\" r=\"3\"/><circle cx=\"6\" cy=\"18\" r=\"3\"/><path d=\"M8.1 8.1L20 20M8.1 15.9L20 4\"/>", "voyage": "<path d=\"M21 16v-2l-8-5V3.5a1.5 1.5 0 0 0-3 0V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5z\"/>", "banque": "<path d=\"M3 9l9-6 9 6zM5 9v9M9.5 9v9M14.5 9v9M19 9v9M3 21h18M3 18h18\"/>", "atm": "<rect x=\"2\" y=\"5\" width=\"20\" height=\"14\" rx=\"2\"/><path d=\"M2 10h20M6 15h4\"/>", "station": "<path d=\"M4 21V4a1 1 0 0 1 1-1h8a1 1 0 0 1 1 1v17M3 21h12\"/><path d=\"M6 8h6M14 9h2a2 2 0 0 1 2 2v5a1.5 1.5 0 0 0 3 0V9l-3-3\"/>", "transfert": "<path d=\"M4 8h14l-3-3M20 16H6l3 3\"/>", "ecole": "<path d=\"M3 21h18M5 21V9l7-5 7 5v12\"/><circle cx=\"12\" cy=\"11\" r=\"2\"/><path d=\"M10 21v-4h4v4\"/>", "autre": "<path d=\"M12 22s7-6.2 7-12a7 7 0 0 0-14 0c0 5.8 7 12 7 12z\"/><circle cx=\"12\" cy=\"10\" r=\"2.5\"/>", "cafe": "<path d=\"M4 8h13v6a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5zM17 10h1.5a2.5 2.5 0 0 1 0 5H17\"/><path d=\"M8 3v2M12 3v2\"/>", "burger": "<path d=\"M4 11a8 6 0 0 1 16 0z\"/><path d=\"M3 14h18\"/><path d=\"M4 17h16v1a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z\"/>", "music": "<path d=\"M9 18V5l11-2v13\"/><circle cx=\"6\" cy=\"18\" r=\"3\"/><circle cx=\"17\" cy=\"16\" r=\"3\"/>", "pin": "<path d=\"M12 22s7-6.2 7-12a7 7 0 0 0-14 0c0 5.8 7 12 7 12z\"/><circle cx=\"12\" cy=\"10\" r=\"2.5\"/>", "phone": "<path d=\"M5 3h4l2 5-2.5 1.5a11 11 0 0 0 6 6L16 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 5a2 2 0 0 1 2-2z\"/>", "clock": "<circle cx=\"12\" cy=\"12\" r=\"9\"/><path d=\"M12 7v5l3 2\"/>", "walk": "<circle cx=\"13\" cy=\"4\" r=\"2\"/><path d=\"M9 21l3-7M12 14l-1-5 4 1 2 4M11 9L8 11\"/>", "check": "<path d=\"M5 12.5l4.5 4.5L19 7.5\"/>", "crown": "<path d=\"M3 8l4.5 4L12 5l4.5 7L21 8l-2 11H5z\" fill=\"currentColor\"/>", "alert": "<path d=\"M12 3L2 20h20z\"/><path d=\"M12 10v4.5M12 17.5v.5\"/>", "heart": "<path d=\"M12 21s-8-5.2-8-11a4.5 4.5 0 0 1 8-2.8A4.5 4.5 0 0 1 20 10c0 5.8-8 11-8 11z\"/>", "x": "<path d=\"M6 6l12 12M18 6L6 18\"/>", "compass": "<circle cx=\"12\" cy=\"12\" r=\"9\"/><path d=\"M15.5 8.5l-2 5-5 2 2-5z\"/>", "map": "<path d=\"M9 4L3 6v14l6-2 6 2 6-2V4l-6 2z\"/><path d=\"M9 4v14M15 6v14\"/>", "user": "<circle cx=\"12\" cy=\"8\" r=\"4\"/><path d=\"M4 21c0-4 3.5-7 8-7s8 3 8 7\"/>", "install": "<rect x=\"7\" y=\"2\" width=\"10\" height=\"20\" rx=\"2\"/><path d=\"M12 6v7M9 10l3 3 3-3\"/>", "message": "<path d=\"M4 4h16v12H9l-5 4z\"/>", "list": "<path d=\"M8 6h13M8 12h13M8 18h13M3 6h.5M3 12h.5M3 18h.5\"/>"};
+const IC = (k, taille, cls) => '<svg class="svgi' + (cls ? ' ' + cls : '') + '" viewBox="0 0 24 24" aria-hidden="true"' + (taille ? ' style="width:' + taille + 'px;height:' + taille + 'px"' : '') + '>' + (ICONS[k] || ICONS.autre) + '</svg>';
+const COEUR = f => IC('heart', 0, f ? 'on' : '');
+const ICO_SPEC = { "☕": "cafe", "🍔": "burger", "🎶": "music", "🕌": "mosque" };
+const cleIcone = l => (l.cat === "culte" && l.religion === "muslim") ? "mosque" : (ICO_SPEC[l.emoji] || (ICONS[l.cat] ? l.cat : "autre"));
 const GOMBE = [[-4.328, 15.268], [-4.293, 15.322]];
 const ZONE_LARGE = { s: -4.345, n: -4.28, o: 15.25, e: 15.34 };
 // Mettre true pour afficher publiquement les commerces inscrits et validés (après avoir supprimé les comptes de test dans l'admin).
@@ -482,7 +487,7 @@ function correspond(nom, requete) {
   return String(developper(requete)).split(/\s+/).map(normS).filter(Boolean).every(t => n.includes(t));
 }
 const aPosition = l => typeof l.lat === "number" && typeof l.lng === "number";
-const emojiDe = l => l.emoji || (l.cat === "culte" && l.religion === "muslim" ? "🕌" : (EMOJI[l.cat] || "📍"));
+const emojiDe = l => IC(cleIcone(l));
 const texteRecherche = l => [l.nom, l.adresse, l.type, CATS[l.cat], l.commune].filter(Boolean).join(" ");
 const adresseAff = l => l.adresse + (l.commune && norm(l.adresse).indexOf(norm(l.commune)) < 0 ? ", " + l.commune : "");
 const premierNum = t => String(t).split(/[;,\/]|\bou\b/)[0];
@@ -531,7 +536,7 @@ function distance(l) {
 }
 function distHTML(l) {
   const d = distance(l);
-  return d === null ? "" : '<p>🚶 ' + (d < 1000 ? Math.max(10, Math.round(d / 10) * 10) + " m" : (d / 1000).toFixed(1).replace(".", ",") + " km") + ' de vous (à vol d\'oiseau)</p>';
+  return d === null ? "" : '<p>' + IC('walk') + ' ' + (d < 1000 ? Math.max(10, Math.round(d / 10) * 10) + " m" : (d / 1000).toFixed(1).replace(".", ",") + " km") + ' de vous (à vol d\'oiseau)</p>';
 }
 function localiser(ok, ko) {
   if (!navigator.geolocation) { ko(); return; }
@@ -552,9 +557,9 @@ function basculerFav(l) {
 }
 
 function badgeHTML(l) {
-  const pre = l.source === "verifie" ? "✔ Vérifié · " : l.source === "inscrit" ? "Commerce inscrit · " : l.source === "reference" ? "Référencé · " : "OpenStreetMap · ";
+  const pre = l.source === "verifie" ? IC('check') + ' Vérifié · ' : l.source === "inscrit" ? "Commerce inscrit · " : l.source === "reference" ? "Référencé · " : "OpenStreetMap · ";
   const cl = l.source === "verifie" || l.source === "inscrit" ? "ok" : l.source === "reference" ? "ref" : "osm";
-  return '<span class="badge ' + cl + '">' + pre + esc(l.type || CAT_LABEL[l.cat]) + '</span>' + (l.haut ? '<span class="badge prem">👑 Premium</span>' : "") + ouvertHTML(l);
+  return '<span class="badge ' + cl + '">' + pre + esc(l.type || CAT_LABEL[l.cat]) + '</span>' + (l.haut ? '<span class="badge prem">' + IC('crown') + ' Premium</span>' : "") + ouvertHTML(l);
 }
 function noteHTML(l) {
   let n = "";
@@ -566,7 +571,7 @@ function noteHTML(l) {
   return n ? '<p class="note">' + esc(n) + '</p>' : "";
 }
 function actionsHTML(l) {
-  return '<div class="actions">' + (l.tel ? '<a class="btn" href="' + esc(telHref(l.tel)) + '">📞 Appeler</a>' : "") +
+  return '<div class="actions">' + (l.tel ? '<a class="btn" href="' + esc(telHref(l.tel)) + '">' + IC('phone') + ' Appeler</a>' : "") +
     (l.tel && !l.sansWa && (l.whatsapp || estMobile(l.tel)) ? '<a class="btn wa" target="_blank" rel="noopener" href="' + esc(waHref(l.tel)) + '">WhatsApp</a>' : "") +
     (aPosition(l) ? '<a class="btn alt" target="_blank" rel="noopener" href="https://www.google.com/maps/dir/?api=1&destination=' + l.lat + ',' + l.lng + '">Itinéraire</a>' : "") + '</div>';
 }
@@ -576,21 +581,21 @@ function fiche(l) {
   if (l.photos && l.photos.length) h += '<div class="photos">' + l.photos.map(src => '<' + 'img src="' + esc(src) + '" alt="Photo de ' + esc(l.nom) + '" loading="lazy" onerror="this.remove()">').join("") + '</div>';
   else h += '<div class="banniere" style="background:' + col + '" aria-hidden="true">' + emojiDe(l) + '</div>';
   h += '<h2>' + esc(l.nom) + '</h2>' + badgeHTML(l);
-  if (l.adresse) h += '<p>📍 ' + esc(adresseAff(l)) + '</p>';
-  if (l.horaires) h += '<p>🕒 ' + esc(l.horaires) + '</p>';
-  if (l.tel) h += '<p>📞 ' + esc(l.tel) + '</p>';
+  if (l.adresse) h += '<p>' + IC('pin') + ' ' + esc(adresseAff(l)) + '</p>';
+  if (l.horaires) h += '<p>' + IC('clock') + ' ' + esc(l.horaires) + '</p>';
+  if (l.tel) h += '<p>' + IC('phone') + ' ' + esc(l.tel) + '</p>';
   if (l.description) h += '<p class="desc">' + esc(l.description) + '</p>';
-  if (l.menuPhotos && l.menuPhotos.length) h += '<p class="menu-titre">🍽️ Menu</p><div class="photos">' + l.menuPhotos.map(src => '<' + 'img src="' + esc(src) + '" alt="Menu de ' + esc(l.nom) + '" loading="lazy" onerror="this.remove()">').join("") + '</div>';
+  if (l.menuPhotos && l.menuPhotos.length) h += '<p class="menu-titre">' + IC('restaurant') + ' Menu</p><div class="photos">' + l.menuPhotos.map(src => '<' + 'img src="' + esc(src) + '" alt="Menu de ' + esc(l.nom) + '" loading="lazy" onerror="this.remove()">').join("") + '</div>';
   h += distHTML(l);
-  return h + noteHTML(l) + actionsHTML(l) + '<a class="lien-signal" href="' + esc(signalHref(l)) + '">⚠️ Signaler une erreur sur cette fiche</a></div>';
+  return h + noteHTML(l) + actionsHTML(l) + '<a class="lien-signal" href="' + esc(signalHref(l)) + '">' + IC('alert') + ' Signaler une erreur sur cette fiche</a></div>';
 }
 function itemHTML(l, mode) {
-  return '<article class="item" style="border-left-color:' + (COULEUR[l.cat] || COULEUR.autre) + '"><h3>' + emojiDe(l) + ' ' + esc(l.nom) + '</h3>' + badgeHTML(l) +
-    (l.adresse ? '<p>📍 ' + esc(adresseAff(l)) + '</p>' : "") + (l.horaires ? '<p>🕒 ' + esc(l.horaires) + '</p>' : "") + (l.tel ? '<p>📞 ' + esc(l.tel) + '</p>' : "") + distHTML(l) +
+  return '<article class="item" style="border-left-color:' + (COULEUR[l.cat] || COULEUR.autre) + '"><h3><span class="hic" style="color:' + (COULEUR[l.cat] || COULEUR.autre) + '">' + emojiDe(l) + '</span> ' + esc(l.nom) + '</h3>' + badgeHTML(l) +
+    (l.adresse ? '<p>' + IC('pin') + ' ' + esc(adresseAff(l)) + '</p>' : "") + (l.horaires ? '<p>' + IC('clock') + ' ' + esc(l.horaires) + '</p>' : "") + (l.tel ? '<p>' + IC('phone') + ' ' + esc(l.tel) + '</p>' : "") + distHTML(l) +
     (aPosition(l) ? "" : '<p class="note">Position exacte non précisée pour l\'instant.</p>') +
     '<div class="actions">' + (l.tel ? '<a class="btn" href="' + esc(telHref(l.tel)) + '">Appeler</a>' : "") +
     (aPosition(l) ? '<button type="button" class="btn alt" data-voir="' + esc(cle(l)) + '">Voir sur la carte</button>' : "") +
-    (mode === "fav" ? '<button type="button" class="btn alt" data-fav="' + esc(cle(l)) + '">♥ Retirer</button>' : '<button type="button" class="btn alt" data-fav="' + esc(cle(l)) + '" aria-label="Favori">' + (estFav(l) ? "♥" : "♡") + '</button>') +
+    (mode === "fav" ? '<button type="button" class="btn alt" data-fav="' + esc(cle(l)) + '">' + COEUR(true) + ' Retirer</button>' : '<button type="button" class="btn alt" data-fav="' + esc(cle(l)) + '" aria-label="Favori">' + COEUR(estFav(l)) + '</button>') +
     '</div></article>';
 }
 
@@ -629,13 +634,13 @@ function setTab(t) {
 function fermerFiche() { sheet.classList.remove("open"); courant = null; }
 function ouvrirFiche(l) {
   courant = l; compter(l, "vue");
-  sheet.innerHTML = '<button type="button" class="x" aria-label="Fermer">✕</button><button type="button" class="fav" aria-label="Favori">' + (estFav(l) ? "♥" : "♡") + '</button>' + fiche(l);
+  sheet.innerHTML = '<button type="button" class="x" aria-label="Fermer">' + IC('x') + '</button><button type="button" class="fav" aria-label="Favori">' + COEUR(estFav(l)) + '</button>' + fiche(l);
   sheet.scrollTop = 0;
   sheet.classList.add("open");
 }
 sheet.addEventListener("click", e => {
   if (e.target.closest(".x")) return fermerFiche();
-  if (e.target.closest(".fav") && courant) { basculerFav(courant); e.target.closest(".fav").textContent = estFav(courant) ? "♥" : "♡"; rendreFavoris(); }
+  if (e.target.closest(".fav") && courant) { basculerFav(courant); e.target.closest(".fav").innerHTML = COEUR(estFav(courant)); rendreFavoris(); }
 });
 document.querySelectorAll("#tabs button").forEach(b => b.addEventListener("click", () => setTab(b.dataset.tab)));
 
@@ -685,7 +690,7 @@ chargerCompte();
 function rendreFavoris() {
   const items = lieux.filter(estFav).sort((a, b) => a.nom.localeCompare(b.nom, "fr"));
   $("favList").innerHTML = items.length ? items.map(l => itemHTML(l, "fav")).join("") :
-    '<div class="favvide"><div class="coeur">♥<span>★</span></div><b>Pas encore de favori</b><p>Ouvrez la fiche d\'un lieu sur la carte et touchez ♡ pour le retrouver ici, même sans chercher.</p><button type="button" id="favVers">🗺️ Découvrir des lieux</button></div>';
+    '<div class="favvide"><div class="coeur">' + COEUR(true) + '<span>★</span></div><b>Pas encore de favori</b><p>Ouvrez la fiche d\'un lieu sur la carte et touchez le cœur pour le retrouver ici, même sans chercher.</p><button type="button" id="favVers">' + IC('map') + ' Découvrir des lieux</button></div>';
   $("favSub").textContent = items.length ? items.length + (items.length > 1 ? " adresses gardées sous la main" : " adresse gardée sous la main") : "Vos adresses, toujours sous la main";
 }
 $("favList").addEventListener("click", clicItems);
@@ -697,14 +702,14 @@ function clicItems(e) {
   if (f) {
     const l = trouver(f.dataset.fav); if (!l) return;
     basculerFav(l);
-    if (tab === "favoris") rendreFavoris(); else if (f.textContent.length < 3) f.textContent = estFav(l) ? "♥" : "♡";
+    if (tab === "favoris") rendreFavoris(); else if (f.textContent.trim().length < 3) f.innerHTML = COEUR(estFav(l));
   }
 }
 
 // ---- suggestions / résultats ----
 const sugg = $("sugg");
 function corpsResultat(l) {
-  return '<b>' + esc(l.nom) + '</b><small>' + (l.source === "verifie" ? "✔ Vérifié" : l.source === "reference" ? "Référencé" : "OpenStreetMap") + " · " + esc(l.type || CAT_LABEL[l.cat]) +
+  return '<b>' + esc(l.nom) + '</b><small>' + (l.source === "verifie" ? IC('check') + ' Vérifié' : l.source === "reference" ? "Référencé" : "OpenStreetMap") + " · " + esc(l.type || CAT_LABEL[l.cat]) +
     (l.adresse ? " · " + esc(l.adresse) : "") + (aPosition(l) ? "" : " · sans position") + '</small>';
 }
 function meilleurs(q, n) {
@@ -745,18 +750,18 @@ function rendreAccueil() {
   lieux.forEach(l => { present[l.cat] = (present[l.cat] || 0) + 1; });
   $("comms").innerHTML = COMMUNES_OUVERTES.map(c => '<button type="button" class="comm" data-k="' + esc(c) + '"><b>' + esc(c) + '</b><small>' + lieux.filter(l => communeDe(l) === c).length + ' lieux</small></button>').join("");
   $("cats").innerHTML = Object.keys(CATS).filter(c => present[c]).map(c =>
-    '<button type="button" class="cat" data-c="' + c + '" style="background:linear-gradient(160deg,' + COULEUR[c] + '2e,#ffffff 70%)"><span class="e" style="background:' + COULEUR[c] + '">' + EMOJI[c] + '</span>' + esc(CAT_COURT[c]) + '<small>' + present[c] + '</small></button>').join("");
+    '<button type="button" class="cat" data-c="' + c + '" style="background:linear-gradient(160deg,' + COULEUR[c] + '2e,#ffffff 70%)"><span class="e" style="background:' + COULEUR[c] + '">' + IC(c) + '</span>' + esc(CAT_COURT[c]) + '<small>' + present[c] + '</small></button>').join("");
   const pops = lieux.filter(l => l.source !== "osm" && aPosition(l)).sort((a, b) => ordre(a) - ordre(b) || (b.tel ? 1 : 0) - (a.tel ? 1 : 0)).slice(0, 30);
   { const jour = Math.floor(Date.now() / 864e5), n = pops.length, dec = n ? jour % n : 0; pops.push(...pops.splice(0, dec)); pops.length = Math.min(pops.length, 10); }
-  $("pops").innerHTML = pops.map((l, i) => '<button type="button" class="pop" data-p="' + i + '"><div class="top" style="background:' + (COULEUR[l.cat] || COULEUR.autre) + '">' + emojiDe(l) + '</div><div class="txt"><b>' + esc(l.nom) + '</b><small>' + (l.source === "verifie" ? "✔ Vérifié" : "Référencé") + " · " + esc(l.type || CAT_LABEL[l.cat]) + '</small></div></button>').join("");
+  $("pops").innerHTML = pops.map((l, i) => '<button type="button" class="pop" data-p="' + i + '"><div class="top" style="background:' + (COULEUR[l.cat] || COULEUR.autre) + '">' + emojiDe(l) + '</div><div class="txt"><b>' + esc(l.nom) + '</b><small>' + (l.source === "verifie" ? IC('check') + ' Vérifié' : "Référencé") + " · " + esc(l.type || CAT_LABEL[l.cat]) + '</small></div></button>').join("");
   $("pops")._items = pops;
 }
 $("comms").addEventListener("click", e => { const b = e.target.closest("[data-k]"); if (!b) return; communeF = b.dataset.k; $("communeSel").value = communeF; filtre = "tous"; $("recherche").value = ""; $("verifies").checked = false; setTab("carte"); construireFiltres(); window.afficher && window.afficher(true); setMode("carte"); });
 $("cats").addEventListener("click", e => { const b = e.target.closest("[data-c]"); if (!b) return; filtre = b.dataset.c; $("recherche").value = ""; $("verifies").checked = false; setTab("carte"); construireFiltres(); window.afficher && window.afficher(true); setMode("carte"); });
 $("pres").addEventListener("click", () => {
-  const b = $("pres"), txt = "📍 Voir les lieux près de moi"; b.textContent = "Recherche de votre position…";
-  localiser(() => { b.textContent = txt; setTab("carte"); setMode("liste"); if (window.afficher) window.afficher(false); if (maPos && loinDeGombe(maPos)) ouvrirDemande("Il semble que vous ne soyez pas dans une commune déjà ouverte (Gombe, Ngaliema, Kintambo, Limete). Dites-nous où vous êtes pour que nous l'ajoutions."); },
-    () => { b.textContent = "Position indisponible : autorisez la localisation puis réessayez"; setTimeout(() => { b.textContent = txt; }, 4000); });
+  const b = $("pres"), txt = IC('pin') + " Voir les lieux près de moi"; b.textContent = "Recherche de votre position…";
+  localiser(() => { b.innerHTML = txt; setTab("carte"); setMode("liste"); if (window.afficher) window.afficher(false); if (maPos && loinDeGombe(maPos)) ouvrirDemande("Il semble que vous ne soyez pas dans une commune déjà ouverte (Gombe, Ngaliema, Kintambo, Limete). Dites-nous où vous êtes pour que nous l'ajoutions."); },
+    () => { b.textContent = "Position indisponible : autorisez la localisation puis réessayez"; setTimeout(() => { b.innerHTML = txt; }, 4000); });
 });
 $("partager").addEventListener("click", () => {
   const texte = "Nexvia RDC : trouvez restaurants, pharmacies et services à Kinshasa. Un projet congolais, soutenons-le !";
@@ -851,7 +856,7 @@ if (typeof L === "undefined") {
   function iconeDe(l) {
     const col = COULEUR[l.cat] || COULEUR.autre, v = l.source === "verifie", t = v ? 42 : 34;
     return L.divIcon({ className: "", iconSize: [t, t], iconAnchor: [t / 2, t / 2],
-      html: '<div class="ico' + (v ? " ver" : "") + '" style="background:' + col + ';font-size:' + Math.round(t * 0.5) + 'px">' + emojiDe(l) + (v ? '<i class="ok">✔</i>' : "") + (l.tel && !v ? '<i class="tel">☎</i>' : "") + '</div>' });
+      html: '<div class="ico' + (v ? " ver" : "") + '" style="background:' + col + ';font-size:' + Math.round(t * 0.5) + 'px">' + emojiDe(l) + (v ? '<i class="ok">' + IC('check', 10) + '</i>' : "") + (l.tel && !v ? '<i class="tel">' + IC('phone', 9) + '</i>' : "") + '</div>' });
   }
   function creerMarqueur(l) {
     const m = L.marker([l._dlat !== undefined ? l._dlat : l.lat, l._dlng !== undefined ? l._dlng : l.lng], { icon: iconeDe(l), title: l.nom, keyboard: true, zIndexOffset: l.source === "verifie" ? 1000 : l.tel ? 300 : 0 });
@@ -911,8 +916,20 @@ if (typeof L === "undefined") {
     const vide = communeF !== "toutes" && !$("recherche").value.trim() && !lieux.some(l => communeDe(l) === communeF)
       ? '<p class="vide">Les lieux de <b>' + esc(communeF) + '</b> arrivent bientôt.<br>Vous avez un commerce dans cette commune ? <a href="/commerce/">Inscrivez-le sur Nexvia RDC</a>.</p>'
       : '<p class="vide">Aucun lieu à afficher avec ces filtres.</p>';
-    $("liste").innerHTML = items.length ? items.map(l => itemHTML(l, "liste")).join("") : vide;
+    listeItems = items; listeRendus = 0;
+    $("liste").innerHTML = items.length ? "" : vide;
+    $("liste").scrollTop = 0;
+    ajouterPaquet();
   }
+  let listeItems = [], listeRendus = 0;
+  const PAQUET = 30;
+  function ajouterPaquet() {
+    const suite = listeItems.slice(listeRendus, listeRendus + PAQUET);
+    if (!suite.length) return;
+    $("liste").insertAdjacentHTML("beforeend", suite.map(l => itemHTML(l, "liste")).join(""));
+    listeRendus += suite.length;
+  }
+  $("liste").addEventListener("scroll", () => { const d = $("liste"); if (listeRendus < listeItems.length && d.scrollTop + d.clientHeight > d.scrollHeight - 900) ajouterPaquet(); }, { passive: true });
   $("liste").addEventListener("click", clicItems);
 
   const champ = $("recherche");
@@ -1007,4 +1024,3 @@ if (typeof L === "undefined") {
     else if (manque.indexOf("references.json") >= 0 && manque.indexOf("osm.json") >= 0) $("statut").textContent += " (Données supplémentaires pas encore ajoutées.)";
   })();
 }
-
