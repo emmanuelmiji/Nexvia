@@ -153,6 +153,7 @@ async function connexion({ request, env, ip }) {
   if (!u || !(await C.mdpValide(mdp, u))) refuse("E-mail ou mot de passe incorrect.", 401);
   await leverBans(db);
   const ban = await infosBan(db, u.id); if (ban) return json({ ok: true, etape: "banni", ...ban });
+  if (env.COMPTE_DEMO_EMAIL && email === String(env.COMPTE_DEMO_EMAIL).trim().toLowerCase() && !C.adminsDe(env).includes(email)) { const cookieDemo = await C.ouvrirSession(env, u.id); u.admin = false; return json({ ok: true, utilisateur: pub(u) }, 200, { "set-cookie": cookieDemo }); }
   // Le mot de passe est bon : si l'envoi d'e-mails est actif, on exige le code reçu par e-mail.
   // (Tant que l'envoi n'est pas configuré, la connexion reste directe, pour ne jamais enfermer l'administrateur dehors.)
   if (Mail.mailConfigure(env)) {
