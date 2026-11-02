@@ -59,6 +59,7 @@ const ROUTES = {
   "POST commerce/formule": choisirFormule,
   "POST commerce/essai": demarrerEssai,
   "POST commerce/adresse": sauverAdresse,
+  "POST auth/supprimer": supprimerCompte,
   "POST commerce/adresse/supprimer": supprimerAdresse,
   "POST commerce/photo": ajouterPhoto,
   "POST commerce/photo/supprimer": supprimerPhoto,
@@ -324,6 +325,26 @@ async function sauverAdresse({ request, env }) {
   if (n === 0 && (marque.nom === "Mon espace" || marque.nom === String(user.nom || "").trim())) await db.prepare("UPDATE marques SET nom = ? WHERE id = ?").bind(champs.nom, marque.id).run();
   return json({ ok: true, id: r.meta.last_row_id, statut: "en_attente" });
 }
+async function supprimerCompte({ request, env }) {
+  // Suppression du compte par l'utilisateur lui-même (exigence App Store 5.1.1(v)).
+  const u = await exigerUser(request, env), b = await lireJson(request), db = await C.base(env);
+  if (!(await C.limiter(env, "suppr:" + u.id, 8, 900))) refuse("Trop de tentatives. Réessayez dans 15 minutes.", 429);
+  if (env.COMPTE_DEMO_EMAIL && String(u.email).toLowerCase() === String(env.COMPTE_DEMO_EMAIL).toLowerCase()) refuse("Ce compte de démonstration ne peut pas être supprimé.", 403);
+  const ligne = await db.prepare("SELECT * FROM users WHERE id = ?").bind(u.id).first();
+  if (!(await C.mdpValide(String(b.mdp || ""), ligne))) refuse("Mot de passe incorrect.", 401);
+  await db.batch([
+    db.prepare("DELETE FROM photos WHERE adresse_id IN (SELECT a.id FROM adresses a JOIN marques m ON m.id = a.marque_id WHERE m.owner_id = ?)").bind(u.id),
+    db.prepare("DELETE FROM adresses WHERE marque_id IN (SELECT id FROM marques WHERE owner_id = ?)").bind(u.id),
+    db.prepare("DELETE FROM demandes_paiement WHERE user_id = ?").bind(u.id),
+    db.prepare("DELETE FROM marques WHERE owner_id = ?").bind(u.id),
+    db.prepare("DELETE FROM sessions WHERE user_id = ?").bind(u.id),
+    db.prepare("DELETE FROM reclamations WHERE user_id = ?").bind(u.id),
+    db.prepare("DELETE FROM verifs WHERE email = ?").bind(u.email),
+    db.prepare("DELETE FROM users WHERE id = ?").bind(u.id)
+  ]);
+  return json({ ok: true }, 200, { "set-cookie": C.cookieVide() });
+}
+
 async function supprimerAdresse({ request, env }) {
   const user = await exigerUser(request, env), db = await C.base(env), marque = await marqueDe(db, user.id);
   const b = await lireJson(request);
