@@ -26,7 +26,7 @@
     ok.addEventListener("click", function () {
       if (!champ.value) { msg.textContent = "Saisissez votre mot de passe."; return; }
       ok.disabled = true; msg.style.color = "#1b2a41"; msg.textContent = "Suppression en cours…";
-      fetch("/api/auth/supprimer", { method: "POST", credentials: "same-origin", headers: { "content-type": "application/json" }, body: JSON.stringify({ mdp: champ.value }) })
+      fetch("/api/auth/supprimer", { method: "POST", credentials: "same-origin", headers: { "content-type": "application/json", "x-nx": "1" }, body: JSON.stringify({ mdp: champ.value }) })
         .then(function (r) { return r.json().catch(function () { return {}; }).then(function (j) { return { r: r, j: j }; }); })
         .then(function (x) {
           if (x.r.ok && x.j && x.j.ok) {
